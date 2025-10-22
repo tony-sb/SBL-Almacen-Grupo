@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${ordenCompra.id != null} ? 'Editar Orden' : 'Nueva Orden'">Nueva Orden - Sistema de Almacén</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link th:href="@{/css/dashboard.css}" rel="stylesheet">
+    <style>
+        .item-row {
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+        }
+        .remove-item {
+            margin-top: 8px;
+        }
+        .subtotal-display {
+            background-color: #f8f9fa !important;
+            font-weight: bold;
+            color: #198754;
+        }
+        .btn-eliminar:hover {
+            background-color: #dc3545 !important;
+            color: white !important;
+        }
+    </style>
+</head>
+<body class="dashboard-body">
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm fixed-top">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/dashboard">
+            <img th:src="@{/img/logo.jpg}" alt="Logo" height="40" class="d-inline-block align-text-top">
+            Sistema de Almacén
+        </a>
+    </div>
+</nav>
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 col-lg-2 d-md-block sidebar">
+            <div class="position-sticky pt-3">
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="bi bi-speedometer2"></i>
+                            Panel de Control
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/productos">
+                            <i class="bi bi-box-seam"></i>
+                            Gestión de Productos
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/ordenes-compra">
+                            <i class="bi bi-cart-plus"></i>
+                            Orden de Abastecimiento
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">
+                            <i class="bi bi-clipboard-data"></i>
+                            Reportes
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">
+                            <i class="bi bi-people"></i>
+                            Usuarios
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 main-content px-md-4">
+            <!-- Page Header -->
+            <div class="page-header mt-4">
+                <h1 class="page-title" th:text="${ordenCompra.id != null} ? 'Editar Orden de Compra' : 'Nueva Orden de Compra'">
+                    Nueva Orden de Compra
+                </h1>
+                <p class="page-subtitle">Complete la información de la orden de abastecimiento</p>
+            </div>
+
+            <!-- Alertas -->
+            <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                <span th:text="${error}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+
+            <!-- Formulario de Orden de Compra -->
+            <div class="card dashboard-card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clipboard-check me-2"></i>
+                        <span th:text="${ordenCompra.id != null} ? 'Editar Orden' : 'Crear Nueva Orden'">Crear Nueva Orden</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Formulario para edición -->
+                    <form th:action="${ordenCompra.id != null} ?
+                            @{'/ordenes-compra/editar/' + ${ordenCompra.id}} :
+                            @{/ordenes-compra/guardar}"
+                          method="post" id="formOrden">
+
+                        <!-- Campo oculto para el ID -->
+                        <input type="hidden" name="id" th:value="${ordenCompra.id}">
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Tipo de Orden *</label>
+                                <select class="form-select" name="tipoOrden" required>
+                                    <option value="">Seleccionar tipo...</option>
+                                    <option th:each="tipo : ${tiposOrden}"
+                                            th:value="${tipo}"
+                                            th:selected="${ordenCompra.tipoOrden == tipo}"
+                                            th:text="${tipo}">
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Fecha de Orden *</label>
+                                <input type="date" class="form-control" name="fechaOC"
+                                       th:value="${ordenCompra.fechaOC != null} ?
+                                               ${#temporals.format(ordenCompra.fechaOC, 'yyyy-MM-dd')} :
+                                               ${#temporals.format(#temporals.createToday(), 'yyyy-MM-dd')}"
+                                       required>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Proveedor *</label>
+                                <select class="form-select" name="proveedorId" required>
+                                    <option value="">Seleccionar proveedor...</option>
+                                    <option th:each="proveedor : ${proveedores}"
+                                            th:value="${proveedor.id}"
+                                            th:selected="${ordenCompra.proveedor?.id == proveedor.id}"
+                                            th:text="${proveedor.nombre + ' - ' + proveedor.ruc}">
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Número de O.C</label>
+                                <input type="text" class="form-control"
+                                       th:value="${ordenCompra.numeroOC}"
+                                       placeholder="Se generará automáticamente" readonly>
+                                <small class="text-muted" th:if="${ordenCompra.id != null}">Número de orden no editable</small>
+                            </div>
+                        </div>
+
+                        <!-- Items de la Orden -->
+                        <div class="mb-3">
+                            <label class="form-label">Productos *</label>
+                            <!-- Cabecera de la tabla de items -->
+                            <div class="row mb-2 fw-bold">
+                                <div class="col-md-5">Producto</div>
+                                <div class="col-md-2">Cantidad</div>
+                                <div class="col-md-2">Precio Unit.</div>
+                                <div class="col-md-2">Subtotal</div>
+                                <div class="col-md-1">Acción</div>
+                            </div>
+                            <div id="items-container">
+                                <!-- Items existentes para edición -->
+                                <div th:each="item, iter : ${ordenCompra.items}" class="item-row row mb-2 align-items-center">
+                                    <div class="col-md-5">
+                                        <select class="form-select producto-select" name="productoIds" required>
+                                            <option value="">Seleccionar producto...</option>
+                                            <option th:each="producto : ${productos}"
+                                                    th:value="${producto.id}"
+                                                    th:selected="${item.producto?.id == producto.id}"
+                                                    th:text="${producto.nombre + ' (' + producto.unidadMedida + ')'}">
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <input type="number" class="form-control cantidad-input" name="cantidades"
+                                               th:value="${item.cantidad}" placeholder="Cant" min="1" required>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <input type="number" class="form-control precio-input" name="precios"
+                                               th:value="${item.precioUnitario}" placeholder="Precio" step="0.01" min="0" required>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <input type="text" class="form-control subtotal-display"
+                                               th:value="${item.subtotal != null} ? 'S/ ' + ${#numbers.formatDecimal(item.subtotal, 1, 'COMMA', 2, 'POINT')} : 'S/ 0.00'"
+                                               readonly>
+                                    </div>
+                                    <div class="col-md-1">
+                                        <button type="button" class="btn btn-danger btn-sm remove-item">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Item vacío por defecto para nueva orden -->
+                                <div th:if="${ordenCompra.items == null || ordenCompra.items.empty}" class="item-row row mb-2 align-items-center">
+                                    <div class="col-md-5">
+                                        <select class="form-select producto-select" name="productoIds" required>
+                                            <option value="">Seleccionar producto...</option>
+                                            <option th:each="producto : ${productos}"
+                                                    th:value="${producto.id}"
+                                                    th:text="${producto.nombre + ' (' + producto.unidadMedida + ')'}">
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <input type="number" class="form-control cantidad-input" name="cantidades"
+                                               placeholder="Cant" min="1" value="1" required>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <input type="number" class="form-control precio-input" name="precios"
+                                               placeholder="Precio" step="0.01" min="0" value="0.00" required>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <input type="text" class="form-control subtotal-display" value="S/ 0.00" readonly>
+                                    </div>
+                                    <div class="col-md-1">
+                                        <button type="button" class="btn btn-danger btn-sm remove-item">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-secondary btn-sm mt-2" id="add-item">
+                                <i class="bi bi-plus-circle me-1"></i>Agregar Producto
+                            </button>
+                        </div>
+
+                        <!-- Observaciones -->
+                        <div class="mb-3">
+                            <label class="form-label">Observaciones</label>
+                            <textarea class="form-control" name="observaciones" rows="3"
+                                      placeholder="Observaciones adicionales..."
+                                      th:text="${ordenCompra.observaciones}"></textarea>
+                        </div>
+
+                        <!-- Total -->
+                        <div class="mb-3">
+                            <div class="card bg-light">
+                                <div class="card-body py-2">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <strong>Total de la Orden:</strong>
+                                        </div>
+                                        <div class="col-md-6 text-end">
+                                            <span class="h5 text-success" id="total-orden">
+                                                <span th:if="${ordenCompra.total != null}"
+                                                      th:text="'S/ ' + ${#numbers.formatDecimal(ordenCompra.total, 1, 'COMMA', 2, 'POINT')}">
+                                                    S/ 0.00
+                                                </span>
+                                                <span th:if="${ordenCompra.total == null}">S/ 0.00</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a th:href="@{/ordenes-compra}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left me-1"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle me-1"></i>
+                                <span th:text="${ordenCompra.id != null} ? 'Actualizar Orden' : 'Crear Orden'">
+                                    Crear Orden
+                                </span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    // Cargar precios de productos desde Thymeleaf
+    window.preciosProductos = {
+        <th:block th:each="producto : ${productos}">
+        [[${producto.id}]]: [[${producto.precioUnitario}]],
+        </th:block>
+    };
+    console.log("💰 Precios de productos cargados en formulario:", window.preciosProductos);
+    /*]]>*/
+</script>
+<script th:src="@{/js/ordenes-compra.js}"></script>
+</body>
+</html>

@@ -1,0 +1,341 @@
+-- Eliminar y recrear la base de datos completa
+DROP DATABASE IF EXISTS almacen_beneficencia;
+CREATE DATABASE almacen_beneficencia;
+USE almacen_beneficencia;
+
+-- Tabla de roles
+CREATE TABLE roles (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(50) UNIQUE NOT NULL,
+    descripcion VARCHAR(255)
+);
+
+-- Tabla de usuarios
+CREATE TABLE usuarios (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    nombre VARCHAR(100) NOT NULL,
+    apellido VARCHAR(100) NOT NULL,
+    email VARCHAR(100),
+    enabled BOOLEAN DEFAULT TRUE,
+    fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Tabla de relación usuarios-roles
+CREATE TABLE usuarios_roles (
+    usuario_id BIGINT NOT NULL,
+    rol_id BIGINT NOT NULL,
+    PRIMARY KEY (usuario_id, rol_id),
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+    FOREIGN KEY (rol_id) REFERENCES roles(id) ON DELETE CASCADE
+);
+
+-- Tabla de productos
+CREATE TABLE productos (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    codigo VARCHAR(50) UNIQUE NOT NULL,
+    nombre VARCHAR(255) NOT NULL,
+    descripcion TEXT,
+    cantidad INT NOT NULL DEFAULT 0,
+    unidad_medida VARCHAR(20) NOT NULL,
+    stock_minimo INT NOT NULL DEFAULT 10,
+    categoria VARCHAR(100) NOT NULL,
+    precio_unitario DECIMAL(10,2) DEFAULT 0.00,
+    fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Tabla de categorías
+CREATE TABLE categorias (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    descripcion TEXT
+);
+
+-- Tabla de movimientos de inventario
+CREATE TABLE movimientos_inventario (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    producto_id BIGINT NOT NULL,
+    tipo_movimiento ENUM('ENTRADA', 'SALIDA') NOT NULL,
+    cantidad INT NOT NULL,
+    motivo VARCHAR(255) NOT NULL,
+    usuario_id BIGINT NOT NULL,
+    fecha_movimiento TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    observaciones TEXT,
+    FOREIGN KEY (producto_id) REFERENCES productos(id),
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+);
+
+-- Insertar datos iniciales
+INSERT INTO roles (nombre, descripcion) VALUES
+('ADMIN', 'Administrador del sistema con todos los permisos'),
+('ALMACENERO', 'Usuario encargado del almacén'),
+('USUARIO', 'Usuario básico del sistema');
+
+-- Insertar usuarios con contraseñas encriptadas (todas son: 123456)
+INSERT INTO usuarios (username, password, nombre, apellido, email) VALUES
+('admin', '$2a$10$8S0.4Vx8.YeC8eZ7p6qQeOc6Q9Qb8wX2fY8gL9mF2dN3vR5tY7H6', 'Juan', 'Pérez', 'admin@beneficencia.com'),
+('almacenero', '$2a$10$8S0.4Vx8.YeC8eZ7p6qQeOc6Q9Qb8wX2fY8gL9mF2dN3vR5tY7H6', 'María', 'García', 'almacen@beneficencia.com'),
+('usuario', '$2a$10$8S0.4Vx8.YeC8eZ7p6qQeOc6Q9Qb8wX2fY8gL9mF2dN3vR5tY7H6', 'Carlos', 'López', 'usuario@beneficencia.com');
+
+-- Asignar roles a usuarios
+INSERT INTO usuarios_roles (usuario_id, rol_id) VALUES
+(1, 1), -- admin tiene rol ADMIN
+(2, 2), -- almacenero tiene rol ALMACENERO
+(3, 3); -- usuario tiene rol USUARIO
+
+-- Insertar categorías
+INSERT INTO categorias (nombre, descripcion) VALUES
+('Medicamentos', 'Medicamentos y fármacos para tratamiento'),
+('Insumos Médicos', 'Material médico quirúrgico y equipos'),
+('Limpieza', 'Productos de limpieza y aseo'),
+('Alimentos', 'Alimentos y bebidas para pacientes'),
+('Material Oficina', 'Material de oficina y papelería');
+
+-- Insertar productos de ejemplo
+INSERT INTO productos (codigo, nombre, descripcion, cantidad, unidad_medida, stock_minimo, categoria, precio_unitario) VALUES
+('MED-001', 'Paracetamol 500mg', 'Analgésico y antipirético de 500mg', 150, 'Unidad', 50, 'Medicamentos', 0.50),
+('MED-002', 'Amoxicilina 250mg', 'Antibiótico de amplio espectro', 80, 'Unidad', 30, 'Medicamentos', 1.20),
+('INS-001', 'Jeringa 3ml', 'Jeringa desechable estéril de 3ml', 200, 'Unidad', 100, 'Insumos Médicos', 0.25),
+('INS-002', 'Guantes Latex Talla M', 'Guantes desechables estériles', 500, 'Par', 200, 'Insumos Médicos', 0.15),
+('LIM-001', 'Jabón Líquido Antibacterial', 'Jabón líquido para manos antibacterial', 25, 'Litro', 10, 'Limpieza', 8.50),
+('ALI-001', 'Leche en Polvo Fortificada', 'Leche en polvo para nutrición', 30, 'Kilogramo', 15, 'Alimentos', 12.00);
+
+
+-- Usa las contraseñas EXACTAS que te generó el programa
+UPDATE usuarios SET password = '$2a$10$lddXob5TGi/QMQ297kIGhe5zW/kR425mQSCzSYfIzlqev6OIXgoqK' WHERE username = 'admin';
+UPDATE usuarios SET password = '$2a$10$Nr4ytmnkI9iIzMi7Zt6hlOHb1XmNDBeCQVG6qFLUrzwj3CIR1J9Ay' WHERE username = 'almacenero';
+UPDATE usuarios SET password = '$2a$10$Wfpa56BmYhXwSR3NMwjy1O5KdZdu9jnkoZgCC1OdleVJdwZvbMnWi' WHERE username = 'usuario';
+
+-- Agregar los productos específicos de tu imagen
+INSERT INTO productos (codigo, nombre, descripcion, cantidad, unidad_medida, stock_minimo, categoria, precio_unitario) VALUES
+('MED-003', 'Aumentín 625 Duo Tablet', 'Antibiótico de amplio espectro', 350, 'Unidad', 50, 'Medicamentos', 2.50),
+('MED-004', 'Azithrai 500 Tablet', 'Antibiótico macrólido', 20, 'Unidad', 10, 'Medicamentos', 3.20),
+('MED-005', 'Ascoril LS Syrup', 'Jarabe para la tos', 85, 'Frasco', 20, 'Medicamentos', 8.50),
+('MED-006', 'Axee 500 Tablet', 'Analgésico y antiinflamatorio', 75, 'Unidad', 25, 'Medicamentos', 1.80),
+('MED-007', 'Allegra 120mg Tablet', 'Antihistamínico', 44, 'Unidad', 15, 'Medicamentos', 4.50),
+('MED-008', 'Alex Syrup', 'Jarabe para síntomas gripales', 65, 'Frasco', 15, 'Medicamentos', 7.20),
+('MED-009', 'Amoxyclav 625 Tablet', 'Antibiótico combinado', 150, 'Unidad', 30, 'Medicamentos', 2.80),
+('MED-010', 'Avil 25 Tablet', 'Antihistamínico', 270, 'Unidad', 50, 'Medicamentos', 1.20);
+
+-- Crear tabla para movimientos recientes (salidas)
+CREATE TABLE IF NOT EXISTS movimientos_recientes (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    producto_id BIGINT NOT NULL,
+    fecha_salida DATE NOT NULL,
+    cantidad INT NOT NULL,
+    dni_beneficiario VARCHAR(20),
+    FOREIGN KEY (producto_id) REFERENCES productos(id)
+);
+
+-- Insertar movimientos recientes de ejemplo
+INSERT INTO movimientos_recientes (producto_id, fecha_salida, cantidad, dni_beneficiario) VALUES
+(3, '2024-01-15', 2, NULL),
+(4, '2024-01-15', 2, NULL),
+(5, '2024-01-14', 2, 'D06D232435452'),
+(6, '2024-01-14', 2, 'D06D232435450'),
+(7, '2024-01-13', 1, 'D06D232435455'),
+(8, '2024-01-13', 1, 'D06D232435456'),
+(9, '2024-01-12', 3, 'D06D232435457'),
+(10, '2024-01-12', 5, 'D06D232435458');
+
+-- Si necesitas cambiar el tipo de fecha a DATE
+ALTER TABLE movimientos_recientes
+MODIFY COLUMN fecha_salida DATE;
+
+-- Insertar datos de prueba con fechas válidas
+INSERT INTO movimientos_recientes (producto_id, fecha_salida, cantidad, dni_beneficiario) VALUES
+(3, CURDATE(), 2, NULL),
+(4, CURDATE(), 2, NULL),
+(5, CURDATE(), 2, 'D06D232435452'),
+(6, '2024-10-12', 2, 'D06D232435450'),
+(7, '2024-10-11', 1, 'D06D232435455'),
+(8, '2024-10-10', 1, 'D06D232435456'),
+(9, '2024-10-09', 3, 'D06D232435457'),
+(10, '2024-10-08', 5, 'D06D232435458');
+
+-- Tabla de proveedores
+CREATE TABLE proveedores (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    ruc VARCHAR(20) UNIQUE NOT NULL,
+    nombre VARCHAR(255) NOT NULL,
+    direccion TEXT,
+    telefono VARCHAR(20),
+    email VARCHAR(100),
+    fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tabla de órdenes de compra
+CREATE TABLE ordenes_compra (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    numero_oc VARCHAR(50) UNIQUE NOT NULL,
+    fecha_oc DATE NOT NULL,
+    proveedor_id BIGINT NOT NULL,
+    usuario_id BIGINT NOT NULL,
+    tipo_orden ENUM('SOLIDAS', 'DONACIONES', 'U_OFICINA', 'INVENTARIO', 'REPORTE', 'R_DONACION', 'R_UTILES', 'R_TOTAL') NOT NULL,
+    estado ENUM('PENDIENTE', 'APROBADA', 'RECHAZADA', 'COMPLETADA') DEFAULT 'PENDIENTE',
+    total DECIMAL(10,2) DEFAULT 0.00,
+    observaciones TEXT,
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (proveedor_id) REFERENCES proveedores(id),
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+);
+
+-- Tabla de items de orden de compra
+CREATE TABLE orden_compra_items (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    orden_compra_id BIGINT NOT NULL,
+    producto_id BIGINT NOT NULL,
+    cantidad INT NOT NULL,
+    precio_unitario DECIMAL(10,2) NOT NULL,
+    subtotal DECIMAL(10,2) NOT NULL,
+    FOREIGN KEY (orden_compra_id) REFERENCES ordenes_compra(id) ON DELETE CASCADE,
+    FOREIGN KEY (producto_id) REFERENCES productos(id)
+);
+-- Insertar proveedores de prueba
+INSERT INTO proveedores (ruc, nombre, direccion, telefono, email) VALUES
+('20123456789', 'Farmacia Central S.A.', 'Av. Libertad 123', '074-123456', 'ventas@farmaciacentral.com'),
+('20123456788', 'Distribuidora Médica Norte', 'Calle Los Pinos 456', '074-654321', 'contacto@medicanorte.com'),
+('20123456787', 'Laboratorios Pharma Perú', 'Jr. Unión 789', '074-789123', 'info@pharmaperu.com');
+
+-- Insertar órdenes de compra de prueba
+INSERT INTO ordenes_compra (numero_oc, fecha_oc, proveedor_id, usuario_id, tipo_orden, estado, total) VALUES
+('SOL-2025-001', '2025-10-06', 1, 1, 'SOLIDAS', 'PENDIENTE', 1500.00),
+('DON-2025-001', '2025-10-06', 2, 2, 'DONACIONES', 'APROBADA', 0.00),
+('UOF-2025-001', '2025-10-06', 3, 1, 'U_OFICINA', 'COMPLETADA', 800.50),
+('INV-2025-001', '2025-10-05', 1, 2, 'INVENTARIO', 'PENDIENTE', 1200.75);
+
+-- Verificar que las órdenes no existen
+SELECT * FROM ordenes_compra;
+
+-- Insertar órdenes de compra (asegúrate de que los usuarios 1 y 2 existen)
+INSERT INTO ordenes_compra (numero_oc, fecha_oc, proveedor_id, usuario_id, tipo_orden, estado, total) VALUES
+('SOL-2025-001', '2025-10-06', 1, 1, 'SOLIDAS', 'PENDIENTE', 1500.00),
+('DON-2025-001', '2025-10-06', 2, 2, 'DONACIONES', 'APROBADA', 0.00),
+('UOF-2025-001', '2025-10-06', 3, 1, 'U_OFICINA', 'COMPLETADA', 800.50),
+('INV-2025-001', '2025-10-05', 1, 2, 'INVENTARIO', 'PENDIENTE', 1200.75);
+
+
+-- 1. PRIMERO: Agregar más productos si necesitas
+INSERT INTO productos (codigo, nombre, descripcion, cantidad, unidad_medida, stock_minimo, categoria, precio_unitario) VALUES
+('MED-011', 'Ibuprofeno 400mg', 'Antiinflamatorio y analgésico', 120, 'Unidad', 30, 'Medicamentos', 0.80),
+('MED-012', 'Omeprazol 20mg', 'Protector gástrico', 90, 'Unidad', 25, 'Medicamentos', 1.50),
+('INS-003', 'Mascarillas Quirúrgicas', 'Mascarillas desechables', 300, 'Unidad', 100, 'Insumos Médicos', 0.10),
+('INS-004', 'Termómetro Digital', 'Termómetro digital clínico', 15, 'Unidad', 5, 'Insumos Médicos', 25.00),
+('LIM-002', 'Alcohol en Gel 500ml', 'Gel antibacterial', 40, 'Frasco', 15, 'Limpieza', 12.00);
+
+-- 2. AGREGAR ÓRDENES DE COMPRA CON ITEMS
+-- Orden 1: SOLIDAS
+INSERT INTO ordenes_compra (numero_oc, fecha_oc, proveedor_id, usuario_id, tipo_orden, estado, total, observaciones) VALUES
+('SOL-2025-002', '2025-10-10', 1, 1, 'SOLIDAS', 'APROBADA', 485.00, 'Compra mensual de medicamentos');
+
+-- Items para SOL-2025-002
+INSERT INTO orden_compra_items (orden_compra_id, producto_id, cantidad, precio_unitario, subtotal) VALUES
+(LAST_INSERT_ID(), 1, 100, 0.50, 50.00),   -- Paracetamol
+(LAST_INSERT_ID(), 2, 50, 1.20, 60.00),    -- Amoxicilina
+(LAST_INSERT_ID(), 11, 80, 0.80, 64.00),   -- Ibuprofeno
+(LAST_INSERT_ID(), 12, 60, 1.50, 90.00),   -- Omeprazol
+(LAST_INSERT_ID(), 3, 200, 0.25, 50.00),   -- Jeringas
+(LAST_INSERT_ID(), 13, 500, 0.10, 50.00),  -- Mascarillas
+(LAST_INSERT_ID(), 15, 10, 12.00, 120.00); -- Alcohol gel
+
+-- Orden 2: DONACIONES
+INSERT INTO ordenes_compra (numero_oc, fecha_oc, proveedor_id, usuario_id, tipo_orden, estado, total, observaciones) VALUES
+('DON-2025-002', '2025-10-12', 2, 2, 'DONACIONES', 'COMPLETADA', 0.00, 'Donación para campaña de invierno');
+
+-- Items para DON-2025-002
+INSERT INTO orden_compra_items (orden_compra_id, producto_id, cantidad, precio_unitario, subtotal) VALUES
+(LAST_INSERT_ID(), 5, 50, 8.50, 425.00),   -- Jabón líquido
+(LAST_INSERT_ID(), 6, 20, 12.00, 240.00),  -- Leche en polvo
+(LAST_INSERT_ID(), 15, 30, 12.00, 360.00); -- Alcohol gel
+
+-- Orden 3: U_OFICINA
+INSERT INTO ordenes_compra (numero_oc, fecha_oc, proveedor_id, usuario_id, tipo_orden, estado, total, observaciones) VALUES
+('UOF-2025-002', '2025-10-15', 3, 1, 'U_OFICINA', 'PENDIENTE', 175.00, 'Material de oficina para administración');
+
+-- Items para UOF-2025-002
+INSERT INTO orden_compra_items (orden_compra_id, producto_id, cantidad, precio_unitario, subtotal) VALUES
+(LAST_INSERT_ID(), 4, 100, 0.15, 15.00),   -- Guantes
+(LAST_INSERT_ID(), 13, 200, 0.10, 20.00),  -- Mascarillas
+(LAST_INSERT_ID(), 14, 5, 25.00, 125.00),  -- Termómetros
+(LAST_INSERT_ID(), 3, 20, 0.25, 5.00);     -- Jeringas
+
+-- 3. VERIFICAR que se crearon correctamente
+SELECT 'Órdenes creadas exitosamente!' as Status;
+
+-- 4. CONSULTA para ver las órdenes con sus items
+SELECT
+    oc.numero_oc,
+    oc.tipo_orden,
+    oc.estado,
+    oc.total,
+    p.nombre as proveedor,
+    COUNT(oci.id) as cantidad_items
+FROM ordenes_compra oc
+JOIN proveedores p ON oc.proveedor_id = p.id
+LEFT JOIN orden_compra_items oci ON oc.id = oci.orden_compra_id
+GROUP BY oc.id
+ORDER BY oc.fecha_oc DESC;
+
+-- 5. CONSULTA para ver los detalles de una orden específica
+SELECT
+    oc.numero_oc,
+    p.nombre as producto,
+    p.unidad_medida,
+    oci.cantidad,
+    oci.precio_unitario,
+    oci.subtotal
+FROM ordenes_compra oc
+JOIN orden_compra_items oci ON oc.id = oci.orden_compra_id
+JOIN productos p ON oci.producto_id = p.id
+WHERE oc.numero_oc = 'SOL-2025-002';
+
+-- AGREGAR ITEMS A LAS ÓRDENES EXISTENTES (si ya tienes órdenes sin items)
+
+-- Para DON-2025-001
+INSERT INTO orden_compra_items (orden_compra_id, producto_id, cantidad, precio_unitario, subtotal)
+SELECT id, 7, 50, 2.50, 125.00 FROM ordenes_compra WHERE numero_oc = 'DON-2025-001'
+UNION ALL
+SELECT id, 8, 30, 3.20, 96.00 FROM ordenes_compra WHERE numero_oc = 'DON-2025-001';
+
+-- Para UOF-2025-001
+INSERT INTO orden_compra_items (orden_compra_id, producto_id, cantidad, precio_unitario, subtotal)
+SELECT id, 4, 150, 0.15, 22.50 FROM ordenes_compra WHERE numero_oc = 'UOF-2025-001'
+UNION ALL
+SELECT id, 3, 100, 0.25, 25.00 FROM ordenes_compra WHERE numero_oc = 'UOF-2025-001';
+
+-- Para INV-2025-001
+INSERT INTO orden_compra_items (orden_compra_id, producto_id, cantidad, precio_unitario, subtotal)
+SELECT id, 1, 200, 0.50, 100.00 FROM ordenes_compra WHERE numero_oc = 'INV-2025-001'
+UNION ALL
+SELECT id, 2, 100, 1.20, 120.00 FROM ordenes_compra WHERE numero_oc = 'INV-2025-001';
+
+-- ACTUALIZAR los totales de las órdenes
+UPDATE ordenes_compra oc
+SET total = (
+    SELECT COALESCE(SUM(subtotal), 0)
+    FROM orden_compra_items
+    WHERE orden_compra_id = oc.id
+)
+WHERE numero_oc IN ('DON-2025-001', 'UOF-2025-001', 'INV-2025-001');
+
+-- Primero haz backup de tu base de datos
+
+-- Ver duplicados
+SELECT numero_oc, COUNT(*) as cantidad
+FROM ordenes_compra
+GROUP BY numero_oc
+HAVING COUNT(*) > 1;
+
+-- Eliminar duplicados, mantener el más reciente
+DELETE o1 FROM ordenes_compra o1
+INNER JOIN ordenes_compra o2
+WHERE o1.id < o2.id AND o1.numero_oc = o2.numero_oc;
+
+-- O si prefieres mantener el más antiguo:
+-- DELETE o1 FROM ordenes_compra o1
+-- INNER JOIN ordenes_compra o2
+-- WHERE o1.id > o2.id AND o1.numero_oc = o2.numero_oc;

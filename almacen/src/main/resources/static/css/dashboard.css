@@ -1,0 +1,186 @@
+.dashboard-body {
+    background-color: #f8f9fa;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+/* Navbar fijo */
+.navbar {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 1100;
+    height: 56px;
+    padding: 0 20px;
+}
+
+/* Sidebar Fijo - MÁS ANGOSTO */
+.sidebar {
+    background-color: #2c3e50;
+    min-height: 100vh;
+    position: fixed;
+    top: 56px;
+    left: 0;
+    width: 200px; /* Reducido de 250px a 200px */
+    z-index: 1000;
+    overflow-y: auto;
+}
+
+/* Sidebar navigation - MÁS COMPACTO */
+.sidebar .nav {
+    padding: 15px 8px 0 8px; /* Menos padding */
+}
+
+.sidebar .nav-link {
+    color: #ecf0f1;
+    padding: 10px 12px; /* Menos padding */
+    border-bottom: 1px solid #34495e;
+    transition: all 0.3s ease;
+    margin: 0 3px; /* Menos margen */
+    border-radius: 5px;
+    font-size: 0.9rem; /* Texto más pequeño */
+}
+
+.sidebar .nav-link:hover {
+    background-color: #34495e;
+    color: #3498db;
+}
+
+.sidebar .nav-link.active {
+    background-color: #3498db;
+    color: white;
+}
+
+.sidebar .nav-link i {
+    margin-right: 8px; /* Menos espacio entre icono y texto */
+    width: 18px;
+    text-align: center;
+    font-size: 1rem; /* Iconos un poco más pequeños */
+}
+
+/* Main Content - MÁS ESPACIO AHORA */
+.main-content {
+    margin-left: 200px; /* Igual al ancho del sidebar */
+    padding: 70px 40px 20px 40px; /* Buen padding lateral */
+    min-height: 100vh;
+    background-color: #f8f9fa;
+}
+
+/* Container fluid sin padding */
+.container-fluid {
+    padding: 0 !important;
+}
+
+/* Row sin margin */
+.row {
+    margin: 0;
+}
+
+/* Page Header */
+.page-header {
+    margin-bottom: 20px;
+    padding-left: 0;
+}
+
+.page-title {
+    color: #2c3e50;
+    font-weight: 700;
+    margin-bottom: 5px;
+    padding-left: 0;
+}
+
+.page-subtitle {
+    color: #7f8c8d;
+    font-size: 1rem;
+    padding-left: 0;
+}
+
+/* Dashboard Cards */
+.dashboard-card {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.dashboard-card .card-header {
+    background-color: #2c3e50;
+    color: white;
+    border-bottom: none;
+    padding: 15px 20px;
+    border-radius: 10px 10px 0 0 !important;
+}
+
+.dashboard-card .card-header h5 {
+    margin: 0;
+    font-weight: 600;
+}
+
+.dashboard-card .card-body {
+    padding: 20px;
+}
+
+/* Table Styles */
+.table {
+    margin-bottom: 0;
+}
+
+.table th {
+    background-color: #2c3e50 !important;
+    color: white;
+    border: none;
+    padding: 12px 15px;
+    font-weight: 600;
+}
+
+.table td {
+    padding: 12px 15px;
+    vertical-align: middle;
+    border-color: #dee2e6;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(52, 152, 219, 0.05);
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(52, 152, 219, 0.1);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 100%;
+        position: relative;
+        top: 0;
+        min-height: auto;
+    }
+
+    .main-content {
+        margin-left: 0;
+        padding: 70px 20px 20px 20px;
+    }
+
+    .table-responsive {
+        font-size: 0.9rem;
+    }
+}
+
+/* Scroll personalizado para sidebar */
+.sidebar::-webkit-scrollbar {
+    width: 4px; /* Scrollbar más angosto */
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: #34495e;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: #3498db;
+    border-radius: 2px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background: #2980b9;
+}

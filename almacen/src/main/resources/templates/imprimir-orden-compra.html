@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="'Orden de Compra - ' + ${ordenCompra.numeroOC}">Orden de Compra</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        /* ======= FORMATO INSTITUCIONAL ======= */
+        body {
+            background-color: #f8f9fa;
+            padding: 15px;
+            font-family: 'Arial', sans-serif;
+            font-size: 11px;
+            line-height: 1.2;
+        }
+
+        .print-container {
+            background: white;
+            padding: 20px 30px;
+            border: 2px solid black;
+            max-width: 800px;
+            margin: 0 auto;
+            box-shadow: 0 0 8px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .print-container::before {
+            content: "";
+            position: absolute;
+            top: 8px; left: 8px; right: 8px; bottom: 8px;
+            border: 1px solid #000;
+            pointer-events: none;
+        }
+
+        .print-header {
+            text-align: center;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 6px;
+        }
+
+        .institution-name {
+            font-size: 16px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .document-title {
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .header-subtitle {
+            font-size: 9px;
+            color: #555;
+        }
+
+        .print-section {
+            margin-bottom: 10px;
+            padding: 8px 10px;
+            border: 1px solid #000;
+            background: #fdfdfd;
+        }
+
+        .section-title {
+            font-weight: bold;
+            margin-bottom: 4px;
+            border-bottom: 1px solid #000;
+            padding-bottom: 2px;
+            font-size: 10px;
+            text-transform: uppercase;
+        }
+
+        .info-row {
+            display: flex;
+            margin-bottom: 3px;
+            font-size: 10px;
+        }
+
+        .info-label {
+            font-weight: bold;
+            width: 120px;
+            flex-shrink: 0;
+        }
+
+        .info-value {
+            flex: 1;
+        }
+
+        .compact-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        /* === Tabla de detalle === */
+        table.detalle {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 9px;
+            margin-top: 6px;
+        }
+
+        table.detalle th, table.detalle td {
+            border: 1px solid #000;
+            padding: 3px 4px;
+            text-align: center;
+        }
+
+        table.detalle th {
+            background: #e9ecef;
+            font-weight: bold;
+        }
+
+        .text-right {
+            text-align: right !important;
+        }
+
+        /* Firmas */
+        .signature-section {
+            margin-top: 20px;
+            padding-top: 12px;
+            border-top: 2px solid #000;
+            font-size: 9px;
+        }
+
+        .signature-section .compact-grid > div {
+            text-align: center;
+        }
+
+        .signature-section div div:first-child {
+            border-top: 1px solid #000;
+            width: 140px;
+            margin: 0 auto 4px auto;
+        }
+
+        /* Optimizaciones para impresión en UNA hoja */
+        @media print {
+            .no-print { display: none !important; }
+            @page {
+                size: A4 portrait;
+                margin: 0.8cm;
+            }
+            body {
+                background-color: white !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                font-size: 10px !important;
+            }
+            .print-container {
+                border: 2px solid black !important;
+                box-shadow: none !important;
+                margin: 0 !important;
+                padding: 15px 25px !important;
+                max-width: none !important;
+            }
+            .print-section {
+                page-break-inside: avoid;
+            }
+            table.detalle {
+                page-break-inside: avoid;
+            }
+        }
+
+        @media screen {
+            .no-print { display: block; }
+        }
+    </style>
+</head>
+<body>
+<div class="container print-container">
+
+    <!-- Botones -->
+    <div class="no-print text-center mb-3">
+        <button onclick="window.print()" class="btn btn-primary btn-sm me-2">🖨️ Imprimir</button>
+        <a th:href="@{/ordenes-compra}" class="btn btn-secondary btn-sm">⬅ Volver a Órdenes</a>
+    </div>
+
+    <!-- Encabezado -->
+    <div class="print-header">
+        <div class="institution-name">SOCIEDAD DE BENEFICENCIA DE LAMBAYEQUE</div>
+        <div class="document-title">ORDEN DE COMPRA</div>
+        <div class="header-subtitle">Sistema de Gestión de Almacén</div>
+    </div>
+
+    <!-- Información general -->
+    <div class="compact-grid">
+        <div class="print-section">
+            <div class="section-title">INFORMACIÓN DE ORDEN</div>
+            <div class="info-row"><div class="info-label">N° ORDEN:</div><div class="info-value" th:text="${ordenCompra.numeroOC}"></div></div>
+            <div class="info-row"><div class="info-label">FECHA:</div><div class="info-value" th:text="${#temporals.format(ordenCompra.fechaOC, 'dd/MM/yyyy')}"></div></div>
+            <div class="info-row"><div class="info-label">TIPO:</div><div class="info-value" th:text="${ordenCompra.tipoOrden}"></div></div>
+            <div class="info-row"><div class="info-label">ESTADO:</div><div class="info-value" th:text="${ordenCompra.estado}"></div></div>
+        </div>
+
+        <div class="print-section">
+            <div class="section-title">SOLICITANTE</div>
+            <div class="info-row"><div class="info-label">USUARIO:</div><div class="info-value" th:text="${ordenCompra.usuario.nombre + ' ' + ordenCompra.usuario.apellido}"></div></div>
+            <div class="info-row"><div class="info-label">FECHA CREACIÓN:</div><div class="info-value" th:text="${#temporals.format(ordenCompra.fechaCreacion, 'dd/MM/yyyy HH:mm')}"></div></div>
+            <div class="info-row"><div class="info-label">TOTAL:</div><div class="info-value fw-bold text-success" th:text="'S/ ' + ${ordenCompra.total}"></div></div>
+        </div>
+    </div>
+
+    <!-- Proveedor -->
+    <div class="print-section">
+        <div class="section-title">INFORMACIÓN DEL PROVEEDOR</div>
+        <div class="compact-grid">
+            <div>
+                <div class="info-row"><div class="info-label">RUC:</div><div class="info-value" th:text="${ordenCompra.proveedor.ruc}"></div></div>
+                <div class="info-row"><div class="info-label">PROVEEDOR:</div><div class="info-value" th:text="${ordenCompra.proveedor.nombre}"></div></div>
+            </div>
+            <div>
+                <div class="info-row"><div class="info-label">TELÉFONO:</div><div class="info-value" th:text="${ordenCompra.proveedor.telefono}"></div></div>
+                <div class="info-row"><div class="info-label">EMAIL:</div><div class="info-value" th:text="${ordenCompra.proveedor.email}"></div></div>
+            </div>
+        </div>
+        <div class="info-row"><div class="info-label">DIRECCIÓN:</div><div class="info-value" th:text="${ordenCompra.proveedor.direccion}"></div></div>
+    </div>
+
+    <!-- 🧾 Tabla de detalle dinámico -->
+    <div class="print-section">
+        <div class="section-title">DETALLE DE PRODUCTOS / SERVICIOS</div>
+        <table class="detalle">
+            <thead>
+            <tr>
+                <th>#</th>
+                <th>Descripción</th>
+                <th>Unidad</th>
+                <th>Cantidad</th>
+                <th>Precio Unitario (S/)</th>
+                <th>Subtotal (S/)</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="item, iter : ${ordenCompra.items}">
+                <td th:text="${iter.count}"></td>
+                <td th:text="${item.producto.nombre}"></td>
+                <td th:text="${item.producto.unidadMedida}"></td>
+                <td th:text="${item.cantidad}"></td>
+                <td th:text="${#numbers.formatDecimal(item.precioUnitario, 1, 'COMMA', 2, 'POINT')}"></td>
+                <td th:text="${#numbers.formatDecimal(item.subtotal, 1, 'COMMA', 2, 'POINT')}"></td>
+            </tr>
+            <!-- Mensaje si no hay items -->
+            <tr th:if="${#lists.isEmpty(ordenCompra.items)}">
+                <td colspan="6" class="text-center">No hay productos en esta orden</td>
+            </tr>
+            </tbody>
+            <tfoot>
+            <tr>
+                <td colspan="5" class="text-right fw-bold">TOTAL GENERAL (S/)</td>
+                <td class="fw-bold" th:text="${#numbers.formatDecimal(ordenCompra.total, 1, 'COMMA', 2, 'POINT')}"></td>
+            </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <!-- Observaciones -->
+    <div th:if="${ordenCompra.observaciones}" class="print-section">
+        <div class="section-title">OBSERVACIONES</div>
+        <div style="font-size: 10px;" th:text="${ordenCompra.observaciones}"></div>
+    </div>
+
+    <!-- Firmas -->
+    <div class="signature-section">
+        <div class="compact-grid">
+            <div>
+                <div></div>
+                <div class="fw-bold" style="font-size:9px;">RESPONSABLE DE ALMACÉN</div>
+                <div style="font-size:8px;">Sociedad de Beneficencia de Lambayeque</div>
+            </div>
+            <div>
+                <div></div>
+                <div class="fw-bold" style="font-size:9px;">PROVEEDOR</div>
+                <div style="font-size:8px;" th:text="${ordenCompra.proveedor.nombre}"></div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // Cerrar después de imprimir (opcional)
+    window.onafterprint = function() {
+        // Si quieres que se cierre automáticamente después de imprimir:
+        // setTimeout(function() {
+        //     window.location.href = '/ordenes-compra';
+        // }, 1000);
+    };
+</script>
+</body>
+</html>

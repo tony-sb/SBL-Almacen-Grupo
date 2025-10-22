@@ -1,0 +1,20 @@
+/* ordenes-compra.css - Ajustes específicos para órdenes */
+
+/* Header más compacto para órdenes */
+.page-header {
+    margin-bottom: 15px !important;
+    padding-left: 0 !important;
+    margin-left: 0 !important;
+}
+
+.page-title {
+    font-size: 1.4rem !important;
+    padding-left: 0 !important;
+    margin-left: 0 !important;
+}
+
+.page-subtitle {
+    font-size: 0.9rem !important;
+    padding-left: 0 !important;
+    margin-left: 0 !important;
+}
