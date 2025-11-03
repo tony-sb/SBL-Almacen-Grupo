@@ -7,7 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
     <link th:href="@{/css/dashboard.css}" rel="stylesheet">
-    <link th:href="@{/css/ordenes-compra.css}" rel="stylesheet">
+    <link th:href="@{/css/ordenes-abastecimiento.css}" rel="stylesheet">
     <style>
         .item-row {
             border: 1px solid #dee2e6;
@@ -15,18 +15,54 @@
             padding: 10px;
             margin-bottom: 10px;
             background: #f8f9fa;
+            transition: all 0.3s ease;
+        }
+        .item-row:hover {
+            border-color: #0d6efd;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         .remove-item {
             margin-top: 8px;
+            transition: all 0.2s ease;
+        }
+        .remove-item:hover {
+            transform: scale(1.1);
         }
         .subtotal-display {
             background-color: #f8f9fa !important;
             font-weight: bold;
             color: #198754;
+            border: 1px solid #ced4da;
         }
         .btn-eliminar:hover {
             background-color: #dc3545 !important;
             color: white !important;
+        }
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .loading-spinner {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .search-header {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid #dee2e6;
         }
     </style>
 </head>
@@ -63,31 +99,43 @@
                     <li class="nav-item">
                         <a class="nav-link" href="/dashboard">
                             <i class="bi bi-speedometer2"></i>
-                            Panel de Control
+                            Dashboard
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link active" href="/ordenes-compra">
+                        <a class="nav-link active" href="/ordenes-abastecimiento">
                             <i class="bi bi-cart-plus"></i>
                             Orden de Abastecimiento
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="#">
+                            <i class="bi bi-box-arrow-up"></i>
+                            Orden de Salidas
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="/productos">
                             <i class="bi bi-box-seam"></i>
-                            Gestión de Productos
+                            Inventario
+                        </a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                        <a class="nav-link" href="/usuarios">
+                            <i class="bi bi-people"></i>
+                            Usuarios
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">
+                            <i class="bi bi-truck"></i>
+                            Proveedores
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="#">
                             <i class="bi bi-clipboard-data"></i>
-                            Reportes
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">
-                            <i class="bi bi-people"></i>
-                            Usuarios
+                            Reporte
                         </a>
                     </li>
                 </ul>
@@ -96,22 +144,58 @@
 
         <!-- Main Content -->
         <main class="col-md-9 ms-sm-auto col-lg-10 main-content px-md-4">
-            <!-- Page Header Normal -->
-            <div class="page-header mt-3">
+            <!-- Título Centrado -->
+            <div class="page-header mt-4 text-center">
+                <h1 class="page-title">Búsqueda de Orden de Abastecimiento</h1>
+            </div>
+
+            <!-- Filtros de Búsqueda -->
+            <div class="search-header">
                 <div class="row align-items-center">
-                    <div class="col-md-6">
-                        <h1 class="page-title">Búsqueda de Orden de Abastecimiento</h1>
-                        <p class="page-subtitle mb-1">
-                            <i class="bi bi-person me-1"></i>Usuario: <span sec:authentication="name"></span>
-                        </p>
-                    </div>
-                    <div class="col-md-6 text-end">
-                        <div class="mb-2">
-                            <span class="me-3">Periodo: 2025</span>
-                            <span>Mes: 10</span>
+                    <div class="col-md-4">
+                        <div class="user-info-section">
+                            <p class="mb-0">
+                                <i class="bi bi-person me-1"></i>
+                                <strong>Usuario:</strong>
+                                <span sec:authentication="name" class="ms-1">almacenero</span>
+                            </p>
                         </div>
-                        <!-- Botón para abrir modal -->
-                        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#nuevaOrdenModal">
+                    </div>
+
+                    <div class="col-md-4 text-center">
+                        <div class="periodo-section">
+                            <div class="row g-2 justify-content-center">
+                                <div class="col-auto">
+                                    <label class="form-label mb-0"><strong>Periodo:</strong></label>
+                                    <select class="form-select form-select-sm" id="periodoSelect">
+                                        <option value="2025">2025</option>
+                                        <option value="2024">2024</option>
+                                        <option value="2023">2023</option>
+                                    </select>
+                                </div>
+                                <div class="col-auto">
+                                    <label class="form-label mb-0"><strong>Mes:</strong></label>
+                                    <select class="form-select form-select-sm" id="mesSelect">
+                                        <option value="01">01 - Enero</option>
+                                        <option value="02">02 - Febrero</option>
+                                        <option value="03">03 - Marzo</option>
+                                        <option value="04">04 - Abril</option>
+                                        <option value="05">05 - Mayo</option>
+                                        <option value="06">06 - Junio</option>
+                                        <option value="07">07 - Julio</option>
+                                        <option value="08">08 - Agosto</option>
+                                        <option value="09">09 - Septiembre</option>
+                                        <option value="10">10 - Octubre</option>
+                                        <option value="11">11 - Noviembre</option>
+                                        <option value="12">12 - Diciembre</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4 text-end">
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#nuevaOrdenModal">
                             <i class="bi bi-plus-circle me-1"></i>Nueva Orden
                         </button>
                     </div>
@@ -124,12 +208,19 @@
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
 
+            <div th:if="${param.error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                <span th:text="${param.error}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+
             <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
                 <i class="bi bi-exclamation-triangle-fill me-2"></i>
                 <span th:text="${error}"></span>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
-            <!-- Tabla de Órdenes de Compra -->
+
+            <!-- Tabla de Órdenes de Abastecimiento -->
             <div class="card dashboard-card">
                 <div class="card-header">
                     <h5 class="mb-0"><i class="bi bi-clipboard-check me-2"></i>Orden de Abastecimiento</h5>
@@ -139,8 +230,7 @@
                         <table class="table table-hover table-striped table-bordered">
                             <thead class="table-dark">
                             <tr>
-                                <th>Tipo</th>
-                                <th>Nº O.C</th>
+                                <th>Nº O.A</th>
                                 <th>Fecha</th>
                                 <th>R.U.C</th>
                                 <th>Proveedor</th>
@@ -151,21 +241,8 @@
                             </thead>
                             <tbody>
                             <tr th:each="orden : ${ordenes}">
-                                <td>
-                        <span th:switch="${orden.tipoOrden}" class="badge">
-                            <span th:case="SOLIDAS" class="bg-primary">Solidas</span>
-                            <span th:case="DONACIONES" class="bg-success">Donaciones</span>
-                            <span th:case="U_OFICINA" class="bg-info">U. Oficina</span>
-                            <span th:case="INVENTARIO" class="bg-warning">Inventario</span>
-                            <span th:case="REPORTE" class="bg-secondary">Reporte</span>
-                            <span th:case="R_DONACION" class="bg-dark">R. Donación</span>
-                            <span th:case="R_UTILES" class="bg-light text-dark">R. Utiles</span>
-                            <span th:case="R_TOTAL" class="bg-danger">R. Total</span>
-                        </span>
-                                </td>
-                                <td th:text="${orden.numeroOC}">00-2025</td>
-                                <td th:text="${#temporals.format(orden.fechaOC, 'dd/MM/yyyy')}">06/10/2025</td>
-                                <!-- CORREGIDO: Usar safe navigation operator -->
+                                <td th:text="${orden.numeroOA}">OA-2025-001</td>
+                                <td th:text="${#temporals.format(orden.fechaOA, 'dd/MM/yyyy')}">06/10/2025</td>
                                 <td th:text="${orden.proveedor?.ruc} ?: 'N/A'">1010101010</td>
                                 <td th:text="${orden.proveedor?.nombre} ?: 'N/A'">XXXXXXXXXX</td>
                                 <td th:text="${orden.usuario?.nombre + ' ' + orden.usuario?.apellido} ?: 'N/A'">Usuario</td>
@@ -179,17 +256,17 @@
                                 </td>
                                 <td>
                                     <div class="btn-group btn-group-sm" role="group">
-                                        <a th:href="@{'/ordenes-compra/imprimir/' + ${orden.id}}"
-                                           class="btn btn-outline-primary" title="Imprimir">
+                                        <a th:href="@{'/ordenes-abastecimiento/imprimir/' + ${orden.id}}"
+                                           class="btn btn-outline-primary" title="Imprimir" data-bs-toggle="tooltip">
                                             <i class="bi bi-printer"></i>
                                         </a>
-                                        <a th:href="@{'/ordenes-compra/editar/' + ${orden.id}}"
-                                           class="btn btn-outline-warning" title="Editar">
+                                        <a th:href="@{'/ordenes-abastecimiento/editar/' + ${orden.id}}"
+                                           class="btn btn-outline-warning" title="Editar" data-bs-toggle="tooltip">
                                             <i class="bi bi-pencil"></i>
                                         </a>
-                                        <a th:href="@{'/ordenes-compra/eliminar/' + ${orden.id}}"
+                                        <a th:href="@{'/ordenes-abastecimiento/eliminar/' + ${orden.id}}"
                                            class="btn btn-outline-danger btn-eliminar"
-                                           title="Eliminar">
+                                           title="Eliminar" data-bs-toggle="tooltip">
                                             <i class="bi bi-trash"></i>
                                         </a>
                                     </div>
@@ -198,9 +275,9 @@
 
                             <!-- Mensaje si no hay órdenes -->
                             <tr th:if="${ordenes.empty}">
-                                <td colspan="8" class="text-center text-muted py-4">
+                                <td colspan="7" class="text-center text-muted py-4">
                                     <i class="bi bi-inbox display-6 d-block mb-2"></i>
-                                    No hay órdenes de compra registradas
+                                    No hay órdenes de abastecimiento registradas
                                     <br>
                                     <button type="button" class="btn btn-primary btn-sm mt-2" data-bs-toggle="modal" data-bs-target="#nuevaOrdenModal">
                                         <i class="bi bi-plus-circle me-1"></i>Crear primera orden
@@ -222,89 +299,16 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="nuevaOrdenModalLabel">
-                    <i class="bi bi-cart-plus me-2"></i>Nueva Orden de Compra
+                    <i class="bi bi-cart-plus me-2"></i>Nueva Orden de Abastecimiento
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form th:action="@{/ordenes-compra/guardar}" method="post" id="formOrden">
+            <form th:action="@{/ordenes-abastecimiento/guardar}" method="post" id="formOrdenModal">
                 <div class="modal-body">
-                    <!-- Información Básica -->
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label">Tipo de Orden *</label>
-                            <select class="form-select" name="tipoOrden" required>
-                                <option value="">Seleccionar tipo...</option>
-                                <option th:each="tipo : ${tiposOrden}"
-                                        th:value="${tipo}"
-                                        th:text="${tipo}">
-                                </option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Fecha *</label>
-                            <input type="date" class="form-control" name="fechaOC"
-                                   th:value="${#temporals.format(#temporals.createToday(), 'yyyy-MM-dd')}" required>
-                        </div>
-                    </div>
+                    <!-- USAR FRAGMENTO REUTILIZABLE -->
+                    <div th:replace="~{fragments/orden-form :: formulario-orden(modo='modal')}"></div>
 
-                    <!-- Proveedor -->
-                    <div class="mb-3">
-                        <label class="form-label">Proveedor *</label>
-                        <select class="form-select" name="proveedorId" required>
-                            <option value="">Seleccionar proveedor...</option>
-                            <option th:each="proveedor : ${proveedores}"
-                                    th:value="${proveedor.id}"
-                                    th:text="${proveedor.nombre + ' - ' + proveedor.ruc}">
-                            </option>
-                        </select>
-                    </div>
-
-                    <!-- Items de la Orden -->
-                    <div class="mb-3">
-                        <label class="form-label">Productos</label>
-                        <!-- Cabecera de la tabla de items -->
-                        <div class="row mb-2 fw-bold">
-                            <div class="col-md-5">Producto</div>
-                            <div class="col-md-2">Cantidad</div>
-                            <div class="col-md-2">Precio Unit.</div>
-                            <div class="col-md-2">Subtotal</div>
-                            <div class="col-md-1">Acción</div>
-                        </div>
-                        <div id="items-container">
-                            <div class="item-row row mb-2 align-items-center">
-                                <div class="col-md-5">
-                                    <select class="form-select producto-select" name="productoIds" required>
-                                        <option value="">Seleccionar producto...</option>
-                                        <option th:each="producto : ${productos}"
-                                                th:value="${producto.id}"
-                                                th:text="${producto.nombre + ' (' + producto.unidadMedida + ')'}">
-                                        </option>
-                                    </select>
-                                </div>
-                                <div class="col-md-2">
-                                    <input type="number" class="form-control cantidad-input" name="cantidades"
-                                           placeholder="Cant" min="1" value="1" required>
-                                </div>
-                                <div class="col-md-2">
-                                    <input type="number" class="form-control precio-input" name="precios"
-                                           placeholder="Precio" step="0.01" min="0" value="0.00" required>
-                                </div>
-                                <div class="col-md-2">
-                                    <input type="text" class="form-control subtotal-display" value="S/ 0.00" readonly>
-                                </div>
-                                <div class="col-md-1">
-                                    <button type="button" class="btn btn-danger btn-sm remove-item">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <button type="button" class="btn btn-secondary btn-sm mt-2" id="add-item">
-                            <i class="bi bi-plus-circle me-1"></i>Agregar Producto
-                        </button>
-                    </div>
-
-                    <!-- Total de la Orden -->
+                    <!-- Total específico para modal -->
                     <div class="mb-3">
                         <div class="card bg-light">
                             <div class="card-body py-2">
@@ -318,13 +322,6 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
-
-                    <!-- Observaciones -->
-                    <div class="mb-3">
-                        <label class="form-label">Observaciones</label>
-                        <textarea class="form-control" name="observaciones" rows="3"
-                                  placeholder="Observaciones adicionales..."></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -353,6 +350,42 @@
     console.log("💰 Precios de productos cargados:", window.preciosProductos);
     /*]]>*/
 </script>
-<script th:src="@{/js/ordenes-compra.js}"></script>
+<script>
+    // Seleccionar automáticamente el mes y año actual
+    document.addEventListener('DOMContentLoaded', function() {
+        const now = new Date();
+        const currentYear = now.getFullYear().toString();
+        const currentMonth = (now.getMonth() + 1).toString().padStart(2, '0');
+
+        // Seleccionar el año actual
+        const periodoSelect = document.getElementById('periodoSelect');
+        if (periodoSelect) {
+            periodoSelect.value = currentYear;
+        }
+
+        // Seleccionar el mes actual
+        const mesSelect = document.getElementById('mesSelect');
+        if (mesSelect) {
+            mesSelect.value = currentMonth;
+        }
+
+        console.log(`📅 Fecha actual seleccionada: Año ${currentYear}, Mes ${currentMonth}`);
+
+        // INICIALIZAR COMPONENTES DE BOOTSTRAP
+        var dropdownElementList = [].slice.call(document.querySelectorAll('.dropdown-toggle'))
+        var dropdownList = dropdownElementList.map(function (dropdownToggleEl) {
+            return new bootstrap.Dropdown(dropdownToggleEl)
+        });
+
+        // Inicializar tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+
+        console.log("✅ Componentes Bootstrap inicializados");
+    });
+</script>
+<script th:src="@{/js/ordenes-abastecimiento.js}"></script>
 </body>
 </html>

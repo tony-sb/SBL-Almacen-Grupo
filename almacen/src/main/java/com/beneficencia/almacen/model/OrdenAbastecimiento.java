@@ -8,18 +8,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "ordenes_compra")
-public class OrdenCompra {
+@Table(name = "ordenes_abastecimiento") // CAMBIADO: ordenes_compra → ordenes_abastecimiento
+public class OrdenAbastecimiento { // CAMBIADO: OrdenCompra → OrdenAbastecimiento
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "numero_oc", unique = true, nullable = false)
-    private String numeroOC;
+    @Column(name = "numero_oa", unique = true, nullable = false) // CAMBIADO: numero_oc → numero_oa
+    private String numeroOA; // CAMBIADO: numeroOC → numeroOA
 
-    @Column(name = "fecha_oc", nullable = false)
-    private LocalDate fechaOC;
+    @Column(name = "fecha_oa", nullable = false) // CAMBIADO: fecha_oc → fecha_oa
+    private LocalDate fechaOA; // CAMBIADO: fechaOC → fechaOA
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "proveedor_id", nullable = false)
@@ -45,10 +45,10 @@ public class OrdenCompra {
     @Column(name = "fecha_actualizacion")
     private LocalDateTime fechaActualizacion;
 
-    @OneToMany(mappedBy = "ordenCompra", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<OrdenCompraItem> items = new ArrayList<>();
+    @OneToMany(mappedBy = "ordenAbastecimiento", cascade = CascadeType.ALL, fetch = FetchType.LAZY) // CAMBIADO
+    private List<OrdenAbastecimientoItem> items = new ArrayList<>(); // CAMBIADO
 
-    // Enums
+    // Enums (se mantienen igual)
     public enum TipoOrden {
         SOLIDAS, DONACIONES, U_OFICINA, INVENTARIO, REPORTE, R_DONACION, R_UTILES, R_TOTAL
     }
@@ -58,7 +58,7 @@ public class OrdenCompra {
     }
 
     // Constructores
-    public OrdenCompra() {
+    public OrdenAbastecimiento() { // CAMBIADO
         this.fechaCreacion = LocalDateTime.now();
         this.fechaActualizacion = LocalDateTime.now();
         this.estado = EstadoOrden.PENDIENTE;
@@ -69,11 +69,11 @@ public class OrdenCompra {
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
-    public String getNumeroOC() { return numeroOC; }
-    public void setNumeroOC(String numeroOC) { this.numeroOC = numeroOC; }
+    public String getNumeroOA() { return numeroOA; } // CAMBIADO
+    public void setNumeroOA(String numeroOA) { this.numeroOA = numeroOA; } // CAMBIADO
 
-    public LocalDate getFechaOC() { return fechaOC; }
-    public void setFechaOC(LocalDate fechaOC) { this.fechaOC = fechaOC; }
+    public LocalDate getFechaOA() { return fechaOA; } // CAMBIADO
+    public void setFechaOA(LocalDate fechaOA) { this.fechaOA = fechaOA; } // CAMBIADO
 
     public Proveedor getProveedor() { return proveedor; }
     public void setProveedor(Proveedor proveedor) { this.proveedor = proveedor; }
@@ -99,6 +99,6 @@ public class OrdenCompra {
     public LocalDateTime getFechaActualizacion() { return fechaActualizacion; }
     public void setFechaActualizacion(LocalDateTime fechaActualizacion) { this.fechaActualizacion = fechaActualizacion; }
 
-    public List<OrdenCompraItem> getItems() { return items; }
-    public void setItems(List<OrdenCompraItem> items) { this.items = items; }
+    public List<OrdenAbastecimientoItem> getItems() { return items; } // CAMBIADO
+    public void setItems(List<OrdenAbastecimientoItem> items) { this.items = items; } // CAMBIADO
 }

@@ -37,4 +37,9 @@ public class AuthController {
 
         return "login";
     }
+
+    @GetMapping("/registro")
+    public String mostrarRegistro() {
+        return "registro";
+    }
 }

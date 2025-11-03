@@ -1,20 +1,20 @@
-package com.beneficencia.almacen.security;
+package com.beneficencia.almacen.service;
 
 import com.beneficencia.almacen.model.Usuario;
 import com.beneficencia.almacen.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collection;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional
 public class CustomUserDetailsService implements UserDetailsService {
 
     @Autowired
@@ -22,21 +22,18 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        Usuario usuario = usuarioRepository.findByUsername(username)
+        Usuario usuario = usuarioRepository.findByUsernameWithRoles(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado: " + username));
 
-        return new User(
-                usuario.getUsername(),
-                usuario.getPassword(),
-                usuario.isEnabled(),
-                true, true, true,
-                getAuthorities(usuario)
-        );
-    }
-
-    private Collection<? extends GrantedAuthority> getAuthorities(Usuario usuario) {
-        return usuario.getRoles().stream()
+        var authorities = usuario.getRoles().stream()
                 .map(rol -> new SimpleGrantedAuthority("ROLE_" + rol.getNombre()))
                 .collect(Collectors.toList());
+
+        return User.builder()
+                .username(usuario.getUsername())
+                .password(usuario.getPassword())
+                .authorities(authorities)
+                .disabled(!usuario.isEnabled())
+                .build();
     }
 }

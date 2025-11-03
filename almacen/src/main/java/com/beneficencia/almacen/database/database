@@ -104,10 +104,20 @@ INSERT INTO productos (codigo, nombre, descripcion, cantidad, unidad_medida, sto
 ('ALI-001', 'Leche en Polvo Fortificada', 'Leche en polvo para nutrición', 30, 'Kilogramo', 15, 'Alimentos', 12.00);
 
 
--- Usa las contraseñas EXACTAS que te generó el programa
-UPDATE usuarios SET password = '$2a$10$lddXob5TGi/QMQ297kIGhe5zW/kR425mQSCzSYfIzlqev6OIXgoqK' WHERE username = 'admin';
-UPDATE usuarios SET password = '$2a$10$Nr4ytmnkI9iIzMi7Zt6hlOHb1XmNDBeCQVG6qFLUrzwj3CIR1J9Ay' WHERE username = 'almacenero';
-UPDATE usuarios SET password = '$2a$10$Wfpa56BmYhXwSR3NMwjy1O5KdZdu9jnkoZgCC1OdleVJdwZvbMnWi' WHERE username = 'usuario';
+-- Actualización para el usuario 'admin'
+UPDATE usuarios
+SET password = '$2a$10$2hXyMYIxpKSpqXwteXoKPuwrYmD88yQczi1kmGx2HlRS5xx51qo7S'
+WHERE username = 'admin';
+
+-- Actualización para el usuario 'almacenero'
+UPDATE usuarios
+SET password = '$2a$10$/8an.EbbuR906ZCiXO6AI.GN9cKnKCZ1jRimVgKch7JxHhJy4v0/K'
+WHERE username = 'almacenero';
+
+-- Actualización para el usuario 'usuario'
+UPDATE usuarios
+SET password = '$2a$10$Em03oTT5IQcyiLbE38.EROWxrmFS6SU1A6SReV2ziHsFKptlDJi8e'
+WHERE username = 'usuario';
 
 -- Agregar los productos específicos de tu imagen
 INSERT INTO productos (codigo, nombre, descripcion, cantidad, unidad_medida, stock_minimo, categoria, precio_unitario) VALUES
@@ -339,3 +349,27 @@ WHERE o1.id < o2.id AND o1.numero_oc = o2.numero_oc;
 -- DELETE o1 FROM ordenes_compra o1
 -- INNER JOIN ordenes_compra o2
 -- WHERE o1.id > o2.id AND o1.numero_oc = o2.numero_oc;
+
+
+-- Encontrar ítems problemáticos
+SELECT oci.id as item_id, oci.orden_compra_id, oc.numero_oc, oci.producto_id
+FROM orden_compra_items oci
+LEFT JOIN productos p ON oci.producto_id = p.id
+LEFT JOIN ordenes_compra oc ON oci.orden_compra_id = oc.id
+WHERE p.id IS NULL;
+
+-- Eliminar ítems con productos que no existen
+DELETE FROM orden_compra_items
+WHERE producto_id NOT IN (SELECT id FROM productos)
+OR producto_id IS NULL;
+
+-- Insertar productos con precios
+INSERT INTO productos (codigo, nombre, descripcion, cantidad, unidad_medida, stock_minimo, categoria, precio_unitario, fecha_registro) VALUES
+('MED001', 'Paracetamol 500mg', 'Analgésico y antipirético', 100, 'Tabletas', 20, 'Medicamentos', 0.50, NOW()),
+('MED002', 'Amoxicilina 250mg', 'Antibiótico de amplio espectro', 50, 'Cápsulas', 15, 'Medicamentos', 1.20, NOW()),
+('MED003', 'Ibuprofeno 400mg', 'Antiinflamatorio no esteroideo', 80, 'Tabletas', 25, 'Medicamentos', 0.80, NOW()),
+('MAT004', 'Jeringa 3ml', 'Jeringa desechable estéril', 200, 'Unidades', 50, 'Material Médico', 0.25, NOW()),
+('MAT005', 'Guantes Latex Talla M', 'Guantes desechables de latex', 150, 'Pares', 30, 'Material Médico', 0.15, NOW()),
+('MAT006', 'Mascarilla Quirúrgica', 'Mascarilla de tres pliegues', 300, 'Unidades', 100, 'Material Médico', 0.10, NOW()),
+('MAT007', 'Gasas Estériles 10x10', 'Gasas estériles individuales', 120, 'Paquetes', 40, 'Material Médico', 0.30, NOW()),
+('MAT008', 'Venda Elástica 10cm', 'Venda elástica de 10cm de ancho', 80, 'Rollos', 20, 'Material Médico', 2.50, NOW());

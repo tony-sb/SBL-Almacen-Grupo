@@ -53,17 +53,17 @@ public class ReporteService {
             date.setSpacingAfter(20);
             document.add(date);
 
-            // Crear tabla
-            PdfPTable table = new PdfPTable(5);
+            // Crear tabla con 4 columnas (eliminando Stock Actual)
+            PdfPTable table = new PdfPTable(4); // CAMBIADO de 5 a 4 columnas
             table.setWidthPercentage(100);
             table.setSpacingBefore(10f);
 
-            // Configurar anchos de columnas
-            float[] columnWidths = {35f, 15f, 15f, 20f, 15f};
+            // Configurar anchos de columnas (sin la columna de Stock)
+            float[] columnWidths = {40f, 20f, 20f, 20f}; // CAMBIADO: solo 4 valores
             table.setWidths(columnWidths);
 
-            // Encabezados de la tabla
-            String[] headers = {"Nombre Producto", "Fecha Salida", "Cantidad", "DNI Beneficiario", "Stock Actual"};
+            // Encabezados de la tabla (SOLO 4 COLUMNAS)
+            String[] headers = {"Nombre Producto", "Fecha Salida", "Cantidad", "DNI Beneficiario"}; // ELIMINADO "Stock Actual"
             for (String headerText : headers) {
                 PdfPCell header = new PdfPCell();
                 header.setBackgroundColor(BaseColor.LIGHT_GRAY);
@@ -78,7 +78,7 @@ public class ReporteService {
             List<MovimientoReciente> movimientos = movimientoRecienteRepository.findAllByOrderByFechaSalidaDesc();
             List<Producto> todosProductos = productoRepository.findAll();
 
-            // Agregar productos con movimientos
+            // Agregar productos con movimientos (SOLO 4 COLUMNAS)
             for (MovimientoReciente movimiento : movimientos) {
                 // Nombre del producto
                 PdfPCell cellNombre = new PdfPCell(new Phrase(movimiento.getProducto().getNombre()));
@@ -114,14 +114,10 @@ public class ReporteService {
                 cellDni.setHorizontalAlignment(Element.ALIGN_CENTER);
                 table.addCell(cellDni);
 
-                // Stock actual
-                PdfPCell cellStock = new PdfPCell(new Phrase(String.valueOf(movimiento.getProducto().getCantidad())));
-                cellStock.setPadding(5);
-                cellStock.setHorizontalAlignment(Element.ALIGN_CENTER);
-                table.addCell(cellStock);
+                // SE ELIMINÓ LA COLUMNA DE STOCK ACTUAL
             }
 
-            // Agregar productos sin movimientos
+            // Agregar productos sin movimientos (SOLO 4 COLUMNAS)
             for (Producto producto : todosProductos) {
                 boolean tieneMovimientos = movimientos.stream()
                         .anyMatch(m -> m.getProducto().getId().equals(producto.getId()));
@@ -150,11 +146,7 @@ public class ReporteService {
                     cellDni.setHorizontalAlignment(Element.ALIGN_CENTER);
                     table.addCell(cellDni);
 
-                    // Stock actual
-                    PdfPCell cellStock = new PdfPCell(new Phrase(String.valueOf(producto.getCantidad())));
-                    cellStock.setPadding(5);
-                    cellStock.setHorizontalAlignment(Element.ALIGN_CENTER);
-                    table.addCell(cellStock);
+                    // SE ELIMINÓ LA COLUMNA DE STOCK ACTUAL
                 }
             }
 

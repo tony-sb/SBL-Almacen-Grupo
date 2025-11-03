@@ -41,37 +41,43 @@
                     <li class="nav-item">
                         <a class="nav-link active" href="/dashboard">
                             <i class="bi bi-speedometer2"></i>
-                            Panel de Control
+                            Dashboard
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/ordenes-compra">
+                        <a class="nav-link" href="/ordenes-abastecimiento"> <!-- CAMBIADO: /ordenes-compra → /ordenes-abastecimiento -->
                             <i class="bi bi-cart-plus"></i>
                             Orden de Abastecimiento
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="#">
+                            <i class="bi bi-box-arrow-up"></i>
+                            Orden de Salidas
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="/productos">
                             <i class="bi bi-box-seam"></i>
-                            Gestión de Productos
+                            Inventario
+                        </a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                        <a class="nav-link" href="/usuarios">
+                            <i class="bi bi-people"></i>
+                            Usuarios
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="#">
-                            <i class="bi bi-cart-plus"></i>
-                            Orden de Compra
+                            <i class="bi bi-truck"></i>
+                            Proveedores
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="#">
                             <i class="bi bi-clipboard-data"></i>
-                            Reportes
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">
-                            <i class="bi bi-people"></i>
-                            Usuarios
+                            Reporte
                         </a>
                     </li>
                 </ul>
@@ -105,7 +111,6 @@
                                 <th>Fecha Salida</th>
                                 <th>Cantidad</th>
                                 <th>DNI Beneficiario</th>
-                                <th>Cant. Stock</th>
                             </tr>
                             </thead>
                             <tbody>
@@ -115,7 +120,6 @@
                                 <td th:text="${#temporals.format(movimiento.fechaSalida, 'dd/MM/yyyy')}">15/01/2024</td>
                                 <td th:text="${movimiento.cantidad}">2</td>
                                 <td th:text="${movimiento.dniBeneficiario != null} ? ${movimiento.dniBeneficiario} : '-'">-</td>
-                                <td th:text="${movimiento.producto.cantidad}">350</td>
                             </tr>
 
                             <!-- PRODUCTOS SIN MOVIMIENTOS desde BD -->
@@ -124,10 +128,31 @@
                                 <td>-</td>
                                 <td>-</td>
                                 <td>-</td>
-                                <td th:text="${producto.cantidad}">20</td>
+                            </tr>
+
+                            <!-- Mensaje si no hay datos -->
+                            <tr th:if="${movimientosRecientes.empty and productosSinMovimientos.empty}">
+                                <td colspan="4" class="text-center text-muted py-4">
+                                    <i class="bi bi-inbox display-6 d-block mb-2"></i>
+                                    No hay movimientos recientes
+                                </td>
                             </tr>
                             </tbody>
                         </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección de Alertas de Stock Bajo -->
+            <div class="card dashboard-card mt-4" th:if="${productosStockBajo > 0}">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="bi bi-exclamation-triangle me-2"></i>Alertas de Stock Bajo</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Tienes <strong th:text="${productosStockBajo}">3</strong> productos con stock bajo que necesitan reposición.
+                        <a th:href="@{/productos}" class="alert-link">Revisar inventario</a>
                     </div>
                 </div>
             </div>

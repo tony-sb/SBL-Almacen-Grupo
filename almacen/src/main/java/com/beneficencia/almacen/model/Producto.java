@@ -1,6 +1,7 @@
 package com.beneficencia.almacen.model;
 
 import jakarta.persistence.*;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
@@ -36,6 +37,9 @@ public class Producto {
     @Column(nullable = false)
     private String categoria;
 
+    @Column(name = "precio_unitario", precision = 10, scale = 2)
+    private BigDecimal precioUnitario = BigDecimal.ZERO;
+
     private LocalDateTime fechaRegistro = LocalDateTime.now();
 
     /**
@@ -47,13 +51,14 @@ public class Producto {
      * Constructor con parámetros principales
      */
     public Producto(String codigo, String nombre, Integer cantidad, String unidadMedida,
-                    Integer stockMinimo, String categoria) {
+                    Integer stockMinimo, String categoria, BigDecimal precioUnitario) {
         this.codigo = codigo;
         this.nombre = nombre;
         this.cantidad = cantidad;
         this.unidadMedida = unidadMedida;
         this.stockMinimo = stockMinimo;
         this.categoria = categoria;
+        this.precioUnitario = precioUnitario != null ? precioUnitario : BigDecimal.ZERO;
     }
 
     // Getters y Setters
@@ -81,6 +86,26 @@ public class Producto {
     public String getCategoria() { return categoria; }
     public void setCategoria(String categoria) { this.categoria = categoria; }
 
+    public BigDecimal getPrecioUnitario() { return precioUnitario; }
+    public void setPrecioUnitario(BigDecimal precioUnitario) {
+        this.precioUnitario = precioUnitario != null ? precioUnitario : BigDecimal.ZERO;
+    }
+
     public LocalDateTime getFechaRegistro() { return fechaRegistro; }
     public void setFechaRegistro(LocalDateTime fechaRegistro) { this.fechaRegistro = fechaRegistro; }
+
+    /**
+     * Método toString para debugging
+     */
+    @Override
+    public String toString() {
+        return "Producto{" +
+                "id=" + id +
+                ", codigo='" + codigo + '\'' +
+                ", nombre='" + nombre + '\'' +
+                ", cantidad=" + cantidad +
+                ", precioUnitario=" + precioUnitario +
+                ", categoria='" + categoria + '\'' +
+                '}';
+    }
 }

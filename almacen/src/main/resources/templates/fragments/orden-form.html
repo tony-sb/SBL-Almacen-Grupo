@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!-- Fragmento simplificado SIN parámetros -->
+<div th:fragment="formulario-orden" class="orden-form-container">
+
+    <!-- Campo oculto para el ID -->
+    <input type="hidden" name="id" th:value="${ordenAbastecimiento.id}">
+
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Tipo de Orden *</label>
+            <select class="form-select" name="tipoOrden" required>
+                <option value="">Seleccionar tipo...</option>
+                <option th:each="tipo : ${tiposOrden}"
+                        th:value="${tipo}"
+                        th:selected="${ordenAbastecimiento.tipoOrden == tipo}"
+                        th:text="${tipo}">
+                </option>
+            </select>
+        </div>
+
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Fecha de Orden *</label>
+            <input type="date" class="form-control" name="fechaOA"
+                   th:value="${ordenAbastecimiento.fechaOA != null} ?
+                               ${#temporals.format(ordenAbastecimiento.fechaOA, 'yyyy-MM-dd')} :
+                               ${#temporals.format(#temporals.createToday(), 'yyyy-MM-dd')}"
+                   required>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Proveedor *</label>
+            <select class="form-select" name="proveedorId" required>
+                <option value="">Seleccionar proveedor...</option>
+                <option th:each="proveedor : ${proveedores}"
+                        th:value="${proveedor.id}"
+                        th:selected="${ordenAbastecimiento.proveedor?.id == proveedor.id}"
+                        th:text="${proveedor.nombre + ' - ' + proveedor.ruc}">
+                </option>
+            </select>
+        </div>
+
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Número de O.A</label>
+            <input type="text" class="form-control"
+                   th:value="${ordenAbastecimiento.numeroOA}"
+                   placeholder="Se generará automáticamente" readonly>
+            <small class="text-muted" th:if="${ordenAbastecimiento.id != null}">Número de orden no editable</small>
+            <small class="text-muted" th:if="${ordenAbastecimiento.id == null}">Se generará automáticamente al guardar</small>
+        </div>
+    </div>
+
+    <!-- Items de la Orden - VERSIÓN CORREGIDA -->
+    <div class="mb-3">
+        <label class="form-label">Productos *</label>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="fw-bold">Lista de productos</span>
+            <span id="contador-items" class="badge bg-secondary">0 producto(s) válido(s)</span>
+        </div>
+
+        <!-- Cabecera de la tabla de items -->
+        <div class="row mb-2 fw-bold small">
+            <div class="col-md-5">Producto</div>
+            <div class="col-md-2">Cantidad</div>
+            <div class="col-md-2">Precio Unit.</div>
+            <div class="col-md-2">Subtotal</div>
+            <div class="col-md-1">Acción</div>
+        </div>
+
+        <div id="items-container">
+            <!-- ITEM BASE (siempre presente para clonar) -->
+            <div class="item-row row align-items-center mb-2">
+                <div class="col-md-5">
+                    <select class="form-select producto-select" name="productoIds">
+                        <option value="">Seleccionar producto...</option>
+                        <option th:each="producto : ${productos}"
+                                th:value="${producto.id}"
+                                th:text="${producto.nombre + ' (' + producto.codigo + ')'}">
+                        </option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <input type="number" class="form-control cantidad-input" name="cantidades" value="1" min="1" max="9999">
+                </div>
+                <div class="col-md-2">
+                    <input type="number" class="form-control precio-input" name="precios" value="0.00" min="0" max="999999" step="0.01">
+                </div>
+                <div class="col-md-2">
+                    <input type="text" class="form-control subtotal-display" value="S/ 0.00" readonly>
+                </div>
+                <div class="col-md-1">
+                    <button type="button" class="btn btn-outline-danger btn-sm remove-item">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Items existentes para edición -->
+            <div th:each="item, stat : ${ordenAbastecimiento.items}" th:if="${ordenAbastecimiento.id != null}" class="item-row row align-items-center mb-2">
+                <input type="hidden" name="productoIds" th:value="${item.producto?.id}">
+                <div class="col-md-5">
+                    <select class="form-select producto-select" name="productoIds">
+                        <option value="">Seleccionar producto...</option>
+                        <option th:each="producto : ${productos}"
+                                th:value="${producto.id}"
+                                th:selected="${item.producto?.id == producto.id}"
+                                th:text="${producto.nombre + ' (' + producto.codigo + ')'}">
+                        </option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <input type="number" class="form-control cantidad-input" name="cantidades"
+                           th:value="${item.cantidad}" min="1" max="9999">
+                </div>
+                <div class="col-md-2">
+                    <input type="number" class="form-control precio-input" name="precios"
+                           th:value="${#numbers.formatDecimal(item.precioUnitario, 1, 2)}"
+                           min="0" max="999999" step="0.01">
+                </div>
+                <div class="col-md-2">
+                    <input type="text" class="form-control subtotal-display"
+                           th:value="'S/ ' + ${#numbers.formatDecimal(item.subtotal, 1, 2)}" readonly>
+                </div>
+                <div class="col-md-1">
+                    <button type="button" class="btn btn-outline-danger btn-sm remove-item">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <button type="button" class="btn btn-outline-secondary btn-sm mt-2" id="add-item">
+            <i class="bi bi-plus-circle me-1"></i>Agregar Producto
+        </button>
+        <div class="mt-1">
+            <small class="text-muted" id="contador-items-total">1 producto(s) en la orden</small>
+        </div>
+    </div>
+
+    <!-- Observaciones -->
+    <div class="mb-3">
+        <label class="form-label">Observaciones</label>
+        <textarea class="form-control" name="observaciones" rows="3"
+                  placeholder="Observaciones adicionales..."
+                  th:text="${ordenAbastecimiento.observaciones}"></textarea>
+    </div>
+
+    <!-- Total -->
+    <div class="mb-3">
+        <div class="card bg-light">
+            <div class="card-body py-2">
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>Total de la Orden:</strong>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <span class="h5 text-success" id="total-orden">
+                            <span th:if="${ordenAbastecimiento.total != null}"
+                                  th:text="'S/ ' + ${#numbers.formatDecimal(ordenAbastecimiento.total, 1, 'COMMA', 2, 'POINT')}">
+                                S/ 0.00
+                            </span>
+                            <span th:if="${ordenAbastecimiento.total == null}">S/ 0.00</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
