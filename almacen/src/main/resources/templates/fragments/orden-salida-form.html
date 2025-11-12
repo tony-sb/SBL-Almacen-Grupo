@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!-- Fragmento para formulario de orden de salida -->
+<div th:fragment="formulario-orden-salida" class="orden-salida-form-container">
+
+    <!-- Sección de Fecha -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <strong>Fecha:</strong> <span th:text="${#temporals.format(#temporals.createToday(), 'dd/MM/yyyy')}">xx/xx/xxxx</span>
+        </div>
+    </div>
+
+    <!-- DATOS DE LA SALIDA -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h6 class="mb-0"><i class="bi bi-clipboard-data me-2"></i>DATOS DE LA SALIDA</h6>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="numero-tramite" class="form-label">Nº de trámite *</label>
+                        <input type="text" class="form-control" id="numero-tramite" name="numeroTramite"
+                               placeholder="Ingrese número de trámite" required>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="fecha-salida" class="form-label">Fecha de Salida *</label>
+                        <input type="date" class="form-control" id="fecha-salida" name="fechaSalida"
+                               th:value="${#temporals.format(#temporals.createToday(), 'yyyy-MM-dd')}" required>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="user-name" class="form-label">Nombre y Apellidos del usuario *</label>
+                        <input type="text" class="form-control" id="user-name" name="nombreUsuario"
+                               placeholder="Ingrese nombre y apellidos" required>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="user-dni" class="form-label">DNI *</label>
+                        <input type="text" class="form-control" id="user-dni" name="dniUsuario"
+                               placeholder="Ingrese DNI" required>
+                    </div>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="description" class="form-label">Descripción</label>
+                <textarea class="form-control" id="description" name="descripcion"
+                          placeholder="Ingrese descripción de la salida" rows="3"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- BÚSQUEDA DE PRODUCTOS -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h6 class="mb-0"><i class="bi bi-search me-2"></i>BÚSQUEDA DE PRODUCTOS</h6>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label class="form-label">Origen:</label>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" id="catalog" name="origin" checked>
+                    <label class="form-check-label" for="catalog">DESDE CATALOGO</label>
+                </div>
+            </div>
+            <div class="mb-3">
+                <input type="text" class="form-control" id="search-term"
+                       placeholder="Cadena de Búsqueda (Cod/Art):"
+                       onkeyup="buscarProductos()">
+            </div>
+
+            <!-- Tabla de productos -->
+            <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                <table class="table table-hover table-striped">
+                    <thead class="table-dark">
+                    <tr>
+                        <th>Elegir</th>
+                        <th>Codigo</th>
+                        <th>U.Medida</th>
+                        <th>Descripción</th>
+                        <th>Grupo</th>
+                        <th>Stock</th>
+                    </tr>
+                    </thead>
+                    <tbody id="tabla-productos">
+                    <!-- Los productos se cargarán dinámicamente -->
+                    <tr th:each="producto : ${productos}">
+                        <td>
+                            <input type="radio" name="productoSeleccionado"
+                                   th:value="${producto.id}"
+                                   th:onclick="|seleccionarProducto(${producto.id}, '${producto.codigo}', '${producto.nombre}', ${producto.cantidad})|">
+                        </td>
+                        <td th:text="${producto.codigo}"></td>
+                        <td th:text="${producto.unidadMedida}"></td>
+                        <td th:text="${producto.nombre}"></td>
+                        <td th:text="${producto.categoria}"></td>
+                        <td th:text="${producto.cantidad}"></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- DETALLES DEL PRODUCTO SELECCIONADO -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h6 class="mb-0"><i class="bi bi-box me-2"></i>DETALLES DEL PRODUCTO SELECCIONADO</h6>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">Código:</label>
+                        <input type="text" class="form-control" id="product-code" readonly>
+                        <input type="hidden" id="product-id" name="productoId">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">Nombre:</label>
+                        <input type="text" class="form-control" id="product-name" readonly>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">Stock Disponible:</label>
+                        <input type="text" class="form-control" id="available-stock" readonly>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">Cantidad *:</label>
+                        <input type="number" class="form-control" id="product-quantity"
+                               name="cantidad" min="1" value="1" required disabled>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leyenda -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <p class="mb-1"><strong>Legenda:</strong> La Ley Orgánica de Protección General de las Unidades de los Acuerdos</p>
+            <p class="mb-0"><strong>Categoría:</strong> DATE: 1.11emrs agregado</p>
+        </div>
+    </div>
+
+    <!-- Script para funcionalidad del formulario -->
+    <script>
+        function buscarProductos() {
+            const termino = document.getElementById('search-term').value.toLowerCase();
+            const filas = document.querySelectorAll('#tabla-productos tr');
+
+            filas.forEach(fila => {
+                const textoFila = fila.textContent.toLowerCase();
+                if (textoFila.includes(termino)) {
+                    fila.style.display = '';
+                } else {
+                    fila.style.display = 'none';
+                }
+            });
+        }
+
+        function seleccionarProducto(id, codigo, nombre, stock) {
+            document.getElementById('product-id').value = id;
+            document.getElementById('product-code').value = codigo;
+            document.getElementById('product-name').value = nombre;
+            document.getElementById('available-stock').value = stock;
+
+            const cantidadInput = document.getElementById('product-quantity');
+            cantidadInput.disabled = false;
+            cantidadInput.max = stock;
+            cantidadInput.value = 1;
+
+            // Resaltar la fila seleccionada
+            const filas = document.querySelectorAll('#tabla-productos tr');
+            filas.forEach(fila => {
+                fila.classList.remove('table-success');
+                const radio = fila.querySelector('input[type="radio"]');
+                if (radio && radio.checked) {
+                    fila.classList.add('table-success');
+                }
+            });
+        }
+
+        // Inicializar cuando se carga el modal
+        document.addEventListener('DOMContentLoaded', function() {
+            // Seleccionar el primer producto por defecto
+            const primeraFila = document.querySelector('#tabla-productos tr');
+            if (primeraFila) {
+                const radio = primeraFila.querySelector('input[type="radio"]');
+                if (radio) {
+                    const id = radio.value;
+                    const codigo = primeraFila.cells[1].textContent;
+                    const nombre = primeraFila.cells[3].textContent;
+                    const stock = parseInt(primeraFila.cells[5].textContent);
+                    seleccionarProducto(id, codigo, nombre, stock);
+                    radio.checked = true;
+                }
+            }
+        });
+    </script>
+</div>
+</body>
+</html>

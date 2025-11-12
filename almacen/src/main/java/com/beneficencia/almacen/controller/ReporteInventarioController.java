@@ -1,5 +1,6 @@
 package com.beneficencia.almacen.controller;
 
+import com.beneficencia.almacen.service.ProductoService;
 import com.beneficencia.almacen.service.ReporteService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
@@ -14,19 +15,19 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 @Controller
-public class ReporteController {
+public class ReporteInventarioController {
 
     @Autowired
     private ReporteService reporteService;
 
-    @GetMapping("/descargar-inventario")
+    @GetMapping("/descargar-inventario-completo")
     public ResponseEntity<InputStreamResource> descargarInventarioPDF() {
         try {
-            // Usar el método del DASHBOARD
-            ByteArrayInputStream pdf = reporteService.generarReporteDashboard();
+            // Usar el método del INVENTARIO COMPLETO
+            ByteArrayInputStream pdf = reporteService.generarReporteInventario();
 
             String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-            String filename = "resumen_dashboard_" + timestamp + ".pdf";
+            String filename = "inventario_completo_" + timestamp + ".pdf";
 
             HttpHeaders headers = new HttpHeaders();
             headers.add("Content-Disposition", "attachment; filename=" + filename);

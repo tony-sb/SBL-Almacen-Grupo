@@ -3,9 +3,11 @@ package com.beneficencia.almacen.repository;
 import com.beneficencia.almacen.model.Producto;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Repositorio para operaciones CRUD de la entidad Producto
@@ -55,4 +57,17 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> {
      */
     @Query("SELECT p FROM Producto p WHERE p.id NOT IN :ids")
     List<Producto> findByIdNotIn(List<Long> ids);
+
+    // MÉTODOS NUEVOS PARA ORDEN DE SALIDAS
+
+    /**
+     * Busca producto por código
+     */
+    Optional<Producto> findByCodigo(String codigo);
+
+    /**
+     * Busca productos por nombre o código (case insensitive)
+     */
+    @Query("SELECT p FROM Producto p WHERE LOWER(p.nombre) LIKE LOWER(CONCAT('%', :termino, '%')) OR LOWER(p.codigo) LIKE LOWER(CONCAT('%', :termino, '%'))")
+    List<Producto> findByNombreContainingIgnoreCaseOrCodigoContainingIgnoreCase(@Param("termino") String termino, String busqueda);
 }

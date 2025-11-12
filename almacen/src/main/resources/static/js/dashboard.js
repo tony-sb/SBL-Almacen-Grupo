@@ -1,6 +1,6 @@
 // Dashboard functionality
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('✅ Dashboard cargado correctamente');
+    console.log('Dashboard cargado correctamente');
 
     // Inicializar tooltips de Bootstrap
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
@@ -63,7 +63,7 @@ function updateTimestamp() {
         second: '2-digit'
     };
 
-    console.log('🕐 Dashboard actualizado:', now.toLocaleDateString('es-ES', options));
+    console.log('Dashboard actualizado:', now.toLocaleDateString('es-ES', options));
 }
 
 function initDashboardFeatures() {
@@ -107,7 +107,7 @@ function initDashboardFeatures() {
         // Click en fila para más detalles (futura implementación)
         row.addEventListener('click', function() {
             const productName = this.cells[0].textContent;
-            console.log('📋 Ver detalles de:', productName);
+            console.log('Ver detalles de:', productName);
             // Aquí puedes redirigir a la página de detalles del producto
         });
     });
@@ -115,7 +115,7 @@ function initDashboardFeatures() {
 
 // Función para actualizar estadísticas en tiempo real
 function updateStats() {
-    console.log('📊 Actualizando estadísticas del dashboard...');
+    console.log('Actualizando estadísticas del dashboard...');
 
     // Simular actualización de datos
     const stats = {
@@ -132,18 +132,18 @@ function updateStats() {
             updateStatsDisplay(data);
         })
         .catch(error => {
-            console.warn('⚠️ No se pudieron cargar estadísticas en tiempo real:', error);
+            console.warn('No se pudieron cargar estadísticas en tiempo real:', error);
         });
 }
 
 function updateStatsDisplay(stats) {
     // Esta función actualizaría la UI con nuevos datos
-    console.log('🔄 Actualizando display con:', stats);
+    console.log('Actualizando display con:', stats);
 }
 
 // Función para manejar errores de carga
 window.addEventListener('error', function(e) {
-    console.error('❌ Error en el dashboard:', e.error);
+    console.error('Error en el dashboard:', e.error);
 });
 
 // Exportar funciones para uso global (si es necesario)

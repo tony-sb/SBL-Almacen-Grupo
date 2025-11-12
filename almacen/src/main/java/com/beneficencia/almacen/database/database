@@ -205,6 +205,33 @@ CREATE TABLE orden_compra_items (
     FOREIGN KEY (orden_compra_id) REFERENCES ordenes_compra(id) ON DELETE CASCADE,
     FOREIGN KEY (producto_id) REFERENCES productos(id)
 );
+-- Tabla para órdenes de salida
+CREATE TABLE IF NOT EXISTS ordenes_salida (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    numero_orden VARCHAR(50) UNIQUE NOT NULL,
+    fecha_salida DATE NOT NULL,
+    dni_usuario VARCHAR(20) NOT NULL,
+    numero_tramite VARCHAR(100) NOT NULL,
+    cantidad_productos INT NOT NULL,
+    usuario_id BIGINT NOT NULL,
+    estado ENUM('PENDIENTE', 'COMPLETADA', 'CANCELADA') DEFAULT 'PENDIENTE',
+    observaciones TEXT,
+    fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+);
+
+-- Tabla para items de órdenes de salida
+CREATE TABLE IF NOT EXISTS orden_salida_items (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    orden_salida_id BIGINT NOT NULL,
+    producto_id BIGINT NOT NULL,
+    cantidad INT NOT NULL,
+    precio_unitario DECIMAL(10,2) DEFAULT 0.00,
+    subtotal DECIMAL(10,2) DEFAULT 0.00,
+    FOREIGN KEY (orden_salida_id) REFERENCES ordenes_salida(id) ON DELETE CASCADE,
+    FOREIGN KEY (producto_id) REFERENCES productos(id)
+);
 -- Insertar proveedores de prueba
 INSERT INTO proveedores (ruc, nombre, direccion, telefono, email) VALUES
 ('20123456789', 'Farmacia Central S.A.', 'Av. Libertad 123', '074-123456', 'ventas@farmaciacentral.com'),
@@ -373,3 +400,10 @@ INSERT INTO productos (codigo, nombre, descripcion, cantidad, unidad_medida, sto
 ('MAT006', 'Mascarilla Quirúrgica', 'Mascarilla de tres pliegues', 300, 'Unidades', 100, 'Material Médico', 0.10, NOW()),
 ('MAT007', 'Gasas Estériles 10x10', 'Gasas estériles individuales', 120, 'Paquetes', 40, 'Material Médico', 0.30, NOW()),
 ('MAT008', 'Venda Elástica 10cm', 'Venda elástica de 10cm de ancho', 80, 'Rollos', 20, 'Material Médico', 2.50, NOW());
+
+-- Insertar datos de ejemplo para órdenes de salida
+INSERT INTO ordenes_salida (numero_orden, fecha_salida, dni_usuario, numero_tramite, cantidad_productos, usuario_id, estado) VALUES
+('010-2025', '2025-10-06', '101010101010', 'TRAM-2025-001', 17614221, 1, 'COMPLETADA'),
+('011-2025', '2025-10-07', '202020202020', 'TRAM-2025-002', 8923471, 2, 'COMPLETADA'),
+('012-2025', '2025-10-08', '303030303030', 'TRAM-2025-003', 4561238, 1, 'PENDIENTE'),
+('013-2025', '2025-10-09', '404040404040', 'TRAM-2025-004', 2345678, 2, 'COMPLETADA');

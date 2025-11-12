@@ -39,7 +39,8 @@ public class SecurityConfig {
                         .requestMatchers("/css/**", "/js/**", "/img/**", "/webjars/**").permitAll()
                         .requestMatchers("/login", "/registro").permitAll()
                         .requestMatchers("/usuarios/**").hasRole("ADMIN")
-                        .requestMatchers("/ordenes-abastecimiento/**", "/productos/**", "/dashboard").hasAnyRole("ADMIN", "ALMACENERO")
+                        // AGREGAR LAS NUEVAS RUTAS DE ORDEN-SALIDA
+                        .requestMatchers("/ordenes-salida/**", "/ordenes-abastecimiento/**", "/productos/**", "/dashboard").hasAnyRole("ADMIN", "ALMACENERO")
                         .requestMatchers("/", "/inicio").authenticated()
                         .anyRequest().authenticated()
                 )

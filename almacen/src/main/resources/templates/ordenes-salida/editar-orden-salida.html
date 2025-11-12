@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Orden de Salida - Sistema de Almacén</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        /* ======= FORMATO INSTITUCIONAL ======= */
+        .dashboard-body {
+            background-color: #f8f9fa;
+            font-family: 'Arial', sans-serif;
+            line-height: 1.2;
+        }
+
+        .sidebar {
+            background: #2c3e50;
+            color: white;
+            min-height: calc(100vh - 56px);
+            padding-top: 1rem;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        }
+
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.8);
+            padding: 0.75rem 1rem;
+            margin: 0.1rem 0.5rem;
+            border-radius: 0.375rem;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .sidebar .nav-link:hover {
+            color: white;
+            background-color: rgba(255,255,255,0.1);
+            transform: translateX(5px);
+        }
+
+        .sidebar .nav-link.active {
+            color: white;
+            background-color: #34495e;
+            font-weight: bold;
+            border-left: 4px solid #3498db;
+        }
+
+        .sidebar .nav-link i {
+            width: 20px;
+            margin-right: 10px;
+        }
+
+        .main-content {
+            margin-top: 56px;
+            padding: 2rem;
+        }
+
+        .page-header {
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .page-title {
+            color: #2c3e50;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            font-size: 24px;
+            text-transform: uppercase;
+        }
+
+        .page-subtitle {
+            color: #555;
+            font-size: 14px;
+        }
+
+        .dashboard-card {
+            border: 2px solid #000;
+            border-radius: 0;
+            margin-bottom: 15px;
+            background: white;
+            position: relative;
+        }
+
+        .dashboard-card::before {
+            content: "";
+            position: absolute;
+            top: 8px; left: 8px; right: 8px; bottom: 8px;
+            border: 1px solid #000;
+            pointer-events: none;
+        }
+
+        .dashboard-card .card-header {
+            background: #e9ecef;
+            color: #000;
+            border-bottom: 2px solid #000;
+            padding: 12px 15px;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 14px;
+        }
+
+        /* MEJORAS DE UX PARA FORMULARIO */
+        .form-control, .form-select {
+            border-radius: 0;
+            border: 1px solid #000;
+            padding: 0.5rem;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            background: #fdfdfd;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #000;
+            box-shadow: 0 0 0 0.2rem rgba(0, 0, 0, 0.1);
+            background: white;
+        }
+
+        .form-label {
+            font-weight: bold;
+            color: #000;
+            margin-bottom: 0.5rem;
+            font-size: 14px;
+        }
+
+        .form-text {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .btn-primary {
+            background: #2c3e50;
+            border: 1px solid #000;
+            border-radius: 0;
+            padding: 10px 25px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            color: white;
+            font-size: 14px;
+        }
+
+        .btn-primary:hover {
+            background: #34495e;
+            transform: translateY(-2px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #95a5a6;
+            border: 1px solid #000;
+            border-radius: 0;
+            padding: 10px 25px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            color: white;
+            font-size: 14px;
+        }
+
+        .btn-secondary:hover {
+            background: #7f8c8d;
+            transform: translateY(-2px);
+            color: white;
+        }
+
+        /* Alertas mejoradas */
+        .alert {
+            border: 1px solid #000;
+            border-radius: 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            font-size: 14px;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .alert-danger {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        /* Navbar styling */
+        .navbar {
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-bottom: 2px solid #000;
+            background: white !important;
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+            color: #2c3e50 !important;
+        }
+
+        .user-info {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .user-role {
+            font-size: 12px;
+            color: #666;
+        }
+
+        /* Información en grid */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 15px 0;
+        }
+
+        .info-item {
+            padding: 8px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        /* Validación */
+        .invalid-feedback {
+            font-size: 12px;
+            color: #dc3545;
+            font-weight: bold;
+        }
+
+        .was-validated .form-control:invalid {
+            border-color: #dc3545;
+            background-color: #f8d7da;
+        }
+
+        .was-validated .form-control:valid {
+            border-color: #28a745;
+            background-color: #d4edda;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                min-height: auto;
+            }
+
+            .main-content {
+                margin-top: 0;
+                padding: 1rem;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .page-title {
+                font-size: 20px;
+            }
+        }
+
+        /* Estilos de impresión */
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+
+            .sidebar {
+                display: none;
+            }
+
+            .main-content {
+                margin: 0;
+                padding: 0;
+            }
+
+            .dashboard-card {
+                border: 2px solid #000 !important;
+                box-shadow: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="dashboard-body">
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm fixed-top">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/dashboard">
+            <img th:src="@{/img/logo.jpg}" alt="Logo" height="40" class="d-inline-block align-text-top">
+            Sistema de Almacén
+        </a>
+        <div class="navbar-nav ms-auto">
+            <div class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                    <i class="bi bi-person-circle me-1"></i>
+                    <span class="user-info" sec:authentication="name">Usuario</span>
+                </a>
+                <ul class="dropdown-menu">
+                    <li><span class="dropdown-item-text user-role" sec:authentication="principal.authorities">Rol</span></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="/logout"><i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 col-lg-2 d-md-block sidebar">
+            <div class="position-sticky pt-3">
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="bi bi-speedometer2"></i>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/ordenes-abastecimiento">
+                            <i class="bi bi-cart-plus"></i>
+                            Orden de Abastecimiento
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/ordenes-salida">
+                            <i class="bi bi-box-arrow-up"></i>
+                            Orden de Salidas
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/inventario">
+                            <i class="bi bi-box-seam"></i>
+                            Inventario
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">
+                            <i class="bi bi-people"></i>
+                            Usuarios
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">
+                            <i class="bi bi-truck"></i>
+                            Proveedores
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">
+                            <i class="bi bi-clipboard-data"></i>
+                            Reporte
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 main-content px-md-4">
+            <!-- Page Header -->
+            <div class="page-header mt-4">
+                <h1 class="page-title">
+                    <i class="bi bi-pencil-square me-2"></i>Editar Orden de Salida
+                </h1>
+                <p class="page-subtitle">Modifique los datos de la orden de salida</p>
+            </div>
+
+            <!-- Alertas -->
+            <div th:if="${param.success}" class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="bi bi-check-circle-fill me-2"></i>Orden actualizada exitosamente
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+
+            <div th:if="${param.error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                <span th:text="${param.error}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+
+            <!-- Formulario de Edición -->
+            <form th:action="@{/ordenes-salida/actualizar}" th:object="${ordenSalida}" method="post" class="needs-validation" novalidate>
+                <input type="hidden" th:field="*{id}" />
+                <input type="hidden" th:field="*{numeroOrden}" />
+                <input type="hidden" th:field="*{fechaRegistro}" />
+
+                <!-- Información de la Orden -->
+                <div class="card dashboard-card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Información de la Orden</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Número de Orden:</label>
+                                    <input type="text" class="form-control" th:value="*{numeroOrden}" readonly>
+                                    <div class="form-text">Este número no se puede modificar</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="fechaSalida" class="form-label">Fecha de Salida *</label>
+                                    <input type="date" class="form-control" id="fechaSalida" th:field="*{fechaSalida}" required>
+                                    <div class="invalid-feedback">Por favor ingrese la fecha de salida</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="numeroTramite" class="form-label">Número de Trámite *</label>
+                                    <input type="text" class="form-control" id="numeroTramite" th:field="*{numeroTramite}" required>
+                                    <div class="invalid-feedback">Por favor ingrese el número de trámite</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="cantidadProductos" class="form-label">Cantidad de Productos *</label>
+                                    <input type="number" class="form-control" id="cantidadProductos" th:field="*{cantidadProductos}" min="1" required>
+                                    <div class="invalid-feedback">Por favor ingrese una cantidad válida</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Información del Usuario -->
+                <div class="card dashboard-card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-person me-2"></i>Información del Usuario</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="nombreUsuario" class="form-label">Nombre Completo *</label>
+                                    <input type="text" class="form-control" id="nombreUsuario" th:field="*{nombreUsuario}" required>
+                                    <div class="invalid-feedback">Por favor ingrese el nombre del usuario</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="dniUsuario" class="form-label">DNI *</label>
+                                    <input type="text" class="form-control" id="dniUsuario" th:field="*{dniUsuario}" required>
+                                    <div class="invalid-feedback">Por favor ingrese el DNI del usuario</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="descripcion" class="form-label">Descripción / Motivo</label>
+                            <textarea class="form-control" id="descripcion" th:field="*{descripcion}" rows="3"
+                                      placeholder="Ingrese una descripción o motivo de la salida"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Información del Sistema -->
+                <div class="card dashboard-card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-clock me-2"></i>Información del Sistema</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Fecha de Registro:</label>
+                                    <input type="text" class="form-control"
+                                           th:value="*{#temporals.format(fechaRegistro, 'dd/MM/yyyy HH:mm')}" readonly>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Estado:</label>
+                                    <input type="text" class="form-control" value="COMPLETADA" readonly>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botones de Acción -->
+                <div class="d-flex justify-content-between mt-4">
+                    <a th:href="@{/ordenes-salida}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left me-1"></i>Volver al Listado
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-2"></i>Actualizar Orden
+                    </button>
+                </div>
+            </form>
+        </main>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Validación del formulario
+    (function () {
+        'use strict'
+        var forms = document.querySelectorAll('.needs-validation')
+        Array.prototype.slice.call(forms)
+            .forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault()
+                        event.stopPropagation()
+                    }
+                    form.classList.add('was-validated')
+                }, false)
+            })
+    })();
+
+    // Establecer fecha máxima como hoy
+    document.addEventListener('DOMContentLoaded', function() {
+        const today = new Date().toISOString().split('T')[0];
+        const fechaSalidaInput = document.getElementById('fechaSalida');
+        if (fechaSalidaInput) {
+            fechaSalidaInput.max = today;
+        }
+    });
+</script>
+</body>
+</html>

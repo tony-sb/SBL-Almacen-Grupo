@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Orden de Salida - Sistema de Almacén</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        /* ======= FORMATO INSTITUCIONAL ======= */
+        body {
+            background-color: #f8f9fa;
+            padding: 15px;
+            font-family: 'Arial', sans-serif;
+            font-size: 11px;
+            line-height: 1.2;
+        }
+
+        .print-container {
+            background: white;
+            padding: 20px 30px;
+            border: 2px solid black;
+            max-width: 800px;
+            margin: 0 auto;
+            box-shadow: 0 0 8px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .print-container::before {
+            content: "";
+            position: absolute;
+            top: 8px; left: 8px; right: 8px; bottom: 8px;
+            border: 1px solid #000;
+            pointer-events: none;
+        }
+
+        .print-header {
+            text-align: center;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 6px;
+        }
+
+        .institution-name {
+            font-size: 16px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .document-title {
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .header-subtitle {
+            font-size: 9px;
+            color: #555;
+        }
+
+        .print-section {
+            margin-bottom: 10px;
+            padding: 8px 10px;
+            border: 1px solid #000;
+            background: #fdfdfd;
+        }
+
+        .section-title {
+            font-weight: bold;
+            margin-bottom: 4px;
+            border-bottom: 1px solid #000;
+            padding-bottom: 2px;
+            font-size: 10px;
+            text-transform: uppercase;
+        }
+
+        .info-row {
+            display: flex;
+            margin-bottom: 3px;
+            font-size: 10px;
+        }
+
+        .info-label {
+            font-weight: bold;
+            width: 120px;
+            flex-shrink: 0;
+        }
+
+        .info-value {
+            flex: 1;
+        }
+
+        .compact-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        /* === Tabla de detalle === */
+        table.detalle {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 9px;
+            margin-top: 6px;
+        }
+
+        table.detalle th, table.detalle td {
+            border: 1px solid #000;
+            padding: 3px 4px;
+            text-align: center;
+        }
+
+        table.detalle th {
+            background: #e9ecef;
+            font-weight: bold;
+        }
+
+        .text-right {
+            text-align: right !important;
+        }
+
+        /* Firmas */
+        .signature-section {
+            margin-top: 20px;
+            padding-top: 12px;
+            border-top: 2px solid #000;
+            font-size: 9px;
+        }
+
+        .signature-section .compact-grid > div {
+            text-align: center;
+        }
+
+        .signature-section div div:first-child {
+            border-top: 1px solid #000;
+            width: 140px;
+            margin: 0 auto 4px auto;
+        }
+
+        /* Optimizaciones para impresión en UNA hoja */
+        @media print {
+            .no-print { display: none !important; }
+            @page {
+                size: A4 portrait;
+                margin: 0.8cm;
+            }
+            body {
+                background-color: white !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                font-size: 10px !important;
+            }
+            .print-container {
+                border: 2px solid black !important;
+                box-shadow: none !important;
+                margin: 0 !important;
+                padding: 15px 25px !important;
+                max-width: none !important;
+            }
+            .print-section {
+                page-break-inside: avoid;
+            }
+            table.detalle {
+                page-break-inside: avoid;
+            }
+        }
+
+        @media screen {
+            .no-print { display: block; }
+        }
+    </style>
+</head>
+<body>
+<div class="container print-container">
+
+    <!-- Botones -->
+    <div class="no-print text-center mb-3">
+        <button onclick="window.print()" class="btn btn-primary btn-sm me-2">🖨️ Imprimir</button>
+        <button onclick="window.close()" class="btn btn-secondary btn-sm">❌ Cerrar</button>
+    </div>
+
+    <!-- Encabezado -->
+    <div class="print-header">
+        <div class="institution-name">SOCIEDAD DE BENEFICENCIA DE LAMBAYEQUE</div>
+        <div class="document-title">ORDEN DE SALIDA DE PRODUCTOS</div>
+        <div class="header-subtitle">Sistema de Gestión de Almacén</div>
+    </div>
+
+    <!-- Información general -->
+    <div class="compact-grid">
+        <div class="print-section">
+            <div class="section-title">INFORMACIÓN DE ORDEN</div>
+            <div class="info-row">
+                <div class="info-label">N° ORDEN:</div>
+                <div class="info-value" th:text="${ordenSalida.numeroOrden}"></div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">FECHA SALIDA:</div>
+                <div class="info-value" th:text="${#temporals.format(ordenSalida.fechaSalida, 'dd/MM/yyyy')}"></div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">N° TRÁMITE:</div>
+                <div class="info-value" th:text="${ordenSalida.numeroTramite}"></div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">CANTIDAD:</div>
+                <div class="info-value" th:text="${ordenSalida.cantidadProductos} + ' unidades'"></div>
+            </div>
+        </div>
+
+        <div class="print-section">
+            <div class="section-title">SOLICITANTE</div>
+            <div class="info-row">
+                <div class="info-label">USUARIO:</div>
+                <div class="info-value" th:text="${ordenSalida.nombreUsuario}"></div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">DNI:</div>
+                <div class="info-value" th:text="${ordenSalida.dniUsuario}"></div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">FECHA REGISTRO:</div>
+                <div class="info-value" th:text="${#temporals.format(ordenSalida.fechaRegistro, 'dd/MM/yyyy HH:mm')}"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Descripción/Motivo -->
+    <div class="print-section">
+        <div class="section-title">DESCRIPCIÓN / MOTIVO</div>
+        <div class="info-row">
+            <div class="info-value" th:text="${ordenSalida.descripcion != null and ordenSalida.descripcion != ''} ? ${ordenSalida.descripcion} : 'No especificado'"></div>
+        </div>
+    </div>
+
+    <!-- Resumen Ejecutivo -->
+    <div class="print-section">
+        <div class="section-title">RESUMEN EJECUTIVO</div>
+        <div style="font-size: 10px;">
+            <p>Se ha procesado la orden de salida <strong th:text="${ordenSalida.numeroOrden}"></strong></p>
+            <p>Usuario: <strong th:text="${ordenSalida.nombreUsuario}"></strong></p>
+            <p>Cantidad total: <strong th:text="${ordenSalida.cantidadProductos} + ' unidades'"></strong></p>
+            <p>Fecha de procesamiento: <strong th:text="${#temporals.format(ordenSalida.fechaRegistro, 'dd/MM/yyyy HH:mm')}"></strong></p>
+        </div>
+    </div>
+
+    <!-- Observaciones -->
+    <div class="print-section">
+        <div class="section-title">OBSERVACIONES</div>
+        <div style="font-size: 10px;">
+            <p>✓ La presente orden de salida ha sido generada según los procedimientos establecidos.</p>
+            <p>✓ Los productos han sido verificados y autorizados para su salida.</p>
+            <p>✓ La cantidad especificada ha sido descontada del inventario del almacén.</p>
+            <p>✓ Este documento sirve como comprobante oficial de salida de productos.</p>
+        </div>
+    </div>
+
+    <!-- Firmas -->
+    <div class="signature-section">
+        <div class="compact-grid">
+            <div>
+                <div></div>
+                <div class="fw-bold" style="font-size:9px;">RESPONSABLE DE ALMACÉN</div>
+                <div style="font-size:8px;">Sociedad de Beneficencia de Lambayeque</div>
+            </div>
+            <div>
+                <div></div>
+                <div class="fw-bold" style="font-size:9px;">USUARIO SOLICITANTE</div>
+                <div style="font-size:8px;" th:text="${ordenSalida.nombreUsuario}"></div>
+                <div style="font-size:8px;" th:text="'DNI: ' + ${ordenSalida.dniUsuario}"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pie de página -->
+    <div style="text-align: center; margin-top: 15px; font-size: 8px; color: #666;">
+        <p>Documento generado automáticamente el
+            <span th:text="${#temporals.format(#temporals.createNow(), 'dd/MM/yyyy \\'a las\\' HH:mm')}"></span>
+        </p>
+        <p>BENEFICENCIA PÚBLICA - SISTEMA DE GESTIÓN DE ALMACÉN</p>
+    </div>
+
+</div>
+
+<script>
+    window.onload = function() {
+        console.log('Documento de orden de salida cargado correctamente');
+    };
+
+    window.onafterprint = function() {
+        console.log('Impresión completada');
+    };
+</script>
+</body>
+</html>

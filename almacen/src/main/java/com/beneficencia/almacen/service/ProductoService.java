@@ -2,6 +2,7 @@ package com.beneficencia.almacen.service;
 
 import com.beneficencia.almacen.model.Producto;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -72,4 +73,53 @@ public interface ProductoService {
      * @return true si existe, false en caso contrario
      */
     boolean existeProductoPorCodigo(String codigo);
+
+    // MÉTODOS NUEVOS PARA ORDEN DE SALIDAS
+
+    /**
+     * Busca productos por término (código o nombre)
+     *
+     * @param termino Término de búsqueda
+     * @return Lista de productos que coinciden
+     */
+    List<Producto> buscarProductosPorTermino(String termino);
+
+    /**
+     * Obtiene producto por código
+     *
+     * @param codigo Código del producto
+     * @return Optional con el producto encontrado
+     */
+    Optional<Producto> obtenerProductoPorCodigo(String codigo);
+
+    // MÉTODOS NUEVOS PARA EL INVENTARIO CON ALERTAS
+
+    /**
+     * Cuenta la cantidad de productos con stock bajo
+     *
+     * @return Número de productos con stock bajo
+     */
+    Long contarProductosConStockBajo();
+
+    /**
+     * Obtiene todas las categorías únicas de productos
+     *
+     * @return Lista de categorías únicas
+     */
+    List<String> obtenerTodasLasCategorias();
+
+    /**
+     * Verifica si un producto tiene stock bajo
+     *
+     * @param producto Producto a verificar
+     * @return true si tiene stock bajo, false en caso contrario
+     */
+    boolean tieneStockBajo(Producto producto);
+
+    /**
+     * Obtiene estadísticas del inventario
+     *
+     * @return Mapa con las estadísticas del inventario
+     */
+    Map<String, Object> obtenerEstadisticasInventario();
 }
