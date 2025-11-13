@@ -407,3 +407,8 @@ INSERT INTO ordenes_salida (numero_orden, fecha_salida, dni_usuario, numero_tram
 ('011-2025', '2025-10-07', '202020202020', 'TRAM-2025-002', 8923471, 2, 'COMPLETADA'),
 ('012-2025', '2025-10-08', '303030303030', 'TRAM-2025-003', 4561238, 1, 'PENDIENTE'),
 ('013-2025', '2025-10-09', '404040404040', 'TRAM-2025-004', 2345678, 2, 'COMPLETADA');
+
+UPDATE productos
+SET categoria = 'Medicamentos'
+WHERE id = 4;
+select * from productos;
