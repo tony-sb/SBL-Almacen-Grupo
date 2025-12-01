@@ -341,10 +341,10 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script th:inline="javascript">
     /*<![CDATA[*/
-    // Cargar precios de productos desde Thymeleaf
+    // Cargar precios de productos desde Thymeleaf - VERSIÓN CORREGIDA
     window.preciosProductos = {
         <th:block th:each="producto : ${productos}">
-        [[${producto.id}]]: [[${producto.precioUnitario}]],
+        [[${producto?.id}]]: [[${#numbers.formatDecimal(producto?.precioUnitario ?: 0, 1, 2)}]],
         </th:block>
     };
     console.log("💰 Precios de productos cargados:", window.preciosProductos);

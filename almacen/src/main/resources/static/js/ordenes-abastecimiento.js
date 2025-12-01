@@ -1,25 +1,81 @@
-// ordenes-compra.js - VERSIÓN CORREGIDA
+// ordenes-abastecimiento.js - VERSIÓN MEJORADA
 console.log("=== INICIANDO SISTEMA DE ÓRDENES DE COMPRA ===");
 
 // Variable global para precios de productos
 window.preciosProductos = {};
 
+// Función para agregar producto (hacerla global)
+window.agregarNuevoItem = function() {
+    console.log(`➕ Agregando nuevo item...`);
+    const container = document.getElementById('items-container');
+
+    if (!container) {
+        console.error("❌ Contenedor de items no encontrado");
+        alert('Error: No se puede agregar items. Recarga la página.');
+        return;
+    }
+
+    const items = container.querySelectorAll('.item-row');
+
+    if (items.length >= 50) {
+        console.warn("⚠️ Límite de items alcanzado");
+        alert('Máximo 50 productos por orden');
+        return;
+    }
+
+    // Buscar el primer item para clonar (siempre existe)
+    const primerItem = items[0];
+    const nuevoItem = primerItem.cloneNode(true);
+
+    // Limpiar valores del nuevo item
+    resetearItem(nuevoItem);
+
+    // Insertar antes del botón agregar
+    container.appendChild(nuevoItem);
+
+    // Configurar eventos del nuevo item
+    configurarEventosItem(nuevoItem);
+    calcularTotal();
+    actualizarContadorItems();
+
+    console.log("✅ Nuevo item agregado correctamente");
+
+    // Scroll y focus al nuevo item
+    setTimeout(() => {
+        nuevoItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        const nuevoSelect = nuevoItem.querySelector('.producto-select');
+        if (nuevoSelect) nuevoSelect.focus();
+    }, 100);
+};
+
 document.addEventListener('DOMContentLoaded', function() {
     console.log("✅ DOM cargado - Inicializando sistema de órdenes");
 
-    // 1. Inicializar precios de productos
-    inicializarPreciosProductos();
+    // 1. Configurar botón agregar producto
+    const addBtn = document.getElementById('add-item');
+    if (addBtn) {
+        console.log("✅ Botón 'Agregar Producto' encontrado");
+        addBtn.addEventListener('click', function() {
+            console.log("🖱️ Botón clickeado manualmente");
+            window.agregarNuevoItem();
+        });
 
-    // 2. Configurar según el tipo de página
-    if (document.getElementById('formOrden')) {
-        console.log("🔄 Formulario detectado - inicializando...");
-        inicializarFormularioCompleto();
+        // También asignar a variable global por si acaso
+        addBtn.onclick = window.agregarNuevoItem;
+    } else {
+        console.error("❌ Botón 'Agregar Producto' NO encontrado");
     }
 
-    // 3. Configurar confirmación de eliminación
+    // 2. Inicializar precios de productos
+    inicializarPreciosProductos();
+
+    // 3. Inicializar items existentes
+    inicializarItems();
+
+    // 4. Configurar confirmación de eliminación
     configurarConfirmacionEliminar();
 
-    // 4. Configurar tooltips
+    // 5. Configurar tooltips
     configurarTooltips();
 
     console.log("✅ Sistema de órdenes inicializado completamente");
@@ -27,39 +83,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function inicializarPreciosProductos() {
     console.log("💰 Inicializando precios de productos...");
-    if (window.preciosProductos && Object.keys(window.preciosProductos).length > 0) {
-        console.log(`✅ ${Object.keys(window.preciosProductos).length} precios cargados`);
-    } else {
-        console.warn("⚠️ No se encontraron precios de productos");
+
+    // Verificar si la variable existe
+    if (typeof window.preciosProductos === 'undefined') {
+        console.warn("⚠️ preciosProductos no definido, inicializando objeto vacío");
         window.preciosProductos = {};
     }
-}
 
-function inicializarFormularioCompleto() {
-    console.log("📝 Inicializando formulario completo...");
-
-    // Configurar botón agregar producto
-    const addBtn = document.getElementById('add-item');
-    if (addBtn) {
-        addBtn.onclick = function() {
-            agregarNuevoItem();
-        };
-        console.log("✅ Botón agregar producto configurado");
+    // Verificar que es un objeto válido
+    if (window.preciosProductos && typeof window.preciosProductos === 'object') {
+        console.log(`✅ ${Object.keys(window.preciosProductos).length} precios cargados`);
+        console.log("Precios disponibles:", window.preciosProductos);
     } else {
-        console.error("❌ Botón agregar producto NO encontrado");
+        console.warn("⚠️ preciosProductos no es un objeto válido, inicializando vacío");
+        window.preciosProductos = {};
     }
-
-    // Configurar validación del formulario
-    const form = document.getElementById('formOrden');
-    if (form) {
-        form.onsubmit = validarFormularioCompleto;
-        console.log("✅ Validación de formulario configurada");
-    }
-
-    // Inicializar items existentes
-    inicializarItems();
-
-    console.log("✅ Formulario completo inicializado");
 }
 
 function inicializarItems() {
@@ -89,7 +127,7 @@ function configurarEventosItem(item) {
     }
 
     // Configurar eventos del select de producto
-    productoSelect.onchange = function() {
+    productoSelect.addEventListener('change', function() {
         const productoId = this.value;
         console.log(`🔄 Producto cambiado: ${productoId}`);
 
@@ -99,7 +137,7 @@ function configurarEventosItem(item) {
             mostrarFeedbackPrecio(precioInput, 'auto');
         } else if (productoId) {
             // Producto sin precio definido, mantener valor actual o 0
-            if (!precioInput.value || precioInput.value === '0.00') {
+            if (!precioInput.value || precioInput.value === '0.00' || precioInput.value === '0') {
                 precioInput.value = '0.00';
             }
             mostrarFeedbackPrecio(precioInput, 'manual');
@@ -111,96 +149,53 @@ function configurarEventosItem(item) {
         calcularSubtotal(item);
         calcularTotal();
         validarItemCompleto(item);
-    };
+    });
 
     // Configurar eventos de cantidad
-    cantidadInput.oninput = function() {
+    cantidadInput.addEventListener('input', function() {
         if (this.value < 1) this.value = 1;
         if (this.value > 9999) this.value = 9999;
         calcularSubtotal(item);
         calcularTotal();
         validarItemCompleto(item);
-    };
+    });
 
-    cantidadInput.onblur = function() {
+    cantidadInput.addEventListener('blur', function() {
         if (!this.value || this.value < 1) {
             this.value = 1;
             calcularSubtotal(item);
             calcularTotal();
         }
-    };
+    });
 
     // Configurar eventos de precio
-    precioInput.oninput = function() {
+    precioInput.addEventListener('input', function() {
         if (this.value < 0) this.value = 0;
         if (this.value > 999999) this.value = 999999;
         calcularSubtotal(item);
         calcularTotal();
         mostrarFeedbackPrecio(this, 'manual');
         validarItemCompleto(item);
-    };
+    });
 
-    precioInput.onblur = function() {
+    precioInput.addEventListener('blur', function() {
         if (!this.value || this.value < 0) {
             this.value = '0.00';
             calcularSubtotal(item);
             calcularTotal();
         }
-    };
+    });
 
     // Configurar botón eliminar
-    removeBtn.onclick = function() {
+    removeBtn.addEventListener('click', function() {
         console.log("🗑️ Intentando eliminar item...");
         eliminarItem(item);
-    };
+    });
 
     // Configurar validación inicial
     validarItemCompleto(item);
 
     console.log("✅ Eventos de item configurados correctamente");
-}
-
-function agregarNuevoItem() {
-    console.log(`➕ Agregando nuevo item...`);
-    const container = document.getElementById('items-container');
-
-    if (!container) {
-        console.error("❌ Contenedor de items no encontrado");
-        mostrarAlerta('error', 'Error: No se puede agregar items. Recarga la página.');
-        return;
-    }
-
-    const items = container.querySelectorAll('.item-row');
-
-    if (items.length >= 50) {
-        console.warn("⚠️ Límite de items alcanzado");
-        mostrarAlerta('warning', 'Máximo 50 productos por orden');
-        return;
-    }
-
-    // Buscar el primer item para clonar (siempre existe)
-    const primerItem = items[0];
-    const nuevoItem = primerItem.cloneNode(true);
-
-    // Limpiar valores del nuevo item
-    resetearItem(nuevoItem);
-
-    // Insertar antes del botón agregar
-    container.appendChild(nuevoItem);
-
-    // Configurar eventos del nuevo item
-    configurarEventosItem(nuevoItem);
-    calcularTotal();
-    actualizarContadorItems();
-
-    console.log("✅ Nuevo item agregado correctamente");
-
-    // Scroll y focus al nuevo item
-    setTimeout(() => {
-        nuevoItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        const nuevoSelect = nuevoItem.querySelector('.producto-select');
-        if (nuevoSelect) nuevoSelect.focus();
-    }, 100);
 }
 
 function eliminarItem(item) {
@@ -346,7 +341,6 @@ function mostrarFeedbackPrecio(input, tipo) {
     }
 }
 
-// Resto de funciones permanecen igual...
 function configurarConfirmacionEliminar() {
     console.log("🗑️ Configurando confirmaciones de eliminación...");
     document.addEventListener('click', function(e) {
@@ -366,14 +360,9 @@ function configurarTooltips() {
     tooltips.forEach(el => new bootstrap.Tooltip(el));
 }
 
-function mostrarAlerta(tipo, mensaje) {
-    // Implementación simple de alerta
-    alert(mensaje);
-}
-
+// Exportar funciones para debugging
 window.ordenesApp = {
-    inicializarItems,
-    agregarNuevoItem,
+    agregarNuevoItem: window.agregarNuevoItem,
     eliminarItem,
     calcularTotal,
     debugItems: function() {

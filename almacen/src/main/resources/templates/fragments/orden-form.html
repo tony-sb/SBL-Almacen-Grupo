@@ -100,14 +100,13 @@
 
             <!-- Items existentes para edición -->
             <div th:each="item, stat : ${ordenAbastecimiento.items}" th:if="${ordenAbastecimiento.id != null}" class="item-row row align-items-center mb-2">
-                <input type="hidden" name="productoIds" th:value="${item.producto?.id}">
                 <div class="col-md-5">
                     <select class="form-select producto-select" name="productoIds">
                         <option value="">Seleccionar producto...</option>
                         <option th:each="producto : ${productos}"
-                                th:value="${producto.id}"
-                                th:selected="${item.producto?.id == producto.id}"
-                                th:text="${producto.nombre + ' (' + producto.codigo + ')'}">
+                                th:value="${producto?.id}"
+                                th:selected="${item?.producto?.id == producto?.id}"
+                                th:text="${producto?.nombre} + ' (' + ${producto?.codigo} + ')'">
                         </option>
                     </select>
                 </div>
@@ -132,9 +131,11 @@
             </div>
         </div>
 
-        <button type="button" class="btn btn-outline-secondary btn-sm mt-2" id="add-item">
+        <button type="button" class="btn btn-outline-secondary btn-sm mt-2" id="add-item"
+                onclick="console.log('Botón clickeado!'); agregarNuevoItem();">
             <i class="bi bi-plus-circle me-1"></i>Agregar Producto
         </button>
+
         <div class="mt-1">
             <small class="text-muted" id="contador-items-total">1 producto(s) en la orden</small>
         </div>

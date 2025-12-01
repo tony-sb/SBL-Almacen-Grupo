@@ -6,6 +6,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -26,19 +28,50 @@ public class DashboardController {
      * @param model Modelo para pasar datos a la vista
      * @return Nombre de la vista 'dashboard' que será renderizada
      */
+
     @GetMapping("/dashboard")
     public String mostrarDashboard(Model model) {
-        // Obtener TODOS los datos desde el servicio que conecta con la BD
-        Map<String, Object> dashboardData = dashboardService.getDashboardData();
+        try {
+            System.out.println("=== CARGANDO DASHBOARD ===");
 
-        // Pasar los datos a la vista HTML
-        model.addAttribute("movimientosRecientes", dashboardData.get("movimientosRecientes"));
-        model.addAttribute("productosSinMovimientos", dashboardData.get("productosSinMovimientos"));
-        model.addAttribute("productosStockBajo", dashboardData.get("productosStockBajo"));
+            Map<String, Object> dashboardData = dashboardService.getDashboardData();
 
-        return "dashboard";
+            // Pasar los datos a la vista
+            model.addAttribute("movimientosRecientes", dashboardData.get("movimientosRecientes"));
+            model.addAttribute("productosSinMovimientos", dashboardData.get("productosSinMovimientos"));
+            model.addAttribute("productosStockBajo", dashboardData.get("productosStockBajo"));
+
+            // Agregar contadores separados para evitar el error de comparación
+            List<?> productosSinMovimientosList = (List<?>) dashboardData.get("productosSinMovimientos");
+            List<?> productosStockBajoList = (List<?>) dashboardData.get("productosStockBajo");
+
+            int cantidadSinMovimientos = productosSinMovimientosList != null ? productosSinMovimientosList.size() : 0;
+            int cantidadStockBajo = productosStockBajoList != null ? productosStockBajoList.size() : 0;
+
+            model.addAttribute("cantidadSinMovimientos", cantidadSinMovimientos);
+            model.addAttribute("cantidadStockBajo", cantidadStockBajo);
+
+            System.out.println("✅ Dashboard cargado:");
+            System.out.println("   - Movimientos recientes: " + ((List<?>)dashboardData.get("movimientosRecientes")).size());
+            System.out.println("   - Productos sin movimientos: " + cantidadSinMovimientos);
+            System.out.println("   - Productos con stock bajo: " + cantidadStockBajo);
+
+            return "dashboard";
+
+        } catch (Exception e) {
+            System.err.println("❌ ERROR al cargar dashboard: " + e.getMessage());
+            e.printStackTrace();
+
+            // En caso de error, establecer valores por defecto
+            model.addAttribute("movimientosRecientes", new ArrayList<>());
+            model.addAttribute("productosSinMovimientos", new ArrayList<>());
+            model.addAttribute("productosStockBajo", new ArrayList<>());
+            model.addAttribute("cantidadSinMovimientos", 0);
+            model.addAttribute("cantidadStockBajo", 0);
+
+            return "dashboard";
+        }
     }
-
     /**
      * Muestra la página de acceso denegado cuando un usuario intenta acceder
      * a recursos para los que no tiene permisos suficientes.

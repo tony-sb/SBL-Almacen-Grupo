@@ -196,12 +196,13 @@
     // Cargar precios de productos desde Thymeleaf
     window.preciosProductos = {
         <th:block th:each="producto : ${productos}">
-        [[${producto.id}]]: [[${producto.precioUnitario}]],
+        [[${producto?.id}]]: [[${producto?.precioUnitario ?: 0}]],
         </th:block>
     };
     console.log("💰 Precios de productos cargados en formulario:", window.preciosProductos);
     /*]]>*/
 </script>
+<script th:src="@{/js/ordenes-abastecimiento.js}"></script>
 <script th:src="@{/js/ordenes-abastecimiento.js}"></script>
 </body>
 </html>
