@@ -15,6 +15,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Controlador para la gestión de órdenes de abastecimiento.
+ * Maneja las operaciones CRUD de órdenes de compra y abastecimiento del almacén.
+ */
 @Controller
 @RequestMapping("/ordenes-abastecimiento")
 public class OrdenAbastecimientoController {
@@ -32,7 +36,13 @@ public class OrdenAbastecimientoController {
     private UsuarioService usuarioService;
 
     /**
-     * Lista todas las órdenes de abastecimiento (página principal)
+     * Muestra la lista de todas las órdenes de abastecimiento (página principal).
+     * Carga las órdenes existentes junto con los proveedores y productos necesarios
+     * para las operaciones del formulario.
+     *
+     * @param model Modelo para pasar datos a la vista
+     * @param authentication Información de autenticación del usuario
+     * @return Nombre de la vista 'ordenes-abastecimiento'
      */
     @GetMapping
     public String listarOrdenesAbastecimiento(Model model, Authentication authentication) {
@@ -72,7 +82,11 @@ public class OrdenAbastecimientoController {
     }
 
     /**
-     * Muestra formulario para nueva orden (página completa)
+     * Muestra el formulario para crear una nueva orden de abastecimiento.
+     * Carga los proveedores y productos disponibles para seleccionar en la orden.
+     *
+     * @param model Modelo para pasar datos a la vista
+     * @return Nombre de la vista 'form-orden-abastecimiento'
      */
     @GetMapping("/nueva")
     public String mostrarFormularioNuevaOrden(Model model) {
@@ -111,7 +125,18 @@ public class OrdenAbastecimientoController {
     }
 
     /**
-     * Guarda una nueva orden de abastecimiento
+     * Procesa el guardado de una nueva orden de abastecimiento.
+     * Valida los datos, procesa los items y asigna el usuario autenticado.
+     *
+     * @param ordenAbastecimiento Objeto de orden con datos básicos
+     * @param proveedorId ID del proveedor seleccionado
+     * @param productoIds Lista de IDs de productos incluidos en la orden
+     * @param cantidades Lista de cantidades correspondientes a cada producto
+     * @param precios Lista de precios unitarios correspondientes a cada producto
+     * @param authentication Información de autenticación del usuario
+     * @param model Modelo para pasar datos a la vista en caso de error
+     * @param redirectAttributes Atributos para mensajes flash en redirección
+     * @return Redirección a la lista de órdenes o recarga del formulario en caso de error
      */
     @PostMapping("/guardar")
     public String guardarOrdenAbastecimiento(@ModelAttribute OrdenAbastecimiento ordenAbastecimiento,
@@ -170,7 +195,12 @@ public class OrdenAbastecimientoController {
     }
 
     /**
-     * Muestra formulario para editar orden existente
+     * Muestra el formulario para editar una orden de abastecimiento existente.
+     * Carga los datos de la orden especificada por ID para su modificación.
+     *
+     * @param id ID de la orden a editar
+     * @param model Modelo para pasar datos a la vista
+     * @return Nombre de la vista 'form-orden-abastecimiento' o redirección en caso de error
      */
     @GetMapping("/editar/{id}")
     public String mostrarFormularioEditarOrden(@PathVariable Long id, Model model) {
@@ -215,7 +245,19 @@ public class OrdenAbastecimientoController {
     }
 
     /**
-     * Actualiza una orden de abastecimiento existente
+     * Procesa la actualización de una orden de abastecimiento existente.
+     * Actualiza los datos básicos y reprocesa todos los items de la orden.
+     *
+     * @param id ID de la orden a actualizar
+     * @param ordenAbastecimiento Objeto de orden con datos actualizados
+     * @param proveedorId ID del proveedor seleccionado
+     * @param productoIds Lista de IDs de productos actualizados
+     * @param cantidades Lista de cantidades actualizadas
+     * @param precios Lista de precios unitarios actualizados
+     * @param authentication Información de autenticación del usuario
+     * @param model Modelo para pasar datos a la vista en caso de error
+     * @param redirectAttributes Atributos para mensajes flash en redirección
+     * @return Redirección a la lista de órdenes o recarga del formulario en caso de error
      */
     @PostMapping("/editar/{id}")
     public String actualizarOrdenAbastecimiento(@PathVariable Long id,
@@ -280,7 +322,12 @@ public class OrdenAbastecimientoController {
     }
 
     /**
-     * Elimina una orden de abastecimiento
+     * Elimina una orden de abastecimiento del sistema.
+     * Realiza validaciones antes de proceder con la eliminación.
+     *
+     * @param id ID de la orden a eliminar
+     * @param redirectAttributes Atributos para mensajes flash en redirección
+     * @return Redirección a la lista de órdenes
      */
     @GetMapping("/eliminar/{id}")
     public String eliminarOrdenAbastecimiento(@PathVariable Long id, RedirectAttributes redirectAttributes) {
@@ -312,7 +359,12 @@ public class OrdenAbastecimientoController {
     }
 
     /**
-     * Muestra vista para imprimir orden
+     * Muestra la vista optimizada para imprimir una orden de abastecimiento.
+     * Carga todos los datos de la orden incluyendo items para generar un formato imprimible.
+     *
+     * @param id ID de la orden a imprimir
+     * @param model Modelo para pasar datos a la vista
+     * @return Nombre de la vista 'imprimir-orden-abastecimiento' o redirección en caso de error
      */
     @GetMapping("/imprimir/{id}")
     public String imprimirOrdenAbastecimiento(@PathVariable Long id, Model model) {
@@ -344,7 +396,13 @@ public class OrdenAbastecimientoController {
     // ================= MÉTODOS PRIVADOS AUXILIARES =================
 
     /**
-     * Procesa los items para una nueva orden
+     * Procesa los items para una nueva orden de abastecimiento.
+     * Valida y crea los items basados en los IDs de producto, cantidades y precios proporcionados.
+     *
+     * @param ordenAbastecimiento Orden a la que se agregarán los items
+     * @param productoIds Lista de IDs de productos
+     * @param cantidades Lista de cantidades correspondientes
+     * @param precios Lista de precios unitarios correspondientes
      */
     private void procesarItemsOrden(OrdenAbastecimiento ordenAbastecimiento,
                                     List<Long> productoIds,
@@ -397,7 +455,13 @@ public class OrdenAbastecimientoController {
     }
 
     /**
-     * Procesa items para edición (limpia existentes y agrega nuevos)
+     * Procesa items para edición de una orden existente.
+     * Limpia los items actuales y agrega los nuevos items proporcionados.
+     *
+     * @param ordenExistente Orden existente a actualizar
+     * @param productoIds Lista de IDs de productos actualizados
+     * @param cantidades Lista de cantidades actualizadas
+     * @param precios Lista de precios unitarios actualizados
      */
     private void procesarItemsParaEdicion(OrdenAbastecimiento ordenExistente,
                                           List<Long> productoIds,
@@ -454,7 +518,13 @@ public class OrdenAbastecimientoController {
     }
 
     /**
-     * Recarga el formulario con datos y mensaje de error
+     * Recarga el formulario con los datos actuales y un mensaje de error.
+     * Utilizado cuando ocurre un error durante el guardado o actualización.
+     *
+     * @param model Modelo para pasar datos a la vista
+     * @param ordenAbastecimiento Orden con datos actuales
+     * @param mensajeError Mensaje de error a mostrar
+     * @return Nombre de la vista 'form-orden-abastecimiento' con datos recargados
      */
     private String recargarFormularioConError(Model model, OrdenAbastecimiento ordenAbastecimiento, String mensajeError) {
         try {

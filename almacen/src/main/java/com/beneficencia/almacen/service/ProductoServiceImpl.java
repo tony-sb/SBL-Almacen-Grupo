@@ -12,9 +12,9 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Implementación del servicio de productos
- *
- * @author Equipo de Desarrollo
+ * Implementación del servicio de productos para la gestión del inventario del almacén.
+ * Proporciona la lógica de negocio para las operaciones CRUD, búsquedas, filtros
+ * y análisis estadísticos de los productos.
  */
 @Service
 @Transactional
@@ -185,12 +185,19 @@ public class ProductoServiceImpl implements ProductoService {
                 )
                 .sum();
 
+        // Calcular estadísticas por categoría
+        Map<String, Long> productosPorCategoria = todosProductos.stream()
+                .collect(HashMap::new,
+                        (map, producto) -> map.merge(producto.getCategoria(), 1L, Long::sum),
+                        HashMap::putAll);
+
         Map<String, Object> estadisticas = new HashMap<>();
         estadisticas.put("totalProductos", todosProductos.size());
         estadisticas.put("totalItems", totalItems);
         estadisticas.put("productosStockBajo", productosStockBajo.size());
         estadisticas.put("totalCategorias", categorias.size());
         estadisticas.put("valorTotalInventario", valorTotal);
+        estadisticas.put("productosPorCategoria", productosPorCategoria);
 
         return estadisticas;
     }

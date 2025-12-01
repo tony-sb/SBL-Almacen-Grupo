@@ -11,9 +11,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.util.Optional;
 
 /**
- * Controlador para la gestión de productos
- *
- * @author Equipo de Desarrollo
+ * Controlador para la gestión de productos del almacén.
+ * Maneja las operaciones CRUD (Crear, Leer, Actualizar, Eliminar) de productos
+ * a través de interfaces web utilizando el patrón MVC.
  */
 @Controller
 @RequestMapping("/productos")
@@ -23,10 +23,11 @@ public class ProductoController {
     private ProductoService productoService;
 
     /**
-     * Muestra la lista de todos los productos
+     * Muestra la lista de todos los productos del inventario.
+     * Recupera todos los productos existentes y los pasa a la vista para su visualización.
      *
      * @param model Modelo para pasar datos a la vista
-     * @return Nombre de la vista JSP
+     * @return Nombre de la vista JSP 'productos/lista'
      */
     @GetMapping
     public String listarProductos(Model model) {
@@ -35,10 +36,12 @@ public class ProductoController {
     }
 
     /**
-     * Muestra el formulario para crear un nuevo producto
+     * Muestra el formulario para crear un nuevo producto.
+     * Prepara el modelo con un producto vacío y las opciones predefinidas
+     * para categorías y unidades de medida.
      *
      * @param model Modelo para pasar datos a la vista
-     * @return Nombre de la vista JSP
+     * @return Nombre de la vista JSP 'productos/formulario'
      */
     @GetMapping("/nuevo")
     public String mostrarFormularioNuevoProducto(Model model) {
@@ -49,10 +52,12 @@ public class ProductoController {
     }
 
     /**
-     * Procesa el formulario para guardar un nuevo producto
+     * Procesa el formulario para guardar un nuevo producto.
+     * Recibe los datos del formulario, valida y persiste el producto en la base de datos.
+     * Maneja excepciones y proporciona retroalimentación al usuario mediante mensajes flash.
      *
-     * @param producto Producto a guardar
-     * @param redirectAttributes Atributos para redirección
+     * @param producto Objeto Producto con los datos del formulario
+     * @param redirectAttributes Atributos para mensajes flash en redirección
      * @return Redirección a la lista de productos
      */
     @PostMapping("/guardar")
@@ -67,12 +72,14 @@ public class ProductoController {
     }
 
     /**
-     * Muestra el formulario para editar un producto existente
+     * Muestra el formulario para editar un producto existente.
+     * Busca el producto por ID y carga sus datos en el formulario para edición.
+     * Si el producto no existe, redirige con un mensaje de error.
      *
      * @param id ID del producto a editar
      * @param model Modelo para pasar datos a la vista
-     * @param redirectAttributes Atributos para redirección
-     * @return Nombre de la vista JSP
+     * @param redirectAttributes Atributos para mensajes flash en redirección
+     * @return Nombre de la vista JSP 'productos/formulario' o redirección en caso de error
      */
     @GetMapping("/editar/{id}")
     public String mostrarFormularioEditarProducto(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
@@ -89,10 +96,12 @@ public class ProductoController {
     }
 
     /**
-     * Elimina un producto
+     * Elimina un producto del inventario.
+     * Busca el producto por ID y procede con su eliminación si existe.
+     * Maneja excepciones y proporciona retroalimentación al usuario.
      *
      * @param id ID del producto a eliminar
-     * @param redirectAttributes Atributos para redirección
+     * @param redirectAttributes Atributos para mensajes flash en redirección
      * @return Redirección a la lista de productos
      */
     @GetMapping("/eliminar/{id}")

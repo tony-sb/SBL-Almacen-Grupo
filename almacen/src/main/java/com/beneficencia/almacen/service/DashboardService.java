@@ -12,6 +12,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Servicio para la gestión de datos del dashboard del sistema.
+ * Proporciona métodos para obtener y procesar la información que se muestra
+ * en el panel principal de control del almacén.
+ */
 @Service
 public class DashboardService {
 
@@ -21,6 +26,16 @@ public class DashboardService {
     @Autowired
     private MovimientoRecienteRepository movimientoRecienteRepository;
 
+    /**
+     * Obtiene y procesa todos los datos necesarios para el dashboard del sistema.
+     * Recopila información sobre movimientos recientes, productos sin movimientos
+     * y productos con stock bajo para mostrar en el panel de control principal.
+     *
+     * @return Mapa con los datos del dashboard organizados en las siguientes claves:
+     *         - "movimientosRecientes": Lista de movimientos ordenados por fecha descendente
+     *         - "productosSinMovimientos": Lista de productos sin movimientos recientes
+     *         - "productosStockBajo": Lista de productos con stock bajo
+     */
     public Map<String, Object> getDashboardData() {
         Map<String, Object> dashboardData = new HashMap<>();
 
@@ -39,9 +54,13 @@ public class DashboardService {
                 .filter(producto -> !idsProductosConMovimientos.contains(producto.getId()))
                 .collect(Collectors.toList());
 
-        // 4. RETORNAR datos para el HTML
+        // 4. OBTENER PRODUCTOS CON STOCK BAJO
+        List<Producto> productosStockBajo = productoRepository.findProductosConStockBajo();
+
+        // 5. RETORNAR datos para el HTML
         dashboardData.put("movimientosRecientes", movimientosRecientes);
         dashboardData.put("productosSinMovimientos", productosSinMovimientos);
+        dashboardData.put("productosStockBajo", productosStockBajo);
 
         return dashboardData;
     }

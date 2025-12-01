@@ -18,6 +18,11 @@ import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * Servicio para la generación de reportes en formato PDF.
+ * Proporciona métodos para crear reportes del inventario completo
+ * y resúmenes del dashboard con diferentes formatos y estructuras.
+ */
 @Service
 public class ReporteService {
 
@@ -27,7 +32,14 @@ public class ReporteService {
     @Autowired
     private MovimientoRecienteRepository movimientoRecienteRepository;
 
-    // MÉTODO PARA EL INVENTARIO COMPLETO (NUEVO)
+    /**
+     * Genera un reporte PDF del inventario completo de productos.
+     * Incluye información detallada de todos los productos con su estado actual,
+     * categorías y estadísticas generales del inventario.
+     *
+     * @return ByteArrayInputStream con el contenido del PDF generado
+     * @throws RuntimeException si ocurre un error durante la generación del PDF
+     */
     public ByteArrayInputStream generarReporteInventario() {
         Document document = new Document();
         ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -159,7 +171,14 @@ public class ReporteService {
         return new ByteArrayInputStream(out.toByteArray());
     }
 
-    // MÉTODO PARA EL DASHBOARD (MOVIMIENTOS RECIENTES)
+    /**
+     * Genera un reporte PDF del dashboard con movimientos recientes.
+     * Incluye información de movimientos de salida y productos sin actividad reciente.
+     * Formato optimizado para el panel de control del sistema.
+     *
+     * @return ByteArrayInputStream con el contenido del PDF generado
+     * @throws RuntimeException si ocurre un error durante la generación del PDF
+     */
     public ByteArrayInputStream generarReporteDashboard() {
         Document document = new Document();
         ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -290,6 +309,13 @@ public class ReporteService {
         return new ByteArrayInputStream(out.toByteArray());
     }
 
+    /**
+     * Calcula el estado de un producto basado en su cantidad y stock mínimo.
+     * Determina si el producto tiene stock normal, bajo o sin datos.
+     *
+     * @param producto Producto a evaluar
+     * @return String con el estado del producto: "NORMAL", "STOCK BAJO" o "SIN DATOS"
+     */
     private String calcularEstadoProducto(Producto producto) {
         if (producto.getCantidad() == null) {
             return "SIN DATOS";
@@ -304,6 +330,13 @@ public class ReporteService {
         }
     }
 
+    /**
+     * Determina si un producto tiene stock bajo.
+     * Evalúa si la cantidad actual es menor o igual al stock mínimo.
+     *
+     * @param producto Producto a verificar
+     * @return true si el producto tiene stock bajo, false en caso contrario
+     */
     private boolean tieneStockBajo(Producto producto) {
         if (producto.getCantidad() == null) return true;
         Integer stockMinimo = producto.getStockMinimo() != null ? producto.getStockMinimo() : 5;

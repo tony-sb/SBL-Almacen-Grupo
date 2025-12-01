@@ -18,6 +18,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+/**
+ * Controlador para la gestión de órdenes de salida del almacén.
+ * Maneja las operaciones de creación, consulta, edición, eliminación e impresión
+ * de órdenes de salida de productos del inventario.
+ */
 @Controller
 @RequestMapping("/ordenes-salida")
 public class OrdenSalidaController {
@@ -31,6 +36,16 @@ public class OrdenSalidaController {
     @Autowired
     private ProductoService productoService;
 
+    /**
+     * Muestra la página principal de órdenes de salida con opciones de filtrado.
+     * Permite filtrar órdenes por período (año/mes) o realizar búsquedas por DNI o número de trámite.
+     *
+     * @param periodo Año para filtrar las órdenes (por defecto 2025)
+     * @param mes Mes para filtrar las órdenes (0 para todo el año)
+     * @param busqueda Término de búsqueda por DNI o número de trámite
+     * @param model Modelo para pasar datos a la vista
+     * @return Nombre de la vista 'ordenes-salida'
+     */
     @GetMapping
     public String mostrarPaginaOrdenSalida(
             @RequestParam(value = "periodo", required = false, defaultValue = "2025") Integer periodo,
@@ -76,6 +91,20 @@ public class OrdenSalidaController {
         return "ordenes-salida";
     }
 
+    /**
+     * Procesa el guardado de una nueva orden de salida.
+     * Valida el stock disponible, actualiza el inventario y genera número de orden automático.
+     *
+     * @param numeroTramite Número de trámite asociado a la orden
+     * @param fechaSalida Fecha de salida de los productos
+     * @param nombreUsuario Nombre del usuario que recibe los productos
+     * @param dniUsuario DNI del usuario que recibe los productos
+     * @param descripcion Descripción o motivo de la salida
+     * @param productoId ID del producto a retirar
+     * @param cantidad Cantidad de productos a retirar
+     * @param redirectAttributes Atributos para mensajes flash en redirección
+     * @return Redirección a la lista de órdenes de salida
+     */
     @PostMapping("/guardar")
     public String guardarOrdenSalida(
             @RequestParam String numeroTramite,
@@ -123,12 +152,25 @@ public class OrdenSalidaController {
         }
     }
 
+    /**
+     * Endpoint REST para obtener la lista de todos los productos disponibles.
+     * Utilizado para cargar dinámicamente los productos en los formularios.
+     *
+     * @return Lista de todos los productos en formato JSON
+     */
     @GetMapping("/productos")
     @ResponseBody
     public List<Producto> obtenerProductos() {
         return productoService.obtenerTodosProductos();
     }
 
+    /**
+     * Elimina una orden de salida mediante una petición AJAX.
+     * Retorna una respuesta JSON indicando el resultado de la operación.
+     *
+     * @param id ID de la orden a eliminar
+     * @return Map con el resultado de la operación (success y message)
+     */
     @DeleteMapping("/eliminar/{id}")
     @ResponseBody
     public Map<String, Object> eliminarOrden(@PathVariable Long id) {
@@ -144,6 +186,14 @@ public class OrdenSalidaController {
         return response;
     }
 
+    /**
+     * Muestra la vista optimizada para imprimir una orden de salida.
+     * Busca la orden por su número de orden y carga todos los datos para la impresión.
+     *
+     * @param numeroOrden Número de orden a imprimir
+     * @param model Modelo para pasar datos a la vista
+     * @return Nombre de la vista 'ordenes-salida/imprimir-orden-salida' o vista de error
+     */
     @GetMapping("/imprimir/{numeroOrden}")
     public String imprimirOrden(@PathVariable String numeroOrden, Model model) {
         try {
@@ -170,7 +220,14 @@ public class OrdenSalidaController {
         }
     }
 
-    // SOLO UN MÉTODO PARA EDITAR - ELIMINÉ EL DUPLICADO
+    /**
+     * Muestra el formulario para editar una orden de salida existente.
+     * Carga los datos de la orden especificada por ID para su modificación.
+     *
+     * @param id ID de la orden a editar
+     * @param model Modelo para pasar datos a la vista
+     * @return Nombre de la vista 'ordenes-salida/editar-orden-salida'
+     */
     @GetMapping("/editar/{id}")
     public String editarOrden(@PathVariable Long id, Model model) {
         try {
@@ -189,6 +246,14 @@ public class OrdenSalidaController {
         }
     }
 
+    /**
+     * Procesa la actualización de una orden de salida existente.
+     * Actualiza los campos modificados de la orden sin afectar el stock.
+     *
+     * @param ordenSalida Objeto de orden con los datos actualizados
+     * @param redirectAttributes Atributos para mensajes flash en redirección
+     * @return Redirección a la lista de órdenes de salida
+     */
     @PostMapping("/actualizar")
     public String actualizarOrdenSalida(
             @ModelAttribute OrdenSalida ordenSalida,
@@ -223,7 +288,12 @@ public class OrdenSalidaController {
         }
     }
 
-    // Método para generar número de orden automático
+    /**
+     * Genera un número de orden automático basado en el total de órdenes existentes.
+     * Formato: XXX-YYYY donde XXX es el número consecutivo e YYYY es el año actual.
+     *
+     * @return Número de orden generado automáticamente
+     */
     private String generarNumeroOrden() {
         Long totalOrdenes = ordenSalidaService.contarTotalOrdenes();
         int siguienteNumero = totalOrdenes.intValue() + 1;
