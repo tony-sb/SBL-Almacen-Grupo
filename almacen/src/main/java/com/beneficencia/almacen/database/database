@@ -412,3 +412,10 @@ UPDATE productos
 SET categoria = 'Medicamentos'
 WHERE id = 4;
 select * from productos;
+
+-- Agregar columna fecha_vencimiento a la tabla productos
+ALTER TABLE productos
+ADD COLUMN fecha_vencimiento DATE NULL AFTER precio_unitario;
+
+-- Opcional: agregar un índice para búsquedas por fecha de vencimiento
+CREATE INDEX idx_fecha_vencimiento ON productos(fecha_vencimiento);

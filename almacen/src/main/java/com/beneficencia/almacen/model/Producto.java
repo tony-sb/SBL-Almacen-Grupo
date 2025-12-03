@@ -2,6 +2,7 @@ package com.beneficencia.almacen.model;
 
 import jakarta.persistence.*;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -80,6 +81,12 @@ public class Producto {
     private LocalDateTime fechaRegistro = LocalDateTime.now();
 
     /**
+     * Fecha de vencimiento del producto, indica la fecha límite.
+     **/
+    @Column(name = "fecha_vencimiento")
+    private LocalDate fechaVencimiento; // NUEVO CAMPO
+
+    /**
      * Constructor por defecto requerido por JPA.
      */
     public Producto() {}
@@ -139,6 +146,11 @@ public class Producto {
 
     public LocalDateTime getFechaRegistro() { return fechaRegistro; }
     public void setFechaRegistro(LocalDateTime fechaRegistro) { this.fechaRegistro = fechaRegistro; }
+
+    public LocalDate getFechaVencimiento() { return fechaVencimiento; }
+    public void setFechaVencimiento(LocalDate fechaVencimiento) { this.fechaVencimiento = fechaVencimiento; }
+
+
 
     /**
      * Método toString para debugging y logging.
