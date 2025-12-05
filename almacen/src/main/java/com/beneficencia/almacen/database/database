@@ -419,3 +419,23 @@ ADD COLUMN fecha_vencimiento DATE NULL AFTER precio_unitario;
 
 -- Opcional: agregar un índice para búsquedas por fecha de vencimiento
 CREATE INDEX idx_fecha_vencimiento ON productos(fecha_vencimiento);
+
+
+-- Tabla para Cuadre de Inventario
+CREATE TABLE cuadre_inventario (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    producto_id BIGINT NOT NULL,
+    cantidad INT NOT NULL,
+    fecha_vencimiento DATE,
+    observaciones TEXT,
+    accion VARCHAR(20) NOT NULL, -- 'REINGRESAR', 'DESCARTAR'
+    estado VARCHAR(20) NOT NULL DEFAULT 'PENDIENTE', -- 'PENDIENTE', 'CONFIRMADO', 'DESCARTADO'
+    fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    fecha_confirmacion TIMESTAMP NULL,
+    FOREIGN KEY (producto_id) REFERENCES productos(id) ON DELETE CASCADE
+);
+
+-- Índices para búsquedas rápidas
+CREATE INDEX idx_cuadre_estado ON cuadre_inventario(estado);
+CREATE INDEX idx_cuadre_producto ON cuadre_inventario(producto_id);
+CREATE INDEX idx_cuadre_fecha ON cuadre_inventario(fecha_registro);
