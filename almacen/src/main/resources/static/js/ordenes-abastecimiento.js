@@ -516,7 +516,7 @@ window.eliminarItem = eliminarItem;
 
 console.log("📦 Sistema de órdenes cargado y listo");
 
-// ✅ CORRECCIÓN EXTRA: Limpiar eventos duplicados al cargar
+// CORRECCIÓN EXTRA: Limpiar eventos duplicados al cargar
 setTimeout(function() {
     const btn = document.getElementById('agregarProductoBtn');
     if (btn) {
