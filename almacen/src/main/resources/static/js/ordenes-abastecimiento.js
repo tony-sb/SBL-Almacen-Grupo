@@ -1,26 +1,25 @@
-// ordenes-abastecimiento.js - VERSIÓN FINAL SIN DUPLICACIÓN
 console.log("=== INICIANDO SISTEMA DE ÓRDENES DE COMPRA ===");
 
 // Variable global para precios de productos
 window.preciosProductos = {};
 let itemCounter = 0; // Contador global de items
-let botonAgregarInicializado = false; // ✅ NUEVO: Control para evitar inicialización múltiple
+let botonAgregarInicializado = false;
 
 // Función principal para agregar producto - SIMPLIFICADA
 function agregarNuevoItem(event) {
     if (event) {
         event.preventDefault();
         event.stopPropagation();
-        event.stopImmediatePropagation(); // ✅ NUEVO: Detener propagación inmediata
+        event.stopImmediatePropagation();
     }
 
-    console.log(`➕ Agregando nuevo item...`);
+    console.log(`Agregando nuevo item...`);
     console.log("itemCounter antes:", itemCounter);
 
     const container = document.getElementById('items-container');
 
     if (!container) {
-        console.error("❌ Contenedor de items no encontrado");
+        console.error("Contenedor de items no encontrado");
         alert('Error: No se puede agregar items. Recarga la página.');
         return;
     }
@@ -30,7 +29,7 @@ function agregarNuevoItem(event) {
     console.log("Items encontrados:", items.length);
 
     if (items.length >= 50) {
-        console.warn("⚠️ Límite de items alcanzado");
+        console.warn("Límite de items alcanzado");
         alert('Máximo 50 productos por orden');
         return;
     }
@@ -56,7 +55,7 @@ function agregarNuevoItem(event) {
     calcularTotal();
     actualizarContadorItems();
 
-    console.log("✅ Nuevo item agregado correctamente (ID:", nuevoItem.id, ")");
+    console.log("Nuevo item agregado correctamente (ID:", nuevoItem.id, ")");
 
     // Scroll y focus al nuevo item
     setTimeout(() => {
@@ -126,7 +125,7 @@ function configurarNuevoItem(item, index) {
     // Configurar eventos
     configurarEventosItem(item);
 
-    console.log("✅ Item configurado:", index);
+    console.log("Item configurado:", index);
 }
 
 // Configurar eventos para un item específico
@@ -137,21 +136,17 @@ function configurarEventosItem(item) {
     const removeBtn = item.querySelector('.remove-item');
 
     if (!productoSelect || !cantidadInput || !precioInput) {
-        console.error("❌ Elementos faltantes en item:", item);
+        console.error("Elementos faltantes en item:", item);
         return;
     }
-
-    // ✅ CORRECCIÓN: NO clonar elementos, usar los existentes
-    // Esto evita duplicación de eventos
-
     // Evento para seleccionar producto
     productoSelect.addEventListener('change', function() {
         const productoId = this.value;
-        console.log(`🔄 Producto cambiado: ${productoId}`);
+        console.log(`Producto cambiado: ${productoId}`);
 
         if (productoId && window.preciosProductos[productoId]) {
             precioInput.value = window.preciosProductos[productoId];
-            console.log(`💰 Precio automático: ${window.preciosProductos[productoId]}`);
+            console.log(`Precio automático: ${window.preciosProductos[productoId]}`);
             mostrarFeedbackPrecio(precioInput, 'auto');
         } else {
             if (!precioInput.value || precioInput.value === '0.00') {
@@ -202,12 +197,12 @@ function configurarEventosItem(item) {
 
     // Configurar botón eliminar
     if (removeBtn) {
-        // ✅ CORRECCIÓN: Remover eventos anteriores
+        // Remover eventos anteriores
         const nuevoRemoveBtn = removeBtn.cloneNode(true);
         removeBtn.parentNode.replaceChild(nuevoRemoveBtn, removeBtn);
 
         nuevoRemoveBtn.addEventListener('click', function() {
-            console.log("🗑️ Eliminar item clickeado");
+            console.log("Eliminar item clickeado");
             eliminarItem(item);
         });
     }
@@ -220,7 +215,7 @@ function configurarEventosItem(item) {
 // Función para eliminar item
 function eliminarItem(item) {
     const items = document.querySelectorAll('.item-row');
-    console.log(`📦 Total de items: ${items.length}`);
+    console.log(`Total de items: ${items.length}`);
 
     if (items.length > 1) {
         // Animación de eliminación
@@ -231,10 +226,10 @@ function eliminarItem(item) {
             item.remove();
             calcularTotal();
             actualizarContadorItems();
-            console.log("✅ Item eliminado");
+            console.log("Item eliminado");
         }, 300);
     } else {
-        console.log("📝 Último item - reseteando valores...");
+        console.log("Último item - reseteando valores...");
         resetearItem(item);
     }
 }
@@ -317,7 +312,7 @@ function calcularTotal() {
         contadorItems.className = itemsValidos > 0 ? 'badge bg-success' : 'badge bg-secondary';
     }
 
-    console.log(`💰 Total calculado: S/ ${total.toFixed(2)} (${itemsValidos} válidos)`);
+    console.log(`Total calculado: S/ ${total.toFixed(2)} (${itemsValidos} válidos)`);
     return total;
 }
 
@@ -366,25 +361,25 @@ function mostrarFeedbackPrecio(input, tipo) {
     }
 }
 
-// ✅ NUEVA FUNCIÓN: Configurar botón de manera segura
+//Configurar botón de manera segura
 function configurarBotonAgregarSeguro() {
     if (botonAgregarInicializado) {
-        console.log("⚠️  Botón ya inicializado, omitiendo...");
+        console.log("Botón ya inicializado, omitiendo...");
         return;
     }
 
     const addBtn = document.getElementById('agregarProductoBtn');
     if (!addBtn) {
-        console.error("❌ Botón 'Agregar Producto' NO encontrado");
+        console.error("Botón 'Agregar Producto' NO encontrado");
         return;
     }
 
-    console.log("✅ Configurando botón de manera segura...");
+    console.log("Configurando botón de manera segura...");
 
     // Marcar como inicializado
     botonAgregarInicializado = true;
 
-    // ✅ CORRECCIÓN CRÍTICA: Reemplazar completamente el botón
+    // Reemplazar completamente el botón
     const nuevoBtn = document.createElement('button');
     nuevoBtn.type = 'button';
     nuevoBtn.className = addBtn.className;
@@ -394,23 +389,23 @@ function configurarBotonAgregarSeguro() {
     // Reemplazar el botón viejo
     addBtn.parentNode.replaceChild(nuevoBtn, addBtn);
 
-    // ✅ SOLUCIÓN: Un solo event listener
+    // SOLUCIÓN: Un solo event listener
     nuevoBtn.addEventListener('click', function(e) {
         console.log("🎯 Evento ÚNICO ejecutado");
         agregarNuevoItem(e);
     });
 
-    console.log("✅ Botón configurado con un solo listener");
+    console.log("Botón configurado con un solo listener");
 }
 
 // Inicialización cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', function() {
-    console.log("✅ DOM cargado - Inicializando sistema de órdenes");
+    console.log("DOM cargado - Inicializando sistema de órdenes");
 
     // 1. Inicializar precios de productos
     inicializarPreciosProductos();
 
-    // 2. ✅ USAR LA NUEVA FUNCIÓN SEGURA para configurar botón
+    // 2. USAR LA NUEVA FUNCIÓN SEGURA para configurar botón
     configurarBotonAgregarSeguro();
 
     // 3. Inicializar items existentes
@@ -422,33 +417,33 @@ document.addEventListener('DOMContentLoaded', function() {
     // 5. Configurar tooltips
     configurarTooltips();
 
-    console.log("✅ Sistema de órdenes inicializado completamente");
+    console.log("Sistema de órdenes inicializado completamente");
 });
 
 // Inicializar precios
 function inicializarPreciosProductos() {
-    console.log("💰 Inicializando precios de productos...");
+    console.log("Inicializando precios de productos...");
 
     if (typeof window.preciosProductos === 'undefined') {
         window.preciosProductos = {};
-        console.warn("⚠️  preciosProductos no definido, inicializando vacío");
+        console.warn("preciosProductos no definido, inicializando vacío");
     }
 
-    console.log(`✅ ${Object.keys(window.preciosProductos).length} precios disponibles`);
+    console.log(`${Object.keys(window.preciosProductos).length} precios disponibles`);
 }
 
 // Inicializar items existentes
 function inicializarItems() {
-    console.log("🔄 Inicializando items...");
+    console.log("Inicializando items...");
     const items = document.querySelectorAll('.item-row');
-    console.log(`📦 Encontrados ${items.length} items`);
+    console.log(`Encontrados ${items.length} items`);
 
     // Configurar contador basado en items existentes
     itemCounter = items.length;
-    console.log("🔢 Contador establecido en:", itemCounter);
+    console.log("Contador establecido en:", itemCounter);
 
     items.forEach((item, index) => {
-        console.log(`   🔧 Inicializando item ${index + 1} (${item.id || 'sin id'})`);
+        console.log(`Inicializando item ${index + 1} (${item.id || 'sin id'})`);
         configurarEventosItem(item);
         calcularSubtotal(item);
         validarItemCompleto(item);
@@ -460,7 +455,7 @@ function inicializarItems() {
 
 // Configurar confirmaciones de eliminación
 function configurarConfirmacionEliminar() {
-    console.log("🗑️ Configurando confirmaciones de eliminación...");
+    console.log(" Configurando confirmaciones de eliminación...");
     document.addEventListener('click', function(e) {
         if (e.target.closest('.btn-eliminar')) {
             e.preventDefault();
@@ -514,21 +509,21 @@ window.ordenesApp = {
 window.agregarNuevoItem = agregarNuevoItem;
 window.eliminarItem = eliminarItem;
 
-console.log("📦 Sistema de órdenes cargado y listo");
+console.log("Sistema de órdenes cargado y listo");
 
 // CORRECCIÓN EXTRA: Limpiar eventos duplicados al cargar
 setTimeout(function() {
     const btn = document.getElementById('agregarProductoBtn');
     if (btn) {
         // Contar event listeners (para debug)
-        console.log("🔍 Verificando eventos del botón...");
+        console.log("Verificando eventos del botón...");
 
         // Forzar un solo listener
         const nuevoBtn = btn.cloneNode(true);
         btn.parentNode.replaceChild(nuevoBtn, btn);
 
         nuevoBtn.addEventListener('click', function(e) {
-            console.log("🎯 ÚNICO listener ejecutándose");
+            console.log("ÚNICO listener ejecutándose");
             agregarNuevoItem(e);
         });
     }
