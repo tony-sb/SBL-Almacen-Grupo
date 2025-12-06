@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
-<!-- Fragmento simplificado SIN parámetros -->
+<!-- Fragmento simplificado -->
 <div th:fragment="formulario-orden" class="orden-form-container">
 
     <!-- Campo oculto para el ID -->
@@ -53,7 +53,7 @@
         </div>
     </div>
 
-    <!-- Items de la Orden - VERSIÓN CORREGIDA -->
+    <!-- Items de la Orden - VERSIÓN MEJORADA -->
     <div class="mb-3">
         <label class="form-label">Productos *</label>
         <div class="d-flex justify-content-between align-items-center mb-2">
@@ -71,35 +71,10 @@
         </div>
 
         <div id="items-container">
-            <!-- ITEM BASE (siempre presente para clonar) -->
-            <div class="item-row row align-items-center mb-2">
-                <div class="col-md-5">
-                    <select class="form-select producto-select" name="productoIds">
-                        <option value="">Seleccionar producto...</option>
-                        <option th:each="producto : ${productos}"
-                                th:value="${producto.id}"
-                                th:text="${producto.nombre + ' (' + producto.codigo + ')'}">
-                        </option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <input type="number" class="form-control cantidad-input" name="cantidades" value="1" min="1" max="9999">
-                </div>
-                <div class="col-md-2">
-                    <input type="number" class="form-control precio-input" name="precios" value="0.00" min="0" max="999999" step="0.01">
-                </div>
-                <div class="col-md-2">
-                    <input type="text" class="form-control subtotal-display" value="S/ 0.00" readonly>
-                </div>
-                <div class="col-md-1">
-                    <button type="button" class="btn btn-outline-danger btn-sm remove-item">
-                        <i class="bi bi-trash"></i>
-                    </button>
-                </div>
-            </div>
-
             <!-- Items existentes para edición -->
-            <div th:each="item, stat : ${ordenAbastecimiento.items}" th:if="${ordenAbastecimiento.id != null}" class="item-row row align-items-center mb-2">
+            <div th:each="item, stat : ${ordenAbastecimiento.items}"
+                 class="item-row row align-items-center mb-2"
+                 th:id="'item-existing-' + ${stat.index}">
                 <div class="col-md-5">
                     <select class="form-select producto-select" name="productoIds">
                         <option value="">Seleccionar producto...</option>
@@ -121,23 +96,88 @@
                 </div>
                 <div class="col-md-2">
                     <input type="text" class="form-control subtotal-display"
-                           th:value="'S/ ' + ${#numbers.formatDecimal(item.subtotal, 1, 2)}" readonly>
+                           th:value="'S/ ' + ${#numbers.formatDecimal(item.subtotal, 1, 2)}"
+                           readonly>
                 </div>
                 <div class="col-md-1">
-                    <button type="button" class="btn btn-outline-danger btn-sm remove-item">
+                    <button type="button" class="btn btn-outline-danger btn-sm remove-item"
+                            onclick="ordenesApp.eliminarFila(this)">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- ITEM BASE VACÍO (template) - SOLO EN NUEVAS ÓRDENES -->
+            <div th:unless="${ordenAbastecimiento.id != null}"
+                 class="item-row row align-items-center mb-2"
+                 id="item-template" style="display: none;">
+                <div class="col-md-5">
+                    <select class="form-select producto-select" name="productoIds">
+                        <option value="">Seleccionar producto...</option>
+                        <option th:each="producto : ${productos}"
+                                th:value="${producto.id}"
+                                th:text="${producto.nombre} + ' (' + ${producto.codigo} + ')'">
+                        </option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <input type="number" class="form-control cantidad-input" name="cantidades" value="1" min="1" max="9999">
+                </div>
+                <div class="col-md-2">
+                    <input type="number" class="form-control precio-input" name="precios" value="0.00" min="0" max="999999" step="0.01">
+                </div>
+                <div class="col-md-2">
+                    <input type="text" class="form-control subtotal-display" value="S/ 0.00" readonly>
+                </div>
+                <div class="col-md-1">
+                    <button type="button" class="btn btn-outline-danger btn-sm remove-item"
+                            onclick="ordenesApp.eliminarFila(this)">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- PRIMER ITEM (solo para nuevas órdenes) -->
+            <div th:unless="${ordenAbastecimiento.id != null}"
+                 class="item-row row align-items-center mb-2"
+                 id="item-0">
+                <div class="col-md-5">
+                    <select class="form-select producto-select" name="productoIds">
+                        <option value="">Seleccionar producto...</option>
+                        <option th:each="producto : ${productos}"
+                                th:value="${producto.id}"
+                                th:text="${producto.nombre} + ' (' + ${producto.codigo} + ')'">
+                        </option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <input type="number" class="form-control cantidad-input" name="cantidades" value="1" min="1" max="9999">
+                </div>
+                <div class="col-md-2">
+                    <input type="number" class="form-control precio-input" name="precios" value="0.00" min="0" max="999999" step="0.01">
+                </div>
+                <div class="col-md-2">
+                    <input type="text" class="form-control subtotal-display" value="S/ 0.00" readonly>
+                </div>
+                <div class="col-md-1">
+                    <button type="button" class="btn btn-outline-danger btn-sm remove-item"
+                            onclick="ordenesApp.eliminarFila(this)">
                         <i class="bi bi-trash"></i>
                     </button>
                 </div>
             </div>
         </div>
 
-        <button type="button" class="btn btn-outline-secondary btn-sm mt-2" id="add-item"
-                onclick="console.log('Botón clickeado!'); agregarNuevoItem();">
+        <!-- BOTÓN CON EVENTO MEJORADO -->
+        <button type="button" class="btn btn-outline-secondary btn-sm mt-2" id="agregarProductoBtn"
+                onclick="ordenesApp.agregarNuevoItem(event)">
             <i class="bi bi-plus-circle me-1"></i>Agregar Producto
         </button>
 
         <div class="mt-1">
-            <small class="text-muted" id="contador-items-total">1 producto(s) en la orden</small>
+            <small class="text-muted" id="contador-items-total">
+                <span th:text="${ordenAbastecimiento.items != null ? #lists.size(ordenAbastecimiento.items) : 0}">0</span> producto(s) en la orden
+            </small>
         </div>
     </div>
 

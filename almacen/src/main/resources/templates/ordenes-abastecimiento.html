@@ -133,7 +133,7 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link active" href="/productos">
+                        <a class="nav-link" href="/productos">
                             <i class="bi bi-box"></i>
                             Productos
                         </a>
@@ -165,30 +165,13 @@
                     <div class="col-md-4 text-center">
                         <div class="periodo-section">
                             <div class="row g-2 justify-content-center">
-                                <div class="col-auto">
-                                    <label class="form-label mb-0"><strong>Periodo:</strong></label>
-                                    <select class="form-select form-select-sm" id="periodoSelect">
-                                        <option value="2025">2025</option>
-                                        <option value="2024">2024</option>
-                                        <option value="2023">2023</option>
-                                    </select>
-                                </div>
-                                <div class="col-auto">
-                                    <label class="form-label mb-0"><strong>Mes:</strong></label>
-                                    <select class="form-select form-select-sm" id="mesSelect">
-                                        <option value="01">01 - Enero</option>
-                                        <option value="02">02 - Febrero</option>
-                                        <option value="03">03 - Marzo</option>
-                                        <option value="04">04 - Abril</option>
-                                        <option value="05">05 - Mayo</option>
-                                        <option value="06">06 - Junio</option>
-                                        <option value="07">07 - Julio</option>
-                                        <option value="08">08 - Agosto</option>
-                                        <option value="09">09 - Septiembre</option>
-                                        <option value="10">10 - Octubre</option>
-                                        <option value="11">11 - Noviembre</option>
-                                        <option value="12">12 - Diciembre</option>
-                                    </select>
+
+                                <div class="periodo-section">
+                                    <p class="mb-0">
+                                        <i class="bi bi-calendar me-1"></i>
+                                        <strong>Periodo Actual:</strong>
+                                        <span id="fechaActual" class="ms-1"></span>
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -351,25 +334,18 @@
     /*]]>*/
 </script>
 <script>
-    // Seleccionar automáticamente el mes y año actual
+    // Mostrar fecha actual automáticamente
     document.addEventListener('DOMContentLoaded', function() {
         const now = new Date();
-        const currentYear = now.getFullYear().toString();
-        const currentMonth = (now.getMonth() + 1).toString().padStart(2, '0');
+        const options = { year: 'numeric', month: 'long', day: 'numeric' };
+        const fechaFormateada = now.toLocaleDateString('es-ES', options);
 
-        // Seleccionar el año actual
-        const periodoSelect = document.getElementById('periodoSelect');
-        if (periodoSelect) {
-            periodoSelect.value = currentYear;
+        const fechaElement = document.getElementById('fechaActual');
+        if (fechaElement) {
+            fechaElement.textContent = fechaFormateada;
         }
 
-        // Seleccionar el mes actual
-        const mesSelect = document.getElementById('mesSelect');
-        if (mesSelect) {
-            mesSelect.value = currentMonth;
-        }
-
-        console.log(`📅 Fecha actual seleccionada: Año ${currentYear}, Mes ${currentMonth}`);
+        console.log(`📅 Fecha actual: ${fechaFormateada}`);
 
         // INICIALIZAR COMPONENTES DE BOOTSTRAP
         var dropdownElementList = [].slice.call(document.querySelectorAll('.dropdown-toggle'))

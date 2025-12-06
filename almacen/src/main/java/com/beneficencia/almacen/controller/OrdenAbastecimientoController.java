@@ -11,9 +11,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * Controlador para la gestión de órdenes de abastecimiento.
@@ -272,48 +270,52 @@ public class OrdenAbastecimientoController {
         try {
             System.out.println("=== ACTUALIZANDO ORDEN EXISTENTE - ID: " + id + " ===");
 
-            // Verificar que la orden existe
-            OrdenAbastecimiento ordenExistente = ordenAbastecimientoService.obtenerOrdenPorId(id)
-                    .orElseThrow(() -> new IllegalArgumentException("Orden no encontrada con ID: " + id));
-
-            // Validaciones
-            if (proveedorId == null) {
-                throw new IllegalArgumentException("Debe seleccionar un proveedor");
-            }
-
-            // Obtener el usuario autenticado
+            // Obtener usuario autenticado
             String username = authentication.getName();
             Usuario usuario = usuarioService.obtenerUsuarioPorUsername(username)
                     .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado: " + username));
 
-            // Establecer proveedor
+            // Obtener proveedor
             Proveedor proveedor = proveedorService.obtenerProveedorPorId(proveedorId)
                     .orElseThrow(() -> new IllegalArgumentException("Proveedor no encontrado con ID: " + proveedorId));
 
-            // Actualizar datos básicos
-            ordenExistente.setTipoOrden(ordenAbastecimiento.getTipoOrden());
-            ordenExistente.setFechaOA(ordenAbastecimiento.getFechaOA());
-            ordenExistente.setProveedor(proveedor);
-            ordenExistente.setObservaciones(ordenAbastecimiento.getObservaciones());
-            ordenExistente.setFechaActualizacion(LocalDateTime.now());
+            // Crear objeto orden con los datos actualizados
+            OrdenAbastecimiento ordenActualizada = new OrdenAbastecimiento();
+            ordenActualizada.setId(id); // IMPORTANTE: Mantener el ID
+            ordenActualizada.setTipoOrden(ordenAbastecimiento.getTipoOrden());
+            ordenActualizada.setFechaOA(ordenAbastecimiento.getFechaOA());
+            ordenActualizada.setProveedor(proveedor);
+            ordenActualizada.setUsuario(usuario);
+            ordenActualizada.setObservaciones(ordenAbastecimiento.getObservaciones());
 
-            System.out.println("Datos básicos actualizados");
+            // Procesar items
+            List<OrdenAbastecimientoItem> items = procesarItemsParaController(productoIds, cantidades, precios);
+            ordenActualizada.setItems(items);
 
-            // Procesar items (limpiar y agregar nuevos)
-            procesarItemsParaEdicion(ordenExistente, productoIds, cantidades, precios);
+            // IMPORTANTE: Asegurarse que cada item tenga referencia a la orden
+            if (items != null) {
+                for (OrdenAbastecimientoItem item : items) {
+                    item.setOrdenAbastecimiento(ordenActualizada);
+                }
+            }
+
+            System.out.println("📋 Datos preparados para actualización:");
+            System.out.println("   - ID: " + ordenActualizada.getId());
+            System.out.println("   - Items: " + (items != null ? items.size() : 0));
 
             // Guardar la orden actualizada
-            OrdenAbastecimiento ordenActualizada = ordenAbastecimientoService.guardarOrden(ordenExistente);
-            System.out.println("Orden actualizada exitosamente: " + ordenActualizada.getNumeroOA());
+            // El service manejará la lógica de actualización
+            OrdenAbastecimiento ordenGuardada = ordenAbastecimientoService.guardarOrden(ordenActualizada);
+            System.out.println("✅ Orden actualizada exitosamente: " + ordenGuardada.getNumeroOA());
 
             // Mensaje de éxito
             redirectAttributes.addFlashAttribute("success",
-                    "Orden de abastecimiento " + ordenActualizada.getNumeroOA() + " actualizada exitosamente");
+                    "Orden de abastecimiento " + ordenGuardada.getNumeroOA() + " actualizada exitosamente");
 
             return "redirect:/ordenes-abastecimiento";
 
         } catch (Exception e) {
-            System.err.println("ERROR al actualizar orden: " + e.getMessage());
+            System.err.println("❌ ERROR al actualizar orden: " + e.getMessage());
             e.printStackTrace();
 
             return recargarFormularioConError(model, ordenAbastecimiento,
@@ -321,6 +323,68 @@ public class OrdenAbastecimientoController {
         }
     }
 
+    /**
+     * Método auxiliar para procesar items en el controller
+     */
+    private List<OrdenAbastecimientoItem> procesarItemsParaController(List<Long> productoIds,
+                                                                      List<Integer> cantidades,
+                                                                      List<BigDecimal> precios) {
+
+        if (productoIds == null || productoIds.isEmpty() || productoIds.stream().allMatch(Objects::isNull)) {
+            System.out.println("⚠️  No hay items para procesar en el controller");
+            return new ArrayList<>();
+        }
+
+        List<OrdenAbastecimientoItem> items = new ArrayList<>();
+        Set<Long> productosYaProcesados = new HashSet<>();
+        int itemsValidos = 0;
+
+        for (int i = 0; i < productoIds.size(); i++) {
+            Long productoId = productoIds.get(i);
+            Integer cantidad = cantidades != null && i < cantidades.size() ? cantidades.get(i) : null;
+            BigDecimal precio = precios != null && i < precios.size() ? precios.get(i) : null;
+
+            // Validar datos
+            if (productoId != null && cantidad != null && precio != null &&
+                    productoId > 0 && cantidad > 0 && precio.compareTo(BigDecimal.ZERO) >= 0) {
+
+                // Evitar duplicados
+                if (productosYaProcesados.contains(productoId)) {
+                    System.out.println("⚠️  Producto duplicado ignorado: ID " + productoId);
+                    continue;
+                }
+
+                try {
+                    Producto producto = productoService.obtenerProductoPorId(productoId)
+                            .orElseThrow(() -> new IllegalArgumentException("Producto no encontrado ID: " + productoId));
+
+                    OrdenAbastecimientoItem item = new OrdenAbastecimientoItem();
+                    item.setProducto(producto);
+                    item.setCantidad(cantidad);
+                    item.setPrecioUnitario(precio);
+                    item.setSubtotal(precio.multiply(BigDecimal.valueOf(cantidad)));
+                    // NOTA: NO establecer ordenAbastecimiento aquí, se hará en el controller principal
+
+                    items.add(item);
+                    productosYaProcesados.add(productoId);
+                    itemsValidos++;
+
+                    System.out.println("✅ Item preparado: " + producto.getNombre() +
+                            " x " + cantidad + " = S/ " + item.getSubtotal());
+
+                } catch (Exception e) {
+                    System.err.println("Error procesando item " + i + ": " + e.getMessage());
+                }
+            }
+        }
+
+        if (itemsValidos == 0 && productoIds != null && !productoIds.isEmpty()) {
+            throw new IllegalArgumentException("Debe agregar al menos un producto válido a la orden");
+        }
+
+        System.out.println("📦 Total items preparados en controller: " + itemsValidos);
+        return items;
+    }
     /**
      * Elimina una orden de abastecimiento del sistema.
      * Realiza validaciones antes de proceder con la eliminación.
@@ -468,55 +532,85 @@ public class OrdenAbastecimientoController {
                                           List<Integer> cantidades,
                                           List<BigDecimal> precios) {
 
-        // Limpiar items existentes
-        ordenExistente.getItems().clear();
-        System.out.println("Items existentes eliminados");
+        // CORRECCIÓN: Usar el repositorio para eliminar items en lugar de solo limpiar la lista
+        // Esto evita el error de FK constraint
+        if (ordenExistente.getItems() != null && !ordenExistente.getItems().isEmpty()) {
+            // IMPORTANTE: Crear una copia de la lista para evitar ConcurrentModificationException
+            List<OrdenAbastecimientoItem> itemsAEliminar = new ArrayList<>(ordenExistente.getItems());
 
-        // Procesar nuevos items
-        if (productoIds != null && cantidades != null && precios != null &&
-                productoIds.size() == cantidades.size() && productoIds.size() == precios.size()) {
+            // Romper la relación bidireccional antes de eliminar
+            for (OrdenAbastecimientoItem item : itemsAEliminar) {
+                item.setOrdenAbastecimiento(null);
+                ordenExistente.getItems().remove(item);
+            }
 
-            List<OrdenAbastecimientoItem> items = new ArrayList<>();
+            System.out.println("✅ Items existentes eliminados correctamente: " + itemsAEliminar.size());
+        } else {
+            ordenExistente.setItems(new ArrayList<>());
+        }
+
+        // Procesar nuevos items solo si hay datos válidos
+        if (productoIds != null && cantidades != null && precios != null) {
+
+            List<OrdenAbastecimientoItem> nuevosItems = new ArrayList<>();
             int itemsValidos = 0;
 
+            // Usar un Set para evitar duplicados por producto
+            Set<Long> productosYaAgregados = new HashSet<>();
+
             for (int i = 0; i < productoIds.size(); i++) {
-                if (productoIds.get(i) != null && cantidades.get(i) != null && precios.get(i) != null) {
+                Long productoId = productoIds.get(i);
+                Integer cantidad = cantidades.get(i);
+                BigDecimal precio = precios.get(i);
+
+                // Validar que todos los datos del item son válidos
+                if (productoId != null && cantidad != null && precio != null &&
+                        productoId > 0 && cantidad > 0 && precio.compareTo(BigDecimal.ZERO) >= 0) {
 
                     try {
-                        int finalI = i;
-                        Producto producto = productoService.obtenerProductoPorId(productoIds.get(i))
-                                .orElseThrow(() -> new IllegalArgumentException("Producto no encontrado ID: " + productoIds.get(finalI)));
+                        // Verificar que no sea un duplicado en los nuevos items
+                        if (productosYaAgregados.contains(productoId)) {
+                            System.out.println("⚠️  Producto duplicado ignorado: ID " + productoId);
+                            continue;
+                        }
+
+                        Producto producto = productoService.obtenerProductoPorId(productoId)
+                                .orElseThrow(() -> new IllegalArgumentException("Producto no encontrado ID: " + productoId));
 
                         OrdenAbastecimientoItem item = new OrdenAbastecimientoItem();
                         item.setProducto(producto);
-                        item.setCantidad(cantidades.get(i));
-                        item.setPrecioUnitario(precios.get(i));
-                        item.setSubtotal(precios.get(i).multiply(BigDecimal.valueOf(cantidades.get(i))));
-                        item.setOrdenAbastecimiento(ordenExistente);
-                        items.add(item);
+                        item.setCantidad(cantidad);
+                        item.setPrecioUnitario(precio);
+                        item.setSubtotal(precio.multiply(BigDecimal.valueOf(cantidad)));
+                        item.setOrdenAbastecimiento(ordenExistente); // IMPORTANTE: Establecer la relación
 
+                        nuevosItems.add(item);
+                        productosYaAgregados.add(productoId);
                         itemsValidos++;
-                        System.out.println("Item actualizado: " + producto.getNombre() +
-                                " x " + cantidades.get(i) + " = S/ " + item.getSubtotal());
+
+                        System.out.println("✅ Item procesado: " + producto.getNombre() +
+                                " x " + cantidad + " = S/ " + item.getSubtotal());
 
                     } catch (Exception e) {
-                        System.err.println("Error procesando item " + i + " para edición: " + e.getMessage());
+                        System.err.println("❌ Error procesando item " + i + " para edición: " + e.getMessage());
                     }
                 }
             }
 
-            if (itemsValidos == 0) {
+            if (itemsValidos == 0 && (productoIds.size() > 0 && !productoIds.stream().allMatch(Objects::isNull))) {
                 throw new IllegalArgumentException("Debe agregar al menos un producto válido a la orden");
             }
 
-            ordenExistente.getItems().addAll(items);
-            System.out.println("Total items actualizados: " + itemsValidos);
+            // Agregar los nuevos items a la orden
+            ordenExistente.getItems().addAll(nuevosItems);
+            System.out.println("📦 Total items actualizados: " + itemsValidos);
         } else {
-            System.out.println("No hay items válidos para actualizar");
-            throw new IllegalArgumentException("Los datos de los productos no son válidos");
+            System.out.println("ℹ️  No hay items para actualizar");
+            if (productoIds != null && productoIds.size() > 0) {
+                throw new IllegalArgumentException("Los datos de los productos no son válidos");
+            }
         }
     }
-
     /**
      * Recarga el formulario con los datos actuales y un mensaje de error.
      * Utilizado cuando ocurre un error durante el guardado o actualización.

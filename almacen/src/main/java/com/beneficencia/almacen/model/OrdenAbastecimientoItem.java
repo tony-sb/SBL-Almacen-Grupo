@@ -56,6 +56,26 @@ public class OrdenAbastecimientoItem {
     private BigDecimal subtotal;
 
     /**
+     * Método para romper la relación con la orden padre.
+     * Importante antes de eliminar items.
+     */
+    public void desconectarDeOrden() {
+        if (this.ordenAbastecimiento != null) {
+            this.ordenAbastecimiento = null;
+        }
+    }
+
+    /**
+     * Método para conectar con una orden padre.
+     */
+    public void conectarAOrden(OrdenAbastecimiento orden) {
+        this.ordenAbastecimiento = orden;
+        if (orden != null && !orden.getItems().contains(this)) {
+            orden.getItems().add(this);
+        }
+    }
+
+    /**
      * Constructor por defecto requerido por JPA.
      */
     public OrdenAbastecimientoItem() {}

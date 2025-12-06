@@ -1,15 +1,20 @@
 package com.beneficencia.almacen.service;
 
 import com.beneficencia.almacen.model.*;
+import com.beneficencia.almacen.repository.OrdenAbastecimientoItemRepository;
 import com.beneficencia.almacen.repository.OrdenAbastecimientoRepository;
 import com.beneficencia.almacen.repository.ProveedorRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.Year;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -29,6 +34,50 @@ public class OrdenAbastecimientoService {
     @Autowired
     private ProveedorRepository proveedorRepository;
 
+    @Autowired
+    private OrdenAbastecimientoItemRepository ordenAbastecimientoItemRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
+    /**
+     * Gestiona los items antiguos antes de guardar una orden actualizada
+     */
+    private void gestionarItemsAntiguos(OrdenAbastecimiento ordenActualizada) {
+        try {
+            System.out.println("🔄 Gestionando items antiguos para orden ID: " + ordenActualizada.getId());
+
+            // Obtener la orden existente con sus items
+            OrdenAbastecimiento ordenExistente = ordenAbastecimientoRepository
+                    .findByIdWithItems(ordenActualizada.getId())
+                    .orElseThrow(() -> new RuntimeException("Orden no encontrada: " + ordenActualizada.getId()));
+
+            // Si hay items existentes, eliminarlos de la base de datos
+            if (ordenExistente.getItems() != null && !ordenExistente.getItems().isEmpty()) {
+                System.out.println("🗑️ Eliminando " + ordenExistente.getItems().size() + " items antiguos");
+
+                // Crear una copia para evitar ConcurrentModificationException
+                List<OrdenAbastecimientoItem> itemsAEliminar = new ArrayList<>(ordenExistente.getItems());
+
+                // Eliminar cada item de la base de datos
+                for (OrdenAbastecimientoItem item : itemsAEliminar) {
+                    // Primero romper la relación
+                    item.setOrdenAbastecimiento(null);
+                    // Luego eliminar de la lista
+                    ordenExistente.getItems().remove(item);
+                    // Finalmente eliminar de la base de datos
+                    if (item.getId() != null) {
+                        ordenAbastecimientoItemRepository.deleteById(item.getId());
+                    }
+                }
+
+                System.out.println("✅ Items antiguos eliminados correctamente");
+            }
+
+        } catch (Exception e) {
+            System.err.println("❌ Error gestionando items antiguos: " + e.getMessage());
+            throw new RuntimeException("Error al gestionar items antiguos", e);
+        }
+    }
     /**
      * Obtiene todas las órdenes de abastecimiento con relaciones cargadas.
      * Incluye información de proveedor y usuario para visualización completa.
@@ -120,6 +169,11 @@ public class OrdenAbastecimientoService {
         try {
             System.out.println("=== INICIANDO GUARDADO DE ORDEN DE ABASTECIMIENTO ===");
 
+            // Si es una orden existente, eliminar items antiguos PRIMERO
+            if (ordenAbastecimiento.getId() != null) {
+                eliminarItemsAntiguosDirectamente(ordenAbastecimiento.getId());
+            }
+
             // Validaciones básicas
             if (ordenAbastecimiento.getTipoOrden() == null) {
                 throw new IllegalArgumentException("El tipo de orden es requerido");
@@ -128,22 +182,21 @@ public class OrdenAbastecimientoService {
                 throw new IllegalArgumentException("El proveedor es requerido");
             }
 
-            // Generar número de OA automáticamente si no existe
+            // Generar número de OA automáticamente si es nueva
             if (ordenAbastecimiento.getNumeroOA() == null || ordenAbastecimiento.getNumeroOA().isEmpty()) {
                 String nuevoNumero = generarNumeroOAUnico(ordenAbastecimiento.getTipoOrden());
                 ordenAbastecimiento.setNumeroOA(nuevoNumero);
                 System.out.println("Número de orden generado: " + nuevoNumero);
-            } else {
-                // Verificar que el número proporcionado no esté duplicado (solo para nuevas órdenes)
-                if (ordenAbastecimiento.getId() == null) {
-                    boolean existe = ordenAbastecimientoRepository.existsByNumeroOA(ordenAbastecimiento.getNumeroOA());
-                    if (existe) {
-                        throw new RuntimeException("El número de orden ya existe: " + ordenAbastecimiento.getNumeroOA());
-                    }
+            }
+
+            // Asegurar que los items tengan la relación bidireccional
+            if (ordenAbastecimiento.getItems() != null) {
+                for (OrdenAbastecimientoItem item : ordenAbastecimiento.getItems()) {
+                    item.setOrdenAbastecimiento(ordenAbastecimiento);
                 }
             }
 
-            // Calcular total basado en los items
+            // Calcular total
             calcularTotal(ordenAbastecimiento);
 
             // Establecer fechas si no existen
@@ -163,9 +216,11 @@ public class OrdenAbastecimientoService {
             validarItemsOrden(ordenAbastecimiento);
 
             System.out.println("Guardando orden con número: " + ordenAbastecimiento.getNumeroOA());
+
+            // Guardar la orden (esto incluirá los nuevos items)
             OrdenAbastecimiento ordenGuardada = ordenAbastecimientoRepository.save(ordenAbastecimiento);
 
-            System.out.println("Orden guardada exitosamente con ID: " + ordenGuardada.getId());
+            System.out.println("✅ Orden guardada exitosamente con ID: " + ordenGuardada.getId());
             System.out.println("Total de orden: S/ " + ordenGuardada.getTotal());
             System.out.println("Items en orden guardada: " +
                     (ordenGuardada.getItems() != null ? ordenGuardada.getItems().size() : 0));
@@ -176,6 +231,31 @@ public class OrdenAbastecimientoService {
             System.err.println("ERROR al guardar orden: " + e.getMessage());
             e.printStackTrace();
             throw new RuntimeException("Error al guardar la orden: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Eliminar items antiguos usando JPQL directo (EVITA el problema de null)
+     */
+    private void eliminarItemsAntiguosDirectamente(Long ordenId) {
+        try {
+            System.out.println("🗑️ ELIMINANDO items antiguos para orden ID: " + ordenId);
+
+            // Usar JPQL DELETE directo (NO SET NULL, SINO DELETE)
+            String deleteQuery = "DELETE FROM OrdenAbastecimientoItem i WHERE i.ordenAbastecimiento.id = :ordenId";
+            int deleted = entityManager.createQuery(deleteQuery)
+                    .setParameter("ordenId", ordenId)
+                    .executeUpdate();
+
+            System.out.println("✅ " + deleted + " items antiguos ELIMINADOS (no set null)");
+
+            // Limpiar el caché para esta orden
+            entityManager.flush();
+            entityManager.clear();
+
+        } catch (Exception e) {
+            System.err.println("❌ Error eliminando items antiguos: " + e.getMessage());
+            throw new RuntimeException("Error al eliminar items antiguos", e);
         }
     }
 
