@@ -3,6 +3,8 @@ package com.beneficencia.almacen.model;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Entidad que representa una orden de salida de productos del almacén.
@@ -25,6 +27,12 @@ public class OrdenSalida {
     private String numeroOrden;
 
     /**
+     * Número adicional de orden de salida (nueva columna).
+     */
+    @Column(name = "numero_orden_salida", unique = true, nullable = false)
+    private String numeroOrdenSalida;
+
+    /**
      * Fecha en que se realiza la salida física de los productos.
      * Campo obligatorio que indica cuándo se entregaron los productos.
      */
@@ -35,7 +43,7 @@ public class OrdenSalida {
      * DNI del usuario o beneficiario que recibe los productos.
      * Campo obligatorio para identificación del receptor.
      */
-    @Column(name = "dni_usuario", nullable = false)
+    @Column(name = "dni_usuario", nullable = false, length = 8)
     private String dniUsuario;
 
     /**
@@ -44,6 +52,13 @@ public class OrdenSalida {
      */
     @Column(name = "nombre_usuario", nullable = false)
     private String nombreUsuario;
+
+    /**
+     * Relación con beneficiario para integridad referencial.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "beneficiario_id")
+    private Beneficiario beneficiario;
 
     /**
      * Número de trámite asociado a la salida de productos.
@@ -66,11 +81,38 @@ public class OrdenSalida {
     private String descripcion;
 
     /**
+     * Usuario del sistema que registra la orden.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "usuario_id", nullable = false)
+    private Usuario usuario;
+
+    /**
+     * Estado de la orden.
+     */
+    @Column(nullable = false)
+    private String estado = "COMPLETADA";
+
+    /**
+     * Observaciones adicionales.
+     */
+    private String observaciones;
+
+    /**
      * Fecha y hora en que se registró la orden en el sistema.
      * Se establece automáticamente al crear el registro.
      */
     @Column(name = "fecha_registro")
     private LocalDateTime fechaRegistro;
+
+    @Column(name = "fecha_actualizacion")
+    private LocalDateTime fechaActualizacion;
+
+    /**
+     * Items de la orden de salida.
+     */
+    @OneToMany(mappedBy = "ordenSalida", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<OrdenSalidaItem> items = new ArrayList<>();
 
     /**
      * Constructor por defecto.
@@ -79,134 +121,86 @@ public class OrdenSalida {
      */
     public OrdenSalida() {
         this.fechaRegistro = LocalDateTime.now();
+        this.fechaActualizacion = LocalDateTime.now();
         this.cantidadProductos = 0;
+        this.estado = "COMPLETADA";
+        this.numeroOrdenSalida = "OS-" + System.currentTimeMillis();
     }
 
     // Getters y Setters
 
-    /**
-     * Obtiene el ID único de la orden de salida.
-     *
-     * @return ID de la orden
-     */
     public Long getId() { return id; }
-
-    /**
-     * Establece el ID único de la orden de salida.
-     *
-     * @param id ID de la orden
-     */
     public void setId(Long id) { this.id = id; }
 
-    /**
-     * Obtiene el número único identificador de la orden.
-     *
-     * @return Número de orden
-     */
     public String getNumeroOrden() { return numeroOrden; }
-
-    /**
-     * Establece el número único identificador de la orden.
-     *
-     * @param numeroOrden Número de orden
-     */
     public void setNumeroOrden(String numeroOrden) { this.numeroOrden = numeroOrden; }
 
-    /**
-     * Obtiene la fecha de salida de los productos.
-     *
-     * @return Fecha de salida
-     */
-    public LocalDate getFechaSalida() { return fechaSalida; }
+    public String getNumeroOrdenSalida() { return numeroOrdenSalida; }
+    public void setNumeroOrdenSalida(String numeroOrdenSalida) { this.numeroOrdenSalida = numeroOrdenSalida; }
 
-    /**
-     * Establece la fecha de salida de los productos.
-     *
-     * @param fechaSalida Fecha de salida
-     */
+    public LocalDate getFechaSalida() { return fechaSalida; }
     public void setFechaSalida(LocalDate fechaSalida) { this.fechaSalida = fechaSalida; }
 
-    /**
-     * Obtiene el DNI del usuario beneficiario.
-     *
-     * @return DNI del usuario
-     */
     public String getDniUsuario() { return dniUsuario; }
-
-    /**
-     * Establece el DNI del usuario beneficiario.
-     *
-     * @param dniUsuario DNI del usuario
-     */
     public void setDniUsuario(String dniUsuario) { this.dniUsuario = dniUsuario; }
 
-    /**
-     * Obtiene el nombre del usuario beneficiario.
-     *
-     * @return Nombre del usuario
-     */
     public String getNombreUsuario() { return nombreUsuario; }
-
-    /**
-     * Establece el nombre del usuario beneficiario.
-     *
-     * @param nombreUsuario Nombre del usuario
-     */
     public void setNombreUsuario(String nombreUsuario) { this.nombreUsuario = nombreUsuario; }
 
-    /**
-     * Obtiene el número de trámite asociado.
-     *
-     * @return Número de trámite
-     */
-    public String getNumeroTramite() { return numeroTramite; }
+    public Beneficiario getBeneficiario() { return beneficiario; }
+    public void setBeneficiario(Beneficiario beneficiario) { this.beneficiario = beneficiario; }
 
-    /**
-     * Establece el número de trámite asociado.
-     *
-     * @param numeroTramite Número de trámite
-     */
+    public String getNumeroTramite() { return numeroTramite; }
     public void setNumeroTramite(String numeroTramite) { this.numeroTramite = numeroTramite; }
 
-    /**
-     * Obtiene la cantidad total de productos entregados.
-     *
-     * @return Cantidad de productos
-     */
     public Integer getCantidadProductos() { return cantidadProductos; }
-
-    /**
-     * Establece la cantidad total de productos entregados.
-     *
-     * @param cantidadProductos Cantidad de productos
-     */
     public void setCantidadProductos(Integer cantidadProductos) { this.cantidadProductos = cantidadProductos; }
 
-    /**
-     * Obtiene la descripción de la orden.
-     *
-     * @return Descripción de la orden
-     */
     public String getDescripcion() { return descripcion; }
-
-    /**
-     * Establece la descripción de la orden.
-     *
-     * @param descripcion Descripción de la orden
-     */
     public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
 
-    /**
-     * Obtiene la fecha y hora de registro en el sistema.
-     *
-     * @return Fecha y hora de registro
-     */
+    public Usuario getUsuario() { return usuario; }
+    public void setUsuario(Usuario usuario) { this.usuario = usuario; }
+
+    public String getEstado() { return estado; }
+    public void setEstado(String estado) { this.estado = estado; }
+
+    public String getObservaciones() { return observaciones; }
+    public void setObservaciones(String observaciones) { this.observaciones = observaciones; }
+
     public LocalDateTime getFechaRegistro() { return fechaRegistro; }
+    public void setFechaRegistro(LocalDateTime fechaRegistro) { this.fechaRegistro = fechaRegistro; }
+
+    public LocalDateTime getFechaActualizacion() { return fechaActualizacion; }
+    public void setFechaActualizacion(LocalDateTime fechaActualizacion) { this.fechaActualizacion = fechaActualizacion; }
+
+    public List<OrdenSalidaItem> getItems() { return items; }
+    public void setItems(List<OrdenSalidaItem> items) { this.items = items; }
 
     /**
-     * Establece la fecha y hora de registro en el sistema.
-     *
-     * @param fechaRegistro Fecha y hora de registro
+     * Método para agregar un item a la orden.
      */
-    public void setFechaRegistro(LocalDateTime fechaRegistro) { this.fechaRegistro = fechaRegistro; }
+    public void agregarItem(OrdenSalidaItem item) {
+        items.add(item);
+        item.setOrdenSalida(this);
+        actualizarCantidadTotal();
+    }
+
+    /**
+     * Método para actualizar la cantidad total de productos.
+     */
+    private void actualizarCantidadTotal() {
+        this.cantidadProductos = items.stream()
+                .mapToInt(OrdenSalidaItem::getCantidad)
+                .sum();
+    }
+
+    /**
+     * Método para calcular el total de la orden.
+     */
+    public Double getTotalOrden() {
+        return items.stream()
+                .mapToDouble(item -> item.getSubtotal() != null ? item.getSubtotal().doubleValue() : 0.0)
+                .sum();
+    }
 }

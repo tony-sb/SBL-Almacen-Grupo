@@ -20,16 +20,23 @@
             <div class="row">
                 <div class="col-md-6">
                     <div class="mb-3">
-                        <label for="numero-tramite" class="form-label">Nº de trámite *</label>
-                        <input type="text" class="form-control" id="numero-tramite" name="numeroTramite"
-                               placeholder="Ingrese número de trámite" required>
+                        <label for="numero-tramite" class="form-label">Nº de O.S.</label>
+                        <input type="text" class="form-control"
+                               id="numero-tramite-preview"
+                               value="Se generará automáticamente"
+                               readonly
+                               style="background-color: #f8f9fa;">
+                        <small class="text-muted">Número de orden generado automáticamente</small>
+                        <!-- Campo oculto para el backend -->
+                        <input type="hidden" id="numero-tramite" name="numeroTramite">
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="mb-3">
                         <label for="fecha-salida" class="form-label">Fecha de Salida *</label>
                         <input type="date" class="form-control" id="fecha-salida" name="fechaSalida"
-                               th:value="${#temporals.format(#temporals.createToday(), 'yyyy-MM-dd')}" required>
+                               th:value="${#temporals.format(#temporals.createToday(), 'yyyy-MM-dd')}"
+                               required>
                     </div>
                 </div>
             </div>
@@ -45,7 +52,12 @@
                     <div class="mb-3">
                         <label for="user-dni" class="form-label">DNI *</label>
                         <input type="text" class="form-control" id="user-dni" name="dniUsuario"
-                               placeholder="Ingrese DNI" required>
+                               placeholder="Ingrese DNI (8 dígitos)"
+                               pattern="\d{8}"
+                               maxlength="8"
+                               title="El DNI debe tener 8 dígitos"
+                               required>
+                        <small class="form-text">8 dígitos numéricos</small>
                     </div>
                 </div>
             </div>
@@ -82,7 +94,7 @@
                     <thead class="table-dark">
                     <tr>
                         <th>Elegir</th>
-                        <th>Codigo</th>
+                        <th>Código</th>
                         <th>U.Medida</th>
                         <th>Descripción</th>
                         <th>Grupo</th>
@@ -101,7 +113,12 @@
                         <td th:text="${producto.unidadMedida}"></td>
                         <td th:text="${producto.nombre}"></td>
                         <td th:text="${producto.categoria}"></td>
-                        <td th:text="${producto.cantidad}"></td>
+                        <td>
+                            <span class="badge"
+                                  th:class="${producto.cantidad <= producto.stockMinimo ? 'bg-warning' : 'bg-success'}">
+                                <span th:text="${producto.cantidad}"></span>
+                            </span>
+                        </td>
                     </tr>
                     </tbody>
                 </table>
@@ -146,16 +163,30 @@
         </div>
     </div>
 
-    <!-- Leyenda -->
-    <div class="card mb-4">
-        <div class="card-body">
-            <p class="mb-1"><strong>Legenda:</strong> La Ley Orgánica de Protección General de las Unidades de los Acuerdos</p>
-            <p class="mb-0"><strong>Categoría:</strong> DATE: 1.11emrs agregado</p>
-        </div>
+    <!-- Validación de DNI -->
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle me-2"></i>
+        <strong>Nota:</strong> El número de orden (Nº O.S.) se generará automáticamente al guardar.
     </div>
 
     <!-- Script para funcionalidad del formulario -->
     <script>
+        // Variables globales
+        let productosSeleccionados = [];
+        let numeroOrdenBase = '';
+
+        // Generar número de orden base al cargar
+        function generarNumeroOrdenBase() {
+            const hoy = new Date();
+            const año = hoy.getFullYear();
+            const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+            const dia = String(hoy.getDate()).padStart(2, '0');
+
+            // Base: OS-YYYYMMDD-XXX
+            numeroOrdenBase = `OS-${año}${mes}${dia}-`;
+            console.log('Número base generado:', numeroOrdenBase);
+        }
+
         function buscarProductos() {
             const termino = document.getElementById('search-term').value.toLowerCase();
             const filas = document.querySelectorAll('#tabla-productos tr');
@@ -190,10 +221,88 @@
                     fila.classList.add('table-success');
                 }
             });
+
+            console.log('Producto seleccionado:', { id, codigo, nombre, stock });
+        }
+
+        // Validar DNI en tiempo real
+        function validarDNI() {
+            const dniInput = document.getElementById('user-dni');
+            const dni = dniInput.value;
+
+            if (dni.length === 8 && /^\d+$/.test(dni)) {
+                dniInput.classList.remove('is-invalid');
+                dniInput.classList.add('is-valid');
+                return true;
+            } else if (dni.length > 0) {
+                dniInput.classList.remove('is-valid');
+                dniInput.classList.add('is-invalid');
+                return false;
+            } else {
+                dniInput.classList.remove('is-valid', 'is-invalid');
+                return false;
+            }
+        }
+
+        // Validar formulario completo antes de enviar
+        function validarFormulario() {
+            const dniValido = validarDNI();
+            const productoSeleccionado = document.getElementById('product-id').value;
+            const cantidad = document.getElementById('product-quantity').value;
+            const stock = parseInt(document.getElementById('available-stock').value);
+
+            let errores = [];
+
+            if (!dniValido) {
+                errores.push('El DNI debe tener 8 dígitos numéricos');
+            }
+
+            if (!productoSeleccionado) {
+                errores.push('Por favor seleccione un producto');
+            }
+
+            if (!cantidad || cantidad <= 0) {
+                errores.push('Ingrese una cantidad válida');
+            }
+
+            if (parseInt(cantidad) > stock) {
+                errores.push(`La cantidad no puede ser mayor al stock disponible (${stock})`);
+            }
+
+            if (errores.length > 0) {
+                alert('Error:\n' + errores.join('\n'));
+                return false;
+            }
+
+            // Generar número de orden final antes de enviar
+            generarNumeroOrdenFinal();
+            return true;
+        }
+
+        // Generar número de orden final con timestamp
+        function generarNumeroOrdenFinal() {
+            const timestamp = Date.now();
+            const random = Math.floor(Math.random() * 1000);
+            const numeroOrden = `${numeroOrdenBase}${timestamp.toString().slice(-3)}${random.toString().padStart(3, '0')}`;
+
+            document.getElementById('numero-tramite-preview').value = numeroOrden;
+            document.getElementById('numero-tramite').value = numeroOrden;
+
+            console.log('Número de orden generado:', numeroOrden);
         }
 
         // Inicializar cuando se carga el modal
         document.addEventListener('DOMContentLoaded', function() {
+            // Generar número base
+            generarNumeroOrdenBase();
+
+            // Establecer fecha máxima como hoy
+            const hoy = new Date().toISOString().split('T')[0];
+            document.getElementById('fecha-salida').max = hoy;
+
+            // Validar DNI en tiempo real
+            document.getElementById('user-dni').addEventListener('input', validarDNI);
+
             // Seleccionar el primer producto por defecto
             const primeraFila = document.querySelector('#tabla-productos tr');
             if (primeraFila) {
@@ -202,11 +311,13 @@
                     const id = radio.value;
                     const codigo = primeraFila.cells[1].textContent;
                     const nombre = primeraFila.cells[3].textContent;
-                    const stock = parseInt(primeraFila.cells[5].textContent);
+                    const stock = parseInt(primeraFila.cells[5].querySelector('span').textContent);
                     seleccionarProducto(id, codigo, nombre, stock);
                     radio.checked = true;
                 }
             }
+
+            console.log('Formulario de orden de salida inicializado');
         });
     </script>
 </div>

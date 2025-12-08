@@ -1,5 +1,3 @@
-console.log("=== INICIANDO SISTEMA DE ÓRDENES DE COMPRA ===");
-
 // Variable global para precios de productos
 window.preciosProductos = {};
 let itemCounter = 0; // Contador global de items

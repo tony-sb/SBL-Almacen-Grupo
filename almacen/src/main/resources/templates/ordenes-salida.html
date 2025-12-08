@@ -114,31 +114,12 @@
                     <div class="col-md-4 text-center">
                         <div class="periodo-section">
                             <div class="row g-2 justify-content-center">
-                                <div class="col-auto">
-                                    <label class="form-label mb-0"><strong>Periodo:</strong></label>
-                                    <select class="form-select form-select-sm" id="periodoSelect">
-                                        <option value="2025">2025</option>
-                                        <option value="2024">2024</option>
-                                        <option value="2023">2023</option>
-                                    </select>
-                                </div>
-                                <div class="col-auto">
-                                    <label class="form-label mb-0"><strong>Mes:</strong></label>
-                                    <select class="form-select form-select-sm" id="mesSelect">
-                                        <option value="0">Todos</option>
-                                        <option value="01">01 - Enero</option>
-                                        <option value="02">02 - Febrero</option>
-                                        <option value="03">03 - Marzo</option>
-                                        <option value="04">04 - Abril</option>
-                                        <option value="05">05 - Mayo</option>
-                                        <option value="06">06 - Junio</option>
-                                        <option value="07">07 - Julio</option>
-                                        <option value="08">08 - Agosto</option>
-                                        <option value="09">09 - Septiembre</option>
-                                        <option value="10">10 - Octubre</option>
-                                        <option value="11">11 - Noviembre</option>
-                                        <option value="12">12 - Diciembre</option>
-                                    </select>
+                                <div class="periodo-section">
+                                    <p class="mb-0">
+                                        <i class="bi bi-calendar me-1"></i>
+                                        <strong>Periodo Actual:</strong>
+                                        <span id="fechaActual" class="ms-1"></span>
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -255,7 +236,7 @@
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form th:action="@{/ordenes-salida/guardar}" method="post" id="formSalidaModal">
+            <form th:action="@{/ordenes-salida/guardar}" method="post" id="formSalidaModal" onsubmit="return validarFormularioSalida()">
                 <div class="modal-body">
                     <!-- Sección de Fecha -->
                     <div class="card mb-4">
@@ -273,16 +254,29 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label for="numero-tramite" class="form-label">Nº de trámite *</label>
-                                        <input type="text" class="form-control" id="numero-tramite" name="numeroTramite"
-                                               placeholder="Ingrese número de trámite" required>
+                                        <label for="numero-tramite" class="form-label">Nº de O.S.</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control"
+                                                   id="numero-tramite-preview"
+                                                   value="Se generará automáticamente"
+                                                   readonly
+                                                   style="background-color: #f8f9fa;">
+                                            <span class="input-group-text">
+                                                <i class="bi bi-info-circle"
+                                                   title="Se generará automáticamente al guardar"></i>
+                                            </span>
+                                        </div>
+                                        <small class="text-muted">Número de orden generado automáticamente</small>
+                                        <!-- Campo oculto para el backend -->
+                                        <input type="hidden" id="numero-tramite" name="numeroTramite">
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="mb-3">
                                         <label for="fecha-salida" class="form-label">Fecha de Salida *</label>
                                         <input type="date" class="form-control" id="fecha-salida" name="fechaSalida"
-                                               th:value="${#temporals.format(#temporals.createToday(), 'yyyy-MM-dd')}" required>
+                                               th:value="${#temporals.format(#temporals.createToday(), 'yyyy-MM-dd')}"
+                                               required>
                                     </div>
                                 </div>
                             </div>
@@ -298,14 +292,20 @@
                                     <div class="mb-3">
                                         <label for="user-dni" class="form-label">DNI *</label>
                                         <input type="text" class="form-control" id="user-dni" name="dniUsuario"
-                                               placeholder="Ingrese DNI" required>
+                                               placeholder="Ingrese DNI (8 dígitos)"
+                                               pattern="\d{8}"
+                                               maxlength="8"
+                                               title="El DNI debe tener 8 dígitos"
+                                               oninput="validarDniInput(this)"
+                                               required>
+                                        <small class="form-text">8 dígitos numéricos</small>
                                     </div>
                                 </div>
                             </div>
                             <div class="mb-3">
                                 <label for="description" class="form-label">Descripción</label>
-                                <input type="text" class="form-control" id="description" name="descripcion"
-                                       placeholder="Ingrese descripción">
+                                <textarea class="form-control" id="description" name="descripcion"
+                                          placeholder="Ingrese descripción de la salida" rows="3"></textarea>
                             </div>
                         </div>
                     </div>
@@ -335,7 +335,7 @@
                                     <thead class="table-dark">
                                     <tr>
                                         <th>Elegir</th>
-                                        <th>Codigo</th>
+                                        <th>Código</th>
                                         <th>U.Medida</th>
                                         <th>Descripción</th>
                                         <th>Grupo</th>
@@ -387,13 +387,7 @@
                         </div>
                     </div>
 
-                    <!-- Leyenda -->
-                    <div class="card mb-4">
-                        <div class="card-body">
-                            <p class="mb-1"><strong>Legenda:</strong> La Ley Orgánica de Protección General de las Unidades de los Acuerdos</p>
-                            <p class="mb-0"><strong>Categoría:</strong> DATE: 1.11emrs agregado</p>
-                        </div>
-                    </div>
+
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
@@ -411,5 +405,136 @@
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script th:src="@{/js/ordenes-salida.js}"></script>
+<script>
+    // Mostrar fecha actual automáticamente
+    document.addEventListener('DOMContentLoaded', function() {
+        const now = new Date();
+        const options = {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        };
+        const fechaFormateada = now.toLocaleDateString('es-ES', options);
+
+        const fechaElement = document.getElementById('fechaActual');
+        if (fechaElement) {
+            fechaElement.textContent = fechaFormateada;
+        }
+
+        console.log(`Fecha actual: ${fechaFormateada}`);
+
+        // Configurar fecha máxima como hoy
+        const hoy = new Date().toISOString().split('T')[0];
+        const fechaSalidaInput = document.getElementById('fecha-salida');
+        if (fechaSalidaInput) {
+            fechaSalidaInput.max = hoy;
+        }
+
+        // Inicializar validación DNI
+        const dniInput = document.getElementById('user-dni');
+        if (dniInput) {
+            dniInput.addEventListener('input', function() {
+                validarDniInput(this);
+            });
+        }
+    });
+
+    // Función para validar DNI en tiempo real
+    function validarDniInput(input) {
+        const dni = input.value;
+
+        if (dni.length === 8 && /^\d+$/.test(dni)) {
+            input.classList.remove('is-invalid');
+            input.classList.add('is-valid');
+            return true;
+        } else if (dni.length > 0) {
+            input.classList.remove('is-valid');
+            input.classList.add('is-invalid');
+            return false;
+        } else {
+            input.classList.remove('is-valid', 'is-invalid');
+            return false;
+        }
+    }
+
+    // Generar número de orden automático
+    function generarNumeroOrden() {
+        const hoy = new Date();
+        const año = hoy.getFullYear();
+        const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+        const dia = String(hoy.getDate()).padStart(2, '0');
+        const timestamp = Date.now();
+        const random = Math.floor(Math.random() * 1000);
+
+        // Formato: OS-YYYYMMDD-TIMESTAMP-RANDOM
+        const numeroOrden = `OS-${año}${mes}${dia}-${timestamp.toString().slice(-4)}${random.toString().padStart(3, '0')}`;
+
+        return numeroOrden;
+    }
+
+    // Validar formulario completo antes de enviar
+    function validarFormularioSalida() {
+        const dniValido = validarDniInput(document.getElementById('user-dni'));
+        const productoSeleccionado = document.getElementById('product-id').value;
+        const cantidad = document.getElementById('product-quantity').value;
+        const stock = parseInt(document.getElementById('available-stock').value);
+
+        let errores = [];
+
+        if (!dniValido) {
+            errores.push('El DNI debe tener 8 dígitos numéricos');
+        }
+
+        if (!productoSeleccionado) {
+            errores.push('Por favor seleccione un producto');
+        }
+
+        if (!cantidad || cantidad <= 0) {
+            errores.push('Ingrese una cantidad válida');
+        }
+
+        if (parseInt(cantidad) > stock) {
+            errores.push(`La cantidad no puede ser mayor al stock disponible (${stock})`);
+        }
+
+        if (errores.length > 0) {
+            alert('Error:\n' + errores.join('\n'));
+            return false;
+        }
+
+        // Generar y establecer número de orden automático
+        const numeroOrden = generarNumeroOrden();
+        document.getElementById('numero-tramite-preview').value = numeroOrden;
+        document.getElementById('numero-tramite').value = numeroOrden;
+
+        console.log('Número de orden generado:', numeroOrden);
+        return true;
+    }
+</script>
+</body>
+</html>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/ordenes-salida.js}"></script>
+<script>
+    // Mostrar fecha actual automáticamente
+document.addEventListener('DOMContentLoaded', function() {
+    const now = new Date();
+    const options = {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    };
+    const fechaFormateada = now.toLocaleDateString('es-ES', options);
+
+    const fechaElement = document.getElementById('fechaActual');
+    if (fechaElement) {
+        fechaElement.textContent = fechaFormateada;
+    }
+
+    console.log(`Fecha actual: ${fechaFormateada}`);
+});
+</script>
 </body>
 </html>

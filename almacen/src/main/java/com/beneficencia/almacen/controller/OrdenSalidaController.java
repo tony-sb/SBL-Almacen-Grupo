@@ -1,6 +1,7 @@
 package com.beneficencia.almacen.controller;
 
 import com.beneficencia.almacen.model.OrdenSalida;
+import com.beneficencia.almacen.model.OrdenSalidaItem;
 import com.beneficencia.almacen.model.Producto;
 import com.beneficencia.almacen.repository.OrdenSalidaRepository;
 import com.beneficencia.almacen.service.OrdenSalidaService;
@@ -46,50 +47,55 @@ public class OrdenSalidaController {
      * @param model Modelo para pasar datos a la vista
      * @return Nombre de la vista 'ordenes-salida'
      */
+    // Array de meses en español (para usar en la vista)
+    private final String[] MESES_ESPANOL = {
+            "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+            "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+    };
+
     @GetMapping
     public String mostrarPaginaOrdenSalida(
-            @RequestParam(value = "periodo", required = false, defaultValue = "2025") Integer periodo,
-            @RequestParam(value = "mes", required = false, defaultValue = "0") Integer mes,
             @RequestParam(value = "busqueda", required = false) String busqueda,
             Model model) {
 
+        // Obtener fecha actual
+        LocalDate hoy = LocalDate.now();
+        int añoActual = hoy.getYear();
+        int mesActual = hoy.getMonthValue();
+
+        // Obtener nombre del mes en español
+        String nombreMes = MESES_ESPANOL[mesActual - 1];
+
+        // Filtrar por mes actual
+        LocalDate inicioMes = hoy.withDayOfMonth(1);
+        LocalDate finMes = hoy.withDayOfMonth(hoy.lengthOfMonth());
+
         List<OrdenSalida> ordenesSalida;
 
-        // Primero verificar si hay búsqueda por DNI o trámite
         if (busqueda != null && !busqueda.trim().isEmpty()) {
-            // Buscar tanto por DNI como por número de trámite
-            List<OrdenSalida> porDni = ordenSalidaService.buscarPorDniUsuario(busqueda);
-            List<OrdenSalida> porTramite = ordenSalidaService.buscarPorNumeroTramite(busqueda);
-
-            // Combinar resultados (evitar duplicados)
-            ordenesSalida = porDni;
-            for (OrdenSalida orden : porTramite) {
-                if (!ordenesSalida.contains(orden)) {
-                    ordenesSalida.add(orden);
-                }
+            // Búsqueda por DNI (8 dígitos)
+            if (busqueda.matches("\\d{8}")) {
+                ordenesSalida = ordenSalidaService.buscarPorDniUsuario(busqueda);
+            } else {
+                // Búsqueda por número de trámite o número de orden
+                ordenesSalida = ordenSalidaService.buscarPorNumeroTramite(busqueda);
             }
         } else {
-            // Filtrar por período y mes
-            if (mes != null && mes > 0) {
-                YearMonth yearMonth = YearMonth.of(periodo, mes);
-                LocalDate fechaInicio = yearMonth.atDay(1);
-                LocalDate fechaFin = yearMonth.atEndOfMonth();
-                ordenesSalida = ordenSalidaService.buscarPorFecha(fechaInicio, fechaFin);
-            } else {
-                // Todas las órdenes del año
-                LocalDate fechaInicio = LocalDate.of(periodo, 1, 1);
-                LocalDate fechaFin = LocalDate.of(periodo, 12, 31);
-                ordenesSalida = ordenSalidaService.buscarPorFecha(fechaInicio, fechaFin);
-            }
+            // Mostrar solo el mes actual
+            ordenesSalida = ordenSalidaService.buscarPorFecha(inicioMes, finMes);
         }
 
+        // Agregar atributos al modelo
         model.addAttribute("ordenesSalida", ordenesSalida);
-        model.addAttribute("periodo", periodo);
-        model.addAttribute("mes", mes);
+        model.addAttribute("añoActual", añoActual);
+        model.addAttribute("mesActual", mesActual);
+        model.addAttribute("nombreMes", nombreMes);
+        model.addAttribute("hoy", hoy);
         model.addAttribute("busqueda", busqueda);
 
         return "ordenes-salida";
     }
+
 
     /**
      * Procesa el guardado de una nueva orden de salida.
@@ -105,9 +111,11 @@ public class OrdenSalidaController {
      * @param redirectAttributes Atributos para mensajes flash en redirección
      * @return Redirección a la lista de órdenes de salida
      */
+    // En el método guardarOrdenSalida, actualízalo para usar la nueva estructura:
+
     @PostMapping("/guardar")
     public String guardarOrdenSalida(
-            @RequestParam String numeroTramite,
+            @RequestParam(required = false) String numeroTramite,
             @RequestParam String fechaSalida,
             @RequestParam String nombreUsuario,
             @RequestParam String dniUsuario,
@@ -117,7 +125,12 @@ public class OrdenSalidaController {
             RedirectAttributes redirectAttributes) {
 
         try {
-            // Crear y guardar la orden de salida
+            // Validar DNI (8 dígitos)
+            if (dniUsuario == null || !dniUsuario.matches("\\d{8}")) {
+                throw new RuntimeException("El DNI debe tener exactamente 8 dígitos");
+            }
+
+            // 1. Crear la orden de salida
             OrdenSalida ordenSalida = new OrdenSalida();
             ordenSalida.setNumeroTramite(numeroTramite);
             ordenSalida.setFechaSalida(LocalDate.parse(fechaSalida));
@@ -125,12 +138,7 @@ public class OrdenSalidaController {
             ordenSalida.setDniUsuario(dniUsuario);
             ordenSalida.setDescripcion(descripcion);
 
-            // Generar número de orden automático
-            String numeroOrden = generarNumeroOrden();
-            ordenSalida.setNumeroOrden(numeroOrden);
-            ordenSalida.setCantidadProductos(cantidad);
-
-            // Actualizar stock del producto
+            // 2. Obtener el producto
             Producto producto = productoService.obtenerProductoPorId(productoId)
                     .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
 
@@ -138,12 +146,18 @@ public class OrdenSalidaController {
                 throw new RuntimeException("Stock insuficiente. Stock disponible: " + producto.getCantidad());
             }
 
-            producto.setCantidad(producto.getCantidad() - cantidad);
-            productoService.actualizarProducto(producto);
+            // 3. Crear el item de la orden
+            OrdenSalidaItem item = new OrdenSalidaItem();
+            item.setProducto(producto);
+            item.setCantidad(cantidad);
+            item.setPrecioUnitario(producto.getPrecioUnitario());
 
-            ordenSalidaService.guardarOrden(ordenSalida);
+            // 4. Guardar la orden con el item usando el nuevo servicio
+            ordenSalida.agregarItem(item);
+            ordenSalidaService.guardarOrdenConItems(ordenSalida, ordenSalida.getItems());
 
             redirectAttributes.addFlashAttribute("success", "Orden de salida guardada exitosamente");
+            redirectAttributes.addFlashAttribute("numeroOrden", ordenSalida.getNumeroOrden());
             return "redirect:/ordenes-salida?success";
 
         } catch (Exception e) {
@@ -151,7 +165,6 @@ public class OrdenSalidaController {
             return "redirect:/ordenes-salida?error";
         }
     }
-
     /**
      * Endpoint REST para obtener la lista de todos los productos disponibles.
      * Utilizado para cargar dinámicamente los productos en los formularios.
@@ -286,17 +299,5 @@ public class OrdenSalidaController {
             redirectAttributes.addFlashAttribute("error", "Error al actualizar la orden: " + e.getMessage());
             return "redirect:/ordenes-salida?error";
         }
-    }
-
-    /**
-     * Genera un número de orden automático basado en el total de órdenes existentes.
-     * Formato: XXX-YYYY donde XXX es el número consecutivo e YYYY es el año actual.
-     *
-     * @return Número de orden generado automáticamente
-     */
-    private String generarNumeroOrden() {
-        Long totalOrdenes = ordenSalidaService.contarTotalOrdenes();
-        int siguienteNumero = totalOrdenes.intValue() + 1;
-        return String.format("%03d-%d", siguienteNumero, LocalDate.now().getYear());
     }
 }

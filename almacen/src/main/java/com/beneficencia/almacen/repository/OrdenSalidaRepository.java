@@ -65,4 +65,9 @@ public interface OrdenSalidaRepository extends JpaRepository<OrdenSalida, Long> 
      */
     @Query("SELECT os FROM OrdenSalida os WHERE os.numeroOrden = :numeroOrden")
     Optional<OrdenSalida> findByNumeroOrden(@Param("numeroOrden") String numeroOrden);
+
+    //
+    // Agrega este método al OrdenSalidaRepository existente:
+    @Query("SELECT COUNT(os) FROM OrdenSalida os WHERE YEAR(os.fechaSalida) = :year AND MONTH(os.fechaSalida) = :month")
+    Long countByFechaSalidaYearAndMonth(@Param("year") int year, @Param("month") int month);
 }
