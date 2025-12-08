@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,7 +53,7 @@ public class DashboardController {
             model.addAttribute("cantidadStockBajo", cantidadStockBajo);
 
             System.out.println("✅ Dashboard cargado:");
-            System.out.println("   - Movimientos recientes: " + ((List<?>)dashboardData.get("movimientosRecientes")).size());
+            System.out.println("   - Movimientos recientes: " + ((List<?>) dashboardData.get("movimientosRecientes")).size());
             System.out.println("   - Productos sin movimientos: " + cantidadSinMovimientos);
             System.out.println("   - Productos con stock bajo: " + cantidadStockBajo);
 
@@ -72,26 +73,24 @@ public class DashboardController {
             return "dashboard";
         }
     }
+
     /**
      * Muestra la página de acceso denegado cuando un usuario intenta acceder
      * a recursos para los que no tiene permisos suficientes.
      *
      * @return Nombre de la vista 'error/access-denied' que será renderizada
      */
-    @GetMapping("/access-denied")
-    public String accessDenied() {
-        return "error/access-denied";
-    }
+    @GetMapping("/error/access-denied")
+    public String accesoDenegado(@RequestParam(value = "reason", required = false) String reason,
+                                 Model model) {
 
-    /**
-     * Maneja la ruta raíz del sistema y redirige al dashboard principal.
-     * Procesa las solicitudes GET a la ruta "/" y redirige automáticamente
-     * al dashboard del usuario autenticado.
-     *
-     * @return Redirección a la ruta "/dashboard"
-     */
-    @GetMapping("/")
-    public String home() {
-        return "redirect:/dashboard";
+        if ("disabled".equals(reason)) {
+            model.addAttribute("titulo", "Cuenta Deshabilitada");
+            model.addAttribute("mensaje", "Tu cuenta está deshabilitada. Contacta al administrador del sistema.");
+        } else {
+            model.addAttribute("titulo", "Acceso Denegado");
+            model.addAttribute("mensaje", "No tienes los permisos necesarios para acceder a esta sección.");
+        }
+        return "error/access-denied";
     }
 }

@@ -25,31 +25,25 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Autowired
     private UsuarioRepository usuarioRepository;
 
-    /**
-     * Carga los detalles de un usuario por su nombre de usuario para la autenticación de Spring Security.
-     * Este método es llamado automáticamente por Spring Security durante el proceso de login.
-     *
-     * @param username Nombre de usuario proporcionado en el formulario de login
-     * @return UserDetails con la información de autenticación y autorización del usuario
-     * @throws UsernameNotFoundException si no se encuentra un usuario con el nombre de usuario proporcionado
-     */
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        // Buscar el usuario en la base de datos con sus roles cargados
         Usuario usuario = usuarioRepository.findByUsernameWithRoles(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado: " + username));
 
-        // Convertir los roles del usuario en autoridades de Spring Security
+        // ✅ SOLUCIÓN CORRECTA: Devolver el UserDetails con disabled=true
+        // NO lances excepción aquí, déjale a Spring Security que maneje el disabled
         var authorities = usuario.getRoles().stream()
                 .map(rol -> new SimpleGrantedAuthority("ROLE_" + rol.getNombre()))
                 .collect(Collectors.toList());
 
-        // Construir el objeto UserDetails que Spring Security utiliza para la autenticación
         return User.builder()
                 .username(usuario.getUsername())
                 .password(usuario.getPassword())
                 .authorities(authorities)
-                .disabled(!usuario.isEnabled())
+                .disabled(!usuario.isEnabled())  // ✅ AQUÍ ESTÁ LA CLAVE: disabled = !isEnabled()
+                .accountExpired(false)
+                .credentialsExpired(false)
+                .accountLocked(false)
                 .build();
     }
 }
