@@ -391,14 +391,10 @@ public class OrdenAbastecimientoService {
      */
     private String obtenerPrefijoTipo(OrdenAbastecimiento.TipoOrden tipoOrden) {
         return switch (tipoOrden) {
-            case SOLIDAS -> "SOL";
-            case DONACIONES -> "DON";
+            case ALIMENTOS -> "ALM";
             case U_OFICINA -> "UOF";
-            case INVENTARIO -> "INV";
-            case REPORTE -> "REP";
-            case R_DONACION -> "RDON";
             case R_UTILES -> "RUT";
-            case R_TOTAL -> "RTOT";
+            case OTROS -> "OTS";
             default -> "OA";
         };
     }

@@ -103,7 +103,7 @@ public class OrdenAbastecimiento {
      * Enumeración que define los tipos de órdenes de abastecimiento disponibles.
      */
     public enum TipoOrden {
-        SOLIDAS, DONACIONES, U_OFICINA, INVENTARIO, REPORTE, R_DONACION, R_UTILES, R_TOTAL
+        ALIMENTOS, U_OFICINA,R_UTILES, OTROS
     }
 
     /**
