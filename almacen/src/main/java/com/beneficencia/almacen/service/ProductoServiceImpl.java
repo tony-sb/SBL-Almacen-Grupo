@@ -23,6 +23,57 @@ public class ProductoServiceImpl implements ProductoService {
     @Autowired
     private ProductoRepository productoRepository;
 
+    // Mapa de prefijos por categoría
+    private static final Map<String, String> PREFIJOS_CATEGORIA = Map.of(
+            "Medicamentos", "MED",
+            "Insumos Médicos", "INS",
+            "Limpieza", "LIM",
+            "Alimentos", "ALI",
+            "Material Oficina", "OFI",
+            "Otros", "OTR"
+    );
+
+    // Prefijo por defecto
+    private static final String PREFIJO_DEFAULT = "PROD";
+
+    /**
+     * Genera un código único automático basado en la categoría
+     */
+    private String generarCodigoAutomatico(String categoria) {
+        // Obtener prefijo basado en categoría
+        String prefijo = PREFIJOS_CATEGORIA.getOrDefault(categoria, PREFIJO_DEFAULT);
+
+        // Buscar el último código con este prefijo
+        List<Producto> productos = productoRepository.findByCodigoStartingWithOrderByIdDesc(prefijo + "-");
+
+        // Determinar el siguiente número
+        int siguienteNumero = 1;
+        if (!productos.isEmpty()) {
+            String ultimoCodigo = productos.get(0).getCodigo();
+            try {
+                // Extraer el número del último código (ej: MED-001 -> 1)
+                String[] partes = ultimoCodigo.split("-");
+                if (partes.length > 1) {
+                    // Remover ceros a la izquierda
+                    String numeroStr = partes[1].replaceAll("^0+", "");
+                    siguienteNumero = Integer.parseInt(numeroStr.isEmpty() ? "0" : numeroStr) + 1;
+                }
+            } catch (NumberFormatException e) {
+                siguienteNumero = 1;
+            }
+        }
+
+        // Formatear con ceros a la izquierda (3 dígitos)
+        return String.format("%s-%03d", prefijo, siguienteNumero);
+    }
+
+    /**
+     * Verifica si un código ya existe (ignorando mayúsculas/minúsculas)
+     */
+    public boolean codigoExiste(String codigo) {
+        return productoRepository.existsByCodigoIgnoreCase(codigo);
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -42,18 +93,29 @@ public class ProductoServiceImpl implements ProductoService {
     /**
      * {@inheritDoc}
      */
-        @Override
+    @Override
     public Producto guardarProducto(Producto producto) {
         System.out.println("Guardando producto - Fecha vencimiento: " + producto.getFechaVencimiento());
+
+        // Si el producto no tiene código, generar uno automático
+        if (producto.getCodigo() == null || producto.getCodigo().trim().isEmpty()) {
+            String codigoAutomatico = generarCodigoAutomatico(producto.getCategoria());
+            producto.setCodigo(codigoAutomatico);
+            System.out.println("Código generado automáticamente: " + codigoAutomatico);
+        } else {
+            // Verificar que el código no exista ya
+            if (codigoExiste(producto.getCodigo())) {
+                throw new IllegalArgumentException("El código " + producto.getCodigo() + " ya existe");
+            }
+        }
+
         System.out.println("Producto completo: " + producto);
         return productoRepository.save(producto);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public Producto actualizarProducto(Producto producto) {
+        // Para actualización, no generamos nuevo código
         return productoRepository.save(producto);
     }
 

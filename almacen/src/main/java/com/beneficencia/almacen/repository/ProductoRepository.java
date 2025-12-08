@@ -17,6 +17,13 @@ import java.util.Optional;
 @Repository
 public interface ProductoRepository extends JpaRepository<Producto, Long> {
 
+    //
+    // Método para buscar productos por prefijo de código
+    List<Producto> findByCodigoStartingWithOrderByIdDesc(String prefijo);
+
+    // Método para verificar si existe un código (case insensitive)
+    boolean existsByCodigoIgnoreCase(String codigo);
+
     /**
      * Busca productos por categoría específica.
      * Útil para filtrar productos por tipo o agrupación.

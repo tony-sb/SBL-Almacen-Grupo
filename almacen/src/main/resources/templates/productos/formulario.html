@@ -258,10 +258,23 @@
                             <!-- Código -->
                             <div class="col-md-6">
                                 <label for="codigo" class="form-label required-field">Código</label>
-                                <input type="text" th:field="*{codigo}" class="form-control" id="codigo"
-                                       placeholder="Ej: MED-001" required maxlength="50"
-                                       th:readonly="${modo == 'editar'}">
-                                <div class="form-text">Código único del producto (no editable después)</div>
+                                <div th:if="${modo == 'nuevo'}">
+                                    <!-- Para nuevo producto: mostrar como solo lectura o generar automático -->
+                                    <div class="input-group">
+                                        <input type="text" th:field="*{codigo}" class="form-control" id="codigo"
+                                               placeholder="Se generará automáticamente" readonly
+                                               th:attr="data-categoria='categoria'">
+                                        <button type="button" class="btn btn-outline-secondary" onclick="generarCodigoManual()">
+                                            <i class="bi bi-arrow-clockwise"></i> Generar Manual
+                                        </button>
+                                    </div>
+                                    <div class="form-text">El código se generará automáticamente basado en la categoría</div>
+                                </div>
+                                <div th:unless="${modo == 'nuevo'}">
+                                    <!-- Para edición: solo lectura -->
+                                    <input type="text" th:field="*{codigo}" class="form-control" id="codigo" readonly>
+                                    <div class="form-text">Código único (no editable después de creado)</div>
+                                </div>
                             </div>
 
                             <!-- Nombre -->
@@ -401,6 +414,73 @@
             cantidadInput.value = valor + 1;
         }
     }
+    //
+     function generarCodigoManual() {
+        const categoriaSelect = document.getElementById('categoria');
+        const codigoInput = document.getElementById('codigo');
+        const categoria = categoriaSelect.value;
+
+        if (!categoria) {
+            alert('Por favor, seleccione una categoría primero');
+            return;
+        }
+
+        // Mapeo de prefijos (igual que en el servicio)
+        const prefijos = {
+            'Medicamentos': 'MED',
+            'Insumos Médicos': 'INS',
+            'Limpieza': 'LIM',
+            'Alimentos': 'ALI',
+            'Material Oficina': 'OFI',
+            'Otros': 'OTR'
+        };
+
+        const prefijo = prefijos[categoria] || 'PROD';
+
+        // Preguntar por número secuencial
+        const numero = prompt(`Ingrese el número secuencial para ${prefijo}-XXX`, "001");
+        if (numero !== null) {
+            // Formatear con ceros a la izquierda si es necesario
+            let numeroFormateado = numero;
+            if (/^\d+$/.test(numero)) {
+                numeroFormateado = numero.padStart(3, '0');
+            }
+
+            const codigoGenerado = `${prefijo}-${numeroFormateado}`;
+            codigoInput.value = codigoGenerado;
+        }
+    }
+
+    // Opcional: Actualizar placeholder cuando cambia la categoría
+    document.getElementById('categoria')?.addEventListener('change', function() {
+        const codigoInput = document.getElementById('codigo');
+        const categoria = this.value;
+
+        const prefijos = {
+            'Medicamentos': 'MED',
+            'Insumos Médicos': 'INS',
+            'Limpieza': 'LIM',
+            'Alimentos': 'ALI',
+            'Material Oficina': 'OFI',
+            'Otros': 'OTR'
+        };
+
+        if (categoria && prefijos[categoria]) {
+            codigoInput.placeholder = `Ej: ${prefijos[categoria]}-001`;
+        } else {
+            codigoInput.placeholder = 'Se generará automáticamente';
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // ... código existente ...
+
+        // Inicializar placeholder basado en categoría seleccionada
+        const categoriaSelect = document.getElementById('categoria');
+        if (categoriaSelect && categoriaSelect.value) {
+            categoriaSelect.dispatchEvent(new Event('change'));
+        }
+    });
 
     // Función para activar/desactivar fecha de vencimiento
     function toggleFechaVencimiento() {
