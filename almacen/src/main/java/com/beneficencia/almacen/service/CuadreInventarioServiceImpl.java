@@ -27,8 +27,9 @@ public class CuadreInventarioServiceImpl implements CuadreInventarioService {
     }
 
     @Override
-    public List<CuadreInventario> obtenerCuadresActivos() {
-        return cuadreRepository.findByEstado("PENDIENTE");
+    public List<CuadreInventario> obtenerTodosCuadresOrdenados() {
+        // Obtiene todos ordenados por fecha descendente
+        return cuadreRepository.findAllByOrderByFechaRegistroDesc();
     }
 
     @Override
@@ -48,10 +49,17 @@ public class CuadreInventarioServiceImpl implements CuadreInventarioService {
             int nuevaCantidad = (producto.getCantidad() != null ? producto.getCantidad() : 0) + cuadre.getCantidad();
             producto.setCantidad(nuevaCantidad);
             productoService.actualizarProducto(producto);
-        }
-        // Si es "descartar", no se modifica el inventario
 
-        cuadre.setEstado("CONFIRMADO");
+            cuadre.setEstado("APROBADO");
+        } else if ("descartar".equals(cuadre.getAccion())) {
+            // Restar cantidad del inventario
+            int nuevaCantidad = Math.max(0, (producto.getCantidad() != null ? producto.getCantidad() : 0) - cuadre.getCantidad());
+            producto.setCantidad(nuevaCantidad);
+            productoService.actualizarProducto(producto);
+
+            cuadre.setEstado("APROBADO");
+        }
+
         cuadre.setFechaConfirmacion(LocalDateTime.now());
         cuadreRepository.save(cuadre);
     }
@@ -61,13 +69,8 @@ public class CuadreInventarioServiceImpl implements CuadreInventarioService {
         CuadreInventario cuadre = cuadreRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Cuadre no encontrado"));
 
-        cuadre.setEstado("CANCELADO");
+        cuadre.setEstado("RECHAZADO");
         cuadre.setFechaConfirmacion(LocalDateTime.now());
         cuadreRepository.save(cuadre);
-    }
-
-    @Override
-    public List<CuadreInventario> obtenerCuadresPorEstado(String estado) {
-        return cuadreRepository.findByEstado(estado);
     }
 }

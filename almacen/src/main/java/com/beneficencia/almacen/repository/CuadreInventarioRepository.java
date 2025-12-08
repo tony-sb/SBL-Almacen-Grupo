@@ -12,4 +12,5 @@ public interface CuadreInventarioRepository extends JpaRepository<CuadreInventar
     List<CuadreInventario> findByEstado(String estado);
     List<CuadreInventario> findByProductoId(Long productoId);
     List<CuadreInventario> findByAccion(String accion);
+    List<CuadreInventario> findAllByOrderByFechaRegistroDesc();
 }

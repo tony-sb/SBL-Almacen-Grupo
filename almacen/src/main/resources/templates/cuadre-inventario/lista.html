@@ -205,19 +205,19 @@
                 <div class="d-flex align-items-center">
                     <i class="bi bi-exclamation-triangle-fill me-3 fs-4"></i>
                     <div>
-                        <strong>Tienes <span th:text="${totalCuadres}">0</span> producto(s) en Stand By</strong>
+                        <strong>Tienes <span th:text="${totalCuadres}">0</span> registro(s) en Stand By</strong>
                         <p class="mb-0">Estos productos tienen discrepancias que necesitan ser resueltas.</p>
                     </div>
                 </div>
             </div>
 
             <!-- Tabla de Productos en Stand By -->
-            <div th:if="${!cuadresActivos.empty}" class="card dashboard-card mb-4">
+            <div th:if="${!cuadres.empty}" class="card dashboard-card mb-4">
                 <div class="card-header">
                     <h5 class="mb-0">
                         <i class="bi bi-clock-history me-2"></i>
                         Productos en Stand By
-                        <span class="badge bg-warning ms-2" th:text="${cuadresActivos.size()}">0</span>
+                        <span class="badge bg-warning ms-2" th:text="${totalCuadres}">0</span>
                     </h5>
                 </div>
                 <div class="card-body">
@@ -236,7 +236,7 @@
                             </tr>
                             </thead>
                             <tbody>
-                            <tr th:each="cuadre : ${cuadresActivos}"
+                            <tr th:each="cuadre : ${cuadres}"
                                 th:id="'cuadre-' + ${cuadre.id}"
                                 th:classappend="${cuadre.accion == 'reingresar'} ? 'estado-reingresar' : 'estado-descartar'">
                                 <td>
@@ -263,10 +263,16 @@
                                     </small>
                                 </td>
                                 <td>
-                                    <span class="badge bg-warning">PENDIENTE</span>
+        <span th:if="${cuadre.estado == 'PENDIENTE'}"
+              class="badge bg-warning">PENDIENTE</span>
+                                    <span th:if="${cuadre.estado == 'APROBADO'}"
+                                          class="badge bg-success">APROBADO</span>
+                                    <span th:if="${cuadre.estado == 'RECHAZADO'}"
+                                          class="badge bg-danger">RECHAZADO</span>
                                 </td>
+
                                 <td>
-                                    <div class="btn-group btn-group-sm">
+                                    <div th:if="${cuadre.estado == 'PENDIENTE'}" class="btn-group btn-group-sm">
                                         <form th:action="@{/cuadre-inventario/confirmar/{id}(id=${cuadre.id})}"
                                               method="post" class="d-inline">
                                             <button type="submit" class="btn btn-success btn-sm" title="Confirmar">
@@ -280,7 +286,11 @@
                                             </button>
                                         </form>
                                     </div>
+                                    <div th:if="${cuadre.estado != 'PENDIENTE'}">
+                                        <small class="text-muted">Procesado</small>
+                                    </div>
                                 </td>
+                            </tr>
                             </tr>
                             </tbody>
                         </table>
@@ -289,7 +299,7 @@
             </div>
 
             <!-- Mensaje si no hay productos en Stand By -->
-            <div th:if="${cuadresActivos.empty}" class="card dashboard-card">
+            <div th:if="${cuadres.empty}" class="card dashboard-card">
                 <div class="card-body text-center py-5">
                     <i class="bi bi-check-circle display-1 text-success mb-3"></i>
                     <h4 class="text-success mb-2">¡No hay productos en Stand By!</h4>

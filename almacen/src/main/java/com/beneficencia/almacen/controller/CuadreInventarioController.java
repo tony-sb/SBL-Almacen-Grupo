@@ -12,7 +12,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/cuadre-inventario")
@@ -25,30 +24,21 @@ public class CuadreInventarioController {
     private ProductoService productoService;
 
     /**
-     * Muestra SOLO los productos que tienen cuadres pendientes
+     * Muestra TODOS los cuadres (pendientes y procesados)
      */
     @GetMapping
     public String mostrarCuadreInventario(Model model) {
-        // Obtener todos los cuadres pendientes
-        List<CuadreInventario> cuadresActivos = cuadreService.obtenerCuadresActivos();
+        // Obtener TODOS los cuadres
+        List<CuadreInventario> cuadres = cuadreService.obtenerTodosCuadresOrdenados();
 
         // Obtener TODOS los productos para el modal
         List<Producto> todosProductos = productoService.obtenerTodosProductos();
 
-        model.addAttribute("cuadresActivos", cuadresActivos);
-        model.addAttribute("todosProductos", todosProductos); // IMPORTANTE: para el modal
-        model.addAttribute("totalCuadres", cuadresActivos.size());
+        model.addAttribute("cuadres", cuadres); // CAMBIA ESTA LÍNEA
+        model.addAttribute("todosProductos", todosProductos);
+        model.addAttribute("totalCuadres", cuadres.size());
 
         return "cuadre-inventario/lista";
-    }
-
-    /**
-     * Muestra el formulario para nuevo cuadre (modal)
-     */
-    @GetMapping("/nuevo")
-    public String mostrarFormularioNuevo(RedirectAttributes redirectAttributes) {
-        redirectAttributes.addFlashAttribute("abrirModal", true);
-        return "redirect:/cuadre-inventario";
     }
 
     /**
@@ -127,13 +117,5 @@ public class CuadreInventarioController {
         }
 
         return "redirect:/cuadre-inventario";
-    }
-
-    /**
-     * Regresar a inventario principal
-     */
-    @GetMapping("/regresar")
-    public String regresarAlInventario() {
-        return "redirect:/inventario";
     }
 }
