@@ -122,7 +122,7 @@
                             <div class="col-md-6">
                                 <label for="ruc" class="form-label">RUC <span class="text-danger">*</span></label>
                                 <input type="text" th:field="*{ruc}" class="form-control" id="ruc"
-                                       placeholder="Ingrese el RUC" required maxlength="20">
+                                       placeholder="Ingrese el RUC" required maxlength="11">
                                 <div class="form-text">Número de RUC de la empresa (11 dígitos)</div>
                             </div>
 
@@ -137,7 +137,14 @@
                             <div class="col-md-6">
                                 <label for="telefono" class="form-label">Teléfono/Celular</label>
                                 <input type="text" th:field="*{telefono}" class="form-control" id="telefono"
-                                       placeholder="Ej: 074-123456 o 987654321">
+                                       placeholder="Ej: 074-123456 o 987654321"
+                                       pattern="^(074-[0-9]{6}|[0-9]{9})$"
+                                       title="Formato: 074-xxxxxx (6 dígitos después del guión) o 9xxxxxxxx (9 dígitos comenzando con 9)"
+                                       maxlength="10">
+                                <div class="form-text">Formato fijo: 074-xxxxxx (6 dígitos) | Celular: 9xxxxxxxx (9 dígitos)</div>
+                                <div class="invalid-feedback" id="telefonoError">
+                                    Formato válido: 074-xxxxxx (6 dígitos después del guión) o 9xxxxxxxx (9 dígitos comenzando con 9)
+                                </div>
                             </div>
 
                             <!-- Email -->
@@ -188,11 +195,145 @@
             });
         }, 5000);
 
-        // Validación básica del RUC (solo números)
+        // Elementos del formulario
         const rucInput = document.getElementById('ruc');
+        const telefonoInput = document.getElementById('telefono');
+        const rucError = document.getElementById('rucError');
+        const telefonoError = document.getElementById('telefonoError');
+        const form = document.querySelector('form');
+
+        // Validación del RUC (exactamente 11 dígitos)
         if (rucInput) {
             rucInput.addEventListener('input', function(e) {
+                // Solo permitir números
                 this.value = this.value.replace(/[^0-9]/g, '');
+
+                // Validar longitud
+                if (this.value.length === 11) {
+                    this.classList.remove('is-invalid');
+                    this.classList.add('is-valid');
+                    rucError.style.display = 'none';
+                } else if (this.value.length > 0) {
+                    this.classList.add('is-invalid');
+                    this.classList.remove('is-valid');
+                    rucError.style.display = 'block';
+                } else {
+                    this.classList.remove('is-invalid', 'is-valid');
+                    rucError.style.display = 'none';
+                }
+            });
+
+            // Validar al perder el foco
+            rucInput.addEventListener('blur', function() {
+                if (this.value.length > 0 && this.value.length !== 11) {
+                    this.classList.add('is-invalid');
+                    rucError.style.display = 'block';
+                }
+            });
+        }
+
+        // Formato y validación del teléfono
+        if (telefonoInput) {
+            telefonoInput.addEventListener('input', function(e) {
+                let value = this.value.replace(/[^0-9-]/g, '');
+
+                // Si empieza con 074, agregar guión automáticamente
+                if (value.startsWith('074') && !value.includes('-') && value.length >= 3) {
+                    if (value.length > 3) {
+                        value = '074-' + value.substring(3);
+                    }
+                }
+
+                this.value = value;
+                validateTelefono();
+            });
+
+            // Validar al perder el foco
+            telefonoInput.addEventListener('blur', function() {
+                validateTelefono();
+            });
+
+            function validateTelefono() {
+                const value = telefonoInput.value.trim();
+
+                // Si está vacío, no validar
+                if (value === '') {
+                    telefonoInput.classList.remove('is-invalid', 'is-valid');
+                    telefonoError.style.display = 'none';
+                    return;
+                }
+
+                // Validar formato
+                let isValid = false;
+
+                if (value.startsWith('074-')) {
+                    // Formato fijo: 074-xxxxxx (6 dígitos)
+                    const parteNumerica = value.substring(4);
+                    if (/^[0-9]{6}$/.test(parteNumerica)) {
+                        isValid = true;
+                    }
+                } else if (value.startsWith('9')) {
+                    // Celular: 9xxxxxxxx (9 dígitos)
+                    if (/^[0-9]{9}$/.test(value)) {
+                        isValid = true;
+                    }
+                } else if (/^[0-9]{9}$/.test(value) && value.startsWith('9')) {
+                    // Celular sin formato
+                    isValid = true;
+                }
+
+                if (isValid) {
+                    telefonoInput.classList.remove('is-invalid');
+                    telefonoInput.classList.add('is-valid');
+                    telefonoError.style.display = 'none';
+                } else {
+                    telefonoInput.classList.add('is-invalid');
+                    telefonoInput.classList.remove('is-valid');
+                    telefonoError.style.display = 'block';
+                }
+            }
+        }
+
+        // Validación antes de enviar el formulario
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                let isValid = true;
+
+                // Validar RUC
+                if (rucInput && rucInput.value.length !== 11) {
+                    rucInput.classList.add('is-invalid');
+                    rucError.style.display = 'block';
+                    isValid = false;
+                }
+
+                // Validar teléfono si tiene valor
+                if (telefonoInput && telefonoInput.value.trim() !== '') {
+                    const value = telefonoInput.value.trim();
+                    let telefonoValido = false;
+
+                    if (value.startsWith('074-')) {
+                        const parteNumerica = value.substring(4);
+                        telefonoValido = /^[0-9]{6}$/.test(parteNumerica);
+                    } else if (value.startsWith('9')) {
+                        telefonoValido = /^[0-9]{9}$/.test(value);
+                    }
+
+                    if (!telefonoValido) {
+                        telefonoInput.classList.add('is-invalid');
+                        telefonoError.style.display = 'block';
+                        isValid = false;
+                    }
+                }
+
+                if (!isValid) {
+                    e.preventDefault();
+                    // Scroll al primer error
+                    const firstError = form.querySelector('.is-invalid');
+                    if (firstError) {
+                        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        firstError.focus();
+                    }
+                }
             });
         }
     });
