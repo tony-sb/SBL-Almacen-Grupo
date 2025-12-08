@@ -130,48 +130,86 @@
 
                         <input type="hidden" th:field="*{id}" />
 
+                        <!-- Mostrar errores generales -->
+                        <div th:if="${#fields.hasGlobalErrors()}" class="alert alert-danger">
+                            <ul>
+                                <li th:each="err : ${#fields.globalErrors()}" th:text="${err}"></li>
+                            </ul>
+                        </div>
+
                         <div class="row g-3">
                             <!-- DNI -->
                             <div class="col-md-6">
                                 <label for="dni" class="form-label">DNI <span class="text-danger">*</span></label>
                                 <div class="input-group">
-                                    <input type="text" th:field="*{dni}" class="form-control" id="dni"
-                                           placeholder="Ingrese el DNI" required maxlength="8"
-                                           pattern="\d{8}" title="El DNI debe tener 8 dígitos numéricos">
+                                    <input type="text" th:field="*{dni}" class="form-control"
+                                           th:classappend="${#fields.hasErrors('dni')} ? 'is-invalid' : ''"
+                                           id="dni" placeholder="Ingrese el DNI" maxlength="8">
+                                </div>
+                                <!-- Mostrar error de validación -->
+                                <div th:if="${#fields.hasErrors('dni')}" class="invalid-feedback d-block">
+                                    <span th:errors="*{dni}"></span>
                                 </div>
                                 <div class="form-text" id="dniFeedback">
-                                    Número de DNI (8 dígitos)
+                                    Número de DNI (8 dígitos numéricos)
                                 </div>
                             </div>
 
                             <!-- Nombres -->
                             <div class="col-md-6">
                                 <label for="nombres" class="form-label">Nombres <span class="text-danger">*</span></label>
-                                <input type="text" th:field="*{nombres}" class="form-control" id="nombres"
-                                       placeholder="Ingrese los nombres" required>
+                                <input type="text" th:field="*{nombres}" class="form-control"
+                                       th:classappend="${#fields.hasErrors('nombres')} ? 'is-invalid' : ''"
+                                       id="nombres" placeholder="Ingrese los nombres">
+                                <!-- Mostrar error de validación -->
+                                <div th:if="${#fields.hasErrors('nombres')}" class="invalid-feedback d-block">
+                                    <span th:errors="*{nombres}"></span>
+                                </div>
                             </div>
 
                             <!-- Apellidos -->
                             <div class="col-md-6">
                                 <label for="apellidos" class="form-label">Apellidos <span class="text-danger">*</span></label>
-                                <input type="text" th:field="*{apellidos}" class="form-control" id="apellidos"
-                                       placeholder="Ingrese los apellidos" required>
+                                <input type="text" th:field="*{apellidos}" class="form-control"
+                                       th:classappend="${#fields.hasErrors('apellidos')} ? 'is-invalid' : ''"
+                                       id="apellidos" placeholder="Ingrese los apellidos">
+                                <!-- Mostrar error de validación -->
+                                <div th:if="${#fields.hasErrors('apellidos')}" class="invalid-feedback d-block">
+                                    <span th:errors="*{apellidos}"></span>
+                                </div>
                             </div>
 
                             <!-- Teléfono -->
                             <div class="col-md-6">
                                 <label for="telefono" class="form-label">Teléfono/Celular</label>
-                                <input type="text" th:field="*{telefono}" class="form-control" id="telefono"
-                                       placeholder="Ej: 074-123456 o 987654321" maxlength="15">
-                                <div class="form-text">Opcional</div>
+                                <input type="text" th:field="*{telefono}" class="form-control"
+                                       th:classappend="${#fields.hasErrors('telefono')} ? 'is-invalid' : ''"
+                                       id="telefono" placeholder="Ej: 987654321 o 074-1234567" maxlength="10">
+                                <!-- Mostrar error de validación -->
+                                <div th:if="${#fields.hasErrors('telefono')}" class="invalid-feedback d-block">
+                                    <span th:errors="*{telefono}"></span>
+                                </div>
+                                <div class="form-text">
+                                    Opcional. Formatos válidos:
+                                    <ul class="mb-0">
+                                        <li>987654321 (9 dígitos, empieza con 9)</li>
+                                        <li>074-123456 (10 dígitos con guion, empieza con 0)</li>
+                                    </ul>
+                                </div>
                             </div>
 
                             <!-- Dirección -->
                             <div class="col-12">
-                                <label for="direccion" class="form-label">Dirección</label>
-                                <textarea th:field="*{direccion}" class="form-control" id="direccion"
-                                          rows="3" placeholder="Ingrese la dirección completa" maxlength="500"></textarea>
-                                <div class="form-text">Opcional - Máximo 500 caracteres</div>
+                                <label for="direccion" class="form-label">Dirección <span class="text-danger">*</span></label>
+                                <textarea th:field="*{direccion}" class="form-control"
+                                          th:classappend="${#fields.hasErrors('direccion')} ? 'is-invalid' : ''"
+                                          id="direccion" rows="3"
+                                          placeholder="Ingrese la dirección completa" maxlength="100"></textarea>
+                                <!-- Mostrar error de validación -->
+                                <div th:if="${#fields.hasErrors('direccion')}" class="invalid-feedback d-block">
+                                    <span th:errors="*{direccion}"></span>
+                                </div>
+                                <div class="form-text">Obligatorio - Entre 5 y 100 caracteres</div>
                             </div>
 
                             <!-- Información de registro (solo para edición) -->
@@ -252,6 +290,53 @@
                     this.classList.add('is-invalid');
                 } else {
                     this.classList.remove('is-valid', 'is-invalid');
+                }
+            });
+        }
+
+        // Formateo automático del teléfono
+        const telefonoInput = document.getElementById('telefono');
+        if (telefonoInput) {
+            telefonoInput.addEventListener('input', function(e) {
+                // Eliminar todo excepto números
+                let valor = this.value.replace(/[^0-9]/g, '');
+
+                // Si empieza con '9' -> formato de 9 dígitos
+                if (valor.startsWith('9') && valor.length === 9) {
+                    this.value = valor;
+                }
+                // Si empieza con '0' -> agregar guion después de 3 dígitos
+                else if (valor.startsWith('0') && valor.length >= 3) {
+                    const parte1 = valor.substring(0, 3);
+                    const parte2 = valor.substring(3);
+                    this.value = parte1 + (parte2 ? '-' + parte2 : '');
+                } else {
+                    this.value = valor;
+                }
+
+                // Validar formato
+                const regex = /^(|\d{9}|0\d{2}-\d{6})$/;
+                if (this.value === '' || regex.test(this.value)) {
+                    this.classList.remove('is-invalid');
+                    this.classList.add('is-valid');
+                } else if (this.value.length > 0) {
+                    this.classList.remove('is-valid');
+                    this.classList.add('is-invalid');
+                } else {
+                    this.classList.remove('is-valid', 'is-invalid');
+                }
+            });
+
+            telefonoInput.addEventListener('blur', function(e) {
+                // Asegurar formato correcto al salir del campo
+                let valor = this.value.replace(/[^0-9]/g, '');
+
+                if (valor.startsWith('9') && valor.length === 9) {
+                    this.value = valor;
+                } else if (valor.startsWith('0') && valor.length >= 3) {
+                    const parte1 = valor.substring(0, 3);
+                    const parte2 = valor.substring(3, 9);
+                    this.value = parte1 + (parte2 ? '-' + parte2 : '');
                 }
             });
         }

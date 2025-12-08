@@ -2,9 +2,11 @@ package com.beneficencia.almacen.controller;
 
 import com.beneficencia.almacen.model.Beneficiario;
 import com.beneficencia.almacen.service.BeneficiarioService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -66,37 +68,28 @@ public class BeneficiarioController {
     }
 
     /**
-     * Guardar NUEVO beneficiario
+     * Guardar NUEVO beneficiario con validación
      */
     @PostMapping("/guardar")
     public String guardarBeneficiario(
-            @ModelAttribute Beneficiario beneficiario,
+            @Valid @ModelAttribute Beneficiario beneficiario,
+            BindingResult bindingResult,
             RedirectAttributes redirectAttributes) {
 
         try {
             System.out.println("POST /beneficiario/guardar - DNI: " + beneficiario.getDni());
 
-            // Validar campos requeridos
-            if (beneficiario.getDni() == null || beneficiario.getDni().trim().isEmpty()) {
-                redirectAttributes.addFlashAttribute("error", "El DNI es obligatorio");
-                return "redirect:/beneficiario/formulario";
+            // Validar campos con BindingResult
+            if (bindingResult.hasErrors()) {
+                System.err.println("Errores de validación encontrados: " + bindingResult.getAllErrors());
+                return "beneficiario/formulario";
             }
 
-            if (beneficiario.getNombres() == null || beneficiario.getNombres().trim().isEmpty()) {
-                redirectAttributes.addFlashAttribute("error", "Los nombres son obligatorios");
-                return "redirect:/beneficiario/formulario";
-            }
-
-            if (beneficiario.getApellidos() == null || beneficiario.getApellidos().trim().isEmpty()) {
-                redirectAttributes.addFlashAttribute("error", "Los apellidos son obligatorios");
-                return "redirect:/beneficiario/formulario";
-            }
-
-            // Validar DNI único
+            // Validar DNI único (además de las validaciones de Bean)
             if (beneficiarioService.existePorDni(beneficiario.getDni())) {
-                redirectAttributes.addFlashAttribute("error",
+                bindingResult.rejectValue("dni", "error.beneficiario",
                         "Ya existe un beneficiario con el DNI: " + beneficiario.getDni());
-                return "redirect:/beneficiario/formulario";
+                return "beneficiario/formulario";
             }
 
             // Establecer fechas
@@ -138,16 +131,23 @@ public class BeneficiarioController {
     }
 
     /**
-     * Actualizar beneficiario existente
+     * Actualizar beneficiario existente con validación
      */
     @PostMapping("/actualizar/{id}")
     public String actualizarBeneficiario(
             @PathVariable Long id,
-            @ModelAttribute Beneficiario beneficiario,
+            @Valid @ModelAttribute Beneficiario beneficiario,
+            BindingResult bindingResult,
             RedirectAttributes redirectAttributes) {
 
         try {
             System.out.println("POST /beneficiario/actualizar/" + id);
+
+            // Validar campos con BindingResult
+            if (bindingResult.hasErrors()) {
+                System.err.println("Errores de validación encontrados: " + bindingResult.getAllErrors());
+                return "beneficiario/formulario";
+            }
 
             // Verificar que exista
             Optional<Beneficiario> existenteOpt = beneficiarioService.obtenerBeneficiarioPorId(id);
@@ -161,9 +161,9 @@ public class BeneficiarioController {
             // Si cambió el DNI, verificar que no exista otro
             if (!existente.getDni().equals(beneficiario.getDni())) {
                 if (beneficiarioService.existePorDni(beneficiario.getDni())) {
-                    redirectAttributes.addFlashAttribute("error",
+                    bindingResult.rejectValue("dni", "error.beneficiario",
                             "Ya existe otro beneficiario con el DNI: " + beneficiario.getDni());
-                    return "redirect:/beneficiario/editar/" + id;
+                    return "beneficiario/formulario";
                 }
             }
 
