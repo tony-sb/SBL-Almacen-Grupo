@@ -42,8 +42,10 @@ public class ProductoServiceImpl implements ProductoService {
     /**
      * {@inheritDoc}
      */
-    @Override
+        @Override
     public Producto guardarProducto(Producto producto) {
+        System.out.println("Guardando producto - Fecha vencimiento: " + producto.getFechaVencimiento());
+        System.out.println("Producto completo: " + producto);
         return productoRepository.save(producto);
     }
 

@@ -303,13 +303,12 @@
                                 <td th:text="${producto.cantidad}">100</td>
                                 <td th:text="${producto.unidadMedida}">Unidad</td>
                                 <td>
-                                    <span th:if="${producto.fechaVencimiento}"
-                                          th:text="${#temporals.format(producto.fechaVencimiento, 'dd/MM/yyyy')}"
-                                          th:classappend="${#temporals.isBefore(producto.fechaVencimiento, #temporals.createToday())} ? 'vencido' :
-                                                         ${#temporals.daysBetween(#temporals.createToday(), producto.fechaVencimiento) < 30} ? 'proximo-vencer' : ''">
-                                        15/12/2025
-                                    </span>
-                                    <span th:unless="${producto.fechaVencimiento}" class="text-muted">Sin fecha</span>
+                                    <!-- Primero verificamos si tiene fecha de vencimiento -->
+                                    <span th:if="${producto.fechaVencimiento != null}"
+                                          th:text="${#temporals.format(producto.fechaVencimiento, 'dd/MM/yyyy')}">
+        15/12/2025
+    </span>
+                                    <span th:unless="${producto.fechaVencimiento != null}" class="text-muted">Sin fecha</span>
                                 </td>
                                 <td>
                                     <span class="badge bg-info badge-categoria" th:text="${producto.categoria}">

@@ -2,6 +2,7 @@ package com.beneficencia.almacen.controller;
 
 import com.beneficencia.almacen.model.Producto;
 import com.beneficencia.almacen.service.ProductoService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -114,12 +115,28 @@ public class ProductoController {
     public String guardarProducto(
             @ModelAttribute Producto producto,
             @RequestParam(value = "tieneVencimiento", required = false) Boolean tieneVencimiento,
+            HttpServletRequest request,  // Agregar esto para debug
             RedirectAttributes redirectAttributes) {
+
+        System.out.println("=== DEBUG GUARDAR PRODUCTO ===");
+        System.out.println("Producto recibido - Fecha vencimiento: " + producto.getFechaVencimiento());
+        System.out.println("Checkbox 'tieneVencimiento': " + tieneVencimiento);
+        System.out.println("Producto código: " + producto.getCodigo());
+        System.out.println("Producto nombre: " + producto.getNombre());
+
+        // Imprimir todos los parámetros de la request
+        System.out.println("Parámetros de la request:");
+        request.getParameterMap().forEach((key, value) ->
+                System.out.println(key + " = " + Arrays.toString(value))
+        );
 
         try {
             // Si no tiene vencimiento, establecer fecha como null
             if (tieneVencimiento == null || !tieneVencimiento) {
                 producto.setFechaVencimiento(null);
+                System.out.println("Checkbox NO marcado - Fecha establecida como null");
+            } else {
+                System.out.println("Checkbox SÍ marcado - Manteniendo fecha: " + producto.getFechaVencimiento());
             }
 
             productoService.guardarProducto(producto);
@@ -131,7 +148,6 @@ public class ProductoController {
         }
         return "redirect:/productos";
     }
-
     /**
      * Muestra el formulario para editar un producto existente.
      * Busca el producto por ID y carga sus datos en el formulario para edición.
