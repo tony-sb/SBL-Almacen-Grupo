@@ -414,34 +414,31 @@
 <script>
     // Mostrar fecha actual automáticamente
     document.addEventListener('DOMContentLoaded', function() {
+        // Inicializar el manager
+        if (typeof ordenSalidaManager !== 'undefined') {
+            ordenSalidaManager.init();
+        } else {
+            console.error('ordenSalidaManager no está definido');
+        }
+
+        // Configurar fecha actual
         const now = new Date();
-        const options = {
+        const fechaFormateada = now.toLocaleDateString('es-ES', {
             year: 'numeric',
             month: 'long',
             day: 'numeric'
-        };
-        const fechaFormateada = now.toLocaleDateString('es-ES', options);
+        });
 
         const fechaElement = document.getElementById('fechaActual');
         if (fechaElement) {
             fechaElement.textContent = fechaFormateada;
         }
 
-        console.log(`Fecha actual: ${fechaFormateada}`);
-
         // Configurar fecha máxima como hoy
         const hoy = new Date().toISOString().split('T')[0];
         const fechaSalidaInput = document.getElementById('fecha-salida');
         if (fechaSalidaInput) {
             fechaSalidaInput.max = hoy;
-        }
-
-        // Inicializar validación DNI
-        const dniInput = document.getElementById('user-dni');
-        if (dniInput) {
-            dniInput.addEventListener('input', function() {
-                validarDniInput(this);
-            });
         }
     });
 
@@ -516,31 +513,6 @@
         console.log('Número de orden generado:', numeroOrden);
         return true;
     }
-</script>
-</body>
-</html>
-
-<!-- Scripts -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-<script th:src="@{/js/ordenes-salida.js}"></script>
-<script>
-    // Mostrar fecha actual automáticamente
-document.addEventListener('DOMContentLoaded', function() {
-    const now = new Date();
-    const options = {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-    };
-    const fechaFormateada = now.toLocaleDateString('es-ES', options);
-
-    const fechaElement = document.getElementById('fechaActual');
-    if (fechaElement) {
-        fechaElement.textContent = fechaFormateada;
-    }
-
-    console.log(`Fecha actual: ${fechaFormateada}`);
-});
 </script>
 </body>
 </html>

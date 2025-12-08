@@ -173,8 +173,8 @@
 
     <!-- Botones -->
     <div class="no-print text-center mb-3">
-        <button onclick="window.print()" class="btn btn-primary btn-sm me-2">🖨️ Imprimir</button>
-        <button onclick="window.close()" class="btn btn-secondary btn-sm">❌ Cerrar</button>
+        <button onclick="window.print()" class="btn btn-primary btn-sm me-2">Imprimir</button>
+        <a href="/ordenes-salida" class="btn btn-secondary btn-sm">Volver a Órdenes</a>
     </div>
 
     <!-- Encabezado -->
@@ -231,15 +231,39 @@
         </div>
     </div>
 
-    <!-- Resumen Ejecutivo -->
+    <!-- Detalle de Productos -->
     <div class="print-section">
-        <div class="section-title">RESUMEN EJECUTIVO</div>
-        <div style="font-size: 10px;">
-            <p>Se ha procesado la orden de salida <strong th:text="${ordenSalida.numeroOrden}"></strong></p>
-            <p>Usuario: <strong th:text="${ordenSalida.nombreUsuario}"></strong></p>
-            <p>Cantidad total: <strong th:text="${ordenSalida.cantidadProductos} + ' unidades'"></strong></p>
-            <p>Fecha de procesamiento: <strong th:text="${#temporals.format(ordenSalida.fechaRegistro, 'dd/MM/yyyy HH:mm')}"></strong></p>
-        </div>
+        <div class="section-title">DETALLE DE PRODUCTOS</div>
+        <table class="detalle">
+            <thead>
+            <tr>
+                <th>#</th>
+                <th>Producto</th>
+                <th>Cantidad</th>
+                <th>Precio Unit.</th>
+                <th>Subtotal</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="item, iter : ${ordenSalida.items}">
+                <td th:text="${iter.count}"></td>
+                <td th:text="${item.producto?.nombre} ?: 'Producto no especificado'"></td>
+                <td th:text="${item.cantidad}"></td>
+                <td class="text-right" th:text="'S/ ' + ${#numbers.formatDecimal(item.precioUnitario != null ? item.precioUnitario : 0, 1, 'COMMA', 2, 'POINT')}"></td>
+                <td class="text-right" th:text="'S/ ' + ${#numbers.formatDecimal(item.subtotal != null ? item.subtotal : 0, 1, 'COMMA', 2, 'POINT')}"></td>
+            </tr>
+            <!-- Mensaje si no hay items -->
+            <tr th:if="${#lists.isEmpty(ordenSalida.items)}">
+                <td colspan="5" class="text-center">No hay detalles de productos disponibles</td>
+            </tr>
+            </tbody>
+            <tfoot>
+            <tr>
+                <td colspan="4" class="text-right fw-bold">TOTAL</td>
+                <td class="fw-bold text-right" th:text="'S/ ' + ${#numbers.formatDecimal(ordenSalida.totalOrden != null ? ordenSalida.totalOrden : 0, 1, 'COMMA', 2, 'POINT')}"></td>
+            </tr>
+            </tfoot>
+        </table>
     </div>
 
     <!-- Observaciones -->
@@ -273,7 +297,7 @@
     <!-- Pie de página -->
     <div style="text-align: center; margin-top: 15px; font-size: 8px; color: #666;">
         <p>Documento generado automáticamente el
-            <span th:text="${#temporals.format(#temporals.createNow(), 'dd/MM/yyyy \\'a las\\' HH:mm')}"></span>
+            <span th:text="${#temporals.format(#temporals.createNow(), 'dd/MM/yyyy HH:mm')}"></span>
         </p>
         <p>BENEFICENCIA PÚBLICA - SISTEMA DE GESTIÓN DE ALMACÉN</p>
     </div>

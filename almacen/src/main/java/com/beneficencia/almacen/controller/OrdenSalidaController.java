@@ -6,6 +6,7 @@ import com.beneficencia.almacen.model.Producto;
 import com.beneficencia.almacen.repository.OrdenSalidaRepository;
 import com.beneficencia.almacen.service.OrdenSalidaService;
 import com.beneficencia.almacen.service.ProductoService;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.List;
 import java.util.HashMap;
@@ -268,6 +270,7 @@ public class OrdenSalidaController {
      * @return Redirección a la lista de órdenes de salida
      */
     @PostMapping("/actualizar")
+    @Transactional
     public String actualizarOrdenSalida(
             @ModelAttribute OrdenSalida ordenSalida,
             RedirectAttributes redirectAttributes) {
@@ -279,13 +282,19 @@ public class OrdenSalidaController {
             OrdenSalida ordenExistente = ordenSalidaService.obtenerOrdenPorId(ordenSalida.getId())
                     .orElseThrow(() -> new RuntimeException("Orden no encontrada con ID: " + ordenSalida.getId()));
 
-            // Actualizar los campos necesarios
+            // IMPORTANTE: No actualizar el stock en la edición, solo datos básicos
+            // Los items deben manejarse por separado o no modificarse
+
+            // Actualizar solo los campos editables (no stock)
             ordenExistente.setNumeroTramite(ordenSalida.getNumeroTramite());
             ordenExistente.setFechaSalida(ordenSalida.getFechaSalida());
             ordenExistente.setNombreUsuario(ordenSalida.getNombreUsuario());
             ordenExistente.setDniUsuario(ordenSalida.getDniUsuario());
             ordenExistente.setDescripcion(ordenSalida.getDescripcion());
-            ordenExistente.setCantidadProductos(ordenSalida.getCantidadProductos());
+
+            // NO actualizar cantidadProductos aquí porque depende de los items
+            // Actualizar fecha de actualización
+            ordenExistente.setFechaActualizacion(LocalDateTime.now());
 
             // Guardar la orden actualizada
             ordenSalidaService.guardarOrden(ordenExistente);

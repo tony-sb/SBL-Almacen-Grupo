@@ -82,18 +82,12 @@ const ordenSalidaManager = (function() {
     // Buscar órdenes - ADAPTADO A TU ESTRUCTURA
     function buscarOrdenes() {
         const busqueda = document.getElementById('busqueda').value.trim();
-        const periodo = document.getElementById('periodoSelect').value;
-        const mes = document.getElementById('mesSelect').value;
 
         // Construir URL según tu estructura de controlador
-        let url = `/ordenes-salida?periodo=${periodo}`;
-
-        if (mes && mes !== '0') {
-            url += `&mes=${mes}`;
-        }
+        let url = `/ordenes-salida`;
 
         if (busqueda) {
-            url += `&busqueda=${encodeURIComponent(busqueda)}`;
+            url += `?busqueda=${encodeURIComponent(busqueda)}`;
         }
 
         console.log('URL de búsqueda:', url);
@@ -251,12 +245,13 @@ const ordenSalidaManager = (function() {
     function validarFormulario(e) {
         const productoId = document.getElementById('product-id').value;
         const cantidad = document.getElementById('product-quantity').value;
-        const numeroTramite = document.getElementById('numero-tramite').value;
+        const dniUsuario = document.getElementById('user-dni').value;
 
         let errores = [];
 
-        if (!numeroTramite.trim()) {
-            errores.push('El número de trámite es obligatorio');
+        // Validar DNI
+        if (!dniUsuario || !dniUsuario.match(/^\d{8}$/)) {
+            errores.push('El DNI debe tener 8 dígitos numéricos');
         }
 
         if (!productoId) {
@@ -281,7 +276,7 @@ const ordenSalidaManager = (function() {
         return true;
     }
 
-    // Imprimir orden de salida - VERSIÓN FINAL
+    // Imprimir orden de salida
     function imprimirSalida(numeroOrden) {
         if (!numeroOrden) {
             alert('Error: Número de orden no válido');
@@ -290,43 +285,14 @@ const ordenSalidaManager = (function() {
 
         console.log('Iniciando impresión para orden:', numeroOrden);
 
-        // Validar formato básico del número de orden
-        if (!numeroOrden.match(/^\d{3}-\d{4}$/) && !numeroOrden.match(/^\d{3}-202\d$/)) {
-            console.warn('Formato de número de orden inusual:', numeroOrden);
-            // Continuar de todos modos, solo era una validación opcional
-        }
-
         const url = `/ordenes-salida/imprimir/${encodeURIComponent(numeroOrden)}`;
         console.log('URL de impresión:', url);
 
-        // Abrir en nueva pestaña para imprimir
-        const ventanaImpresion = window.open(
-            url,
-            `impresion_${numeroOrden}`,
-            'width=1000,height=700,scrollbars=yes,resizable=yes'
-        );
-
-        if (ventanaImpresion) {
-            console.log('Ventana de impresión abierta correctamente');
-            ventanaImpresion.focus();
-
-            // Manejar errores de carga
-            const timer = setInterval(function() {
-                if (ventanaImpresion.closed) {
-                    clearInterval(timer);
-                    console.log('Ventana de impresión cerrada por el usuario');
-                }
-            }, 500);
-
-        } else {
-            const errorMsg = 'No se pudo abrir la ventana de impresión. ' +
-                            'Por favor, permite ventanas emergentes para este sitio.';
-            console.error(errorMsg);
-            alert(errorMsg);
-        }
+        // Redirigir a la misma página para imprimir
+        window.location.href = url;
     }
 
-    // Editar orden de salida - CORREGIDA
+    // Editar orden de salida
     function editarSalida(id) {
         if (!id) {
             showError('ID de orden no válido');
@@ -334,11 +300,10 @@ const ordenSalidaManager = (function() {
         }
 
         console.log('Editando orden ID:', id);
-        // Cambiar a GET para el formulario de edición
         window.location.href = `/ordenes-salida/editar/${id}`;
     }
 
-    // Eliminar orden de salida - ADAPTADO
+    // Eliminar orden de salida
     function eliminarSalida(id, numeroOrden) {
         if (!id || !numeroOrden) {
             showError('Datos de orden no válidos');
@@ -382,14 +347,12 @@ const ordenSalidaManager = (function() {
     }
 
     function showLoading(show) {
-        // Puedes implementar un spinner aquí
         if (show) {
             console.log('Cargando...');
         }
     }
 
     function showError(message) {
-        // Usar SweetAlert o similar para mejor UX
         if (typeof Swal !== 'undefined') {
             Swal.fire('Error', message, 'error');
         } else {
@@ -398,7 +361,6 @@ const ordenSalidaManager = (function() {
     }
 
     function showSuccess(message) {
-        // Usar SweetAlert o similar para mejor UX
         if (typeof Swal !== 'undefined') {
             Swal.fire('Éxito', message, 'success');
         } else {
