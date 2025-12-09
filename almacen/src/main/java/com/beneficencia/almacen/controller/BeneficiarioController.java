@@ -49,8 +49,20 @@ public class BeneficiarioController {
                                     (b.getApellidos() != null && b.getApellidos().toLowerCase().contains(busquedaLower))
                     )
                     .toList();
+
+            // **ORDENAR RESULTADOS DE BÚSQUEDA** - Los más recientes primero
+            if (beneficiarios != null && !beneficiarios.isEmpty()) {
+                beneficiarios.sort((b1, b2) -> {
+                    if (b1.getFechaRegistro() != null && b2.getFechaRegistro() != null) {
+                        return b2.getFechaRegistro().compareTo(b1.getFechaRegistro());
+                    }
+                    return 0; // Si no hay fecha, mantener orden
+                });
+            }
+
         } else {
-            beneficiarios = beneficiarioService.obtenerTodosBeneficiarios();
+            // **CAMBIO AQUÍ**: Obtener beneficiarios ordenados por fecha descendente
+            beneficiarios = beneficiarioService.obtenerBeneficiariosOrdenadosPorFechaDesc();
         }
 
         System.out.println("Encontrados " + beneficiarios.size() + " beneficiarios");

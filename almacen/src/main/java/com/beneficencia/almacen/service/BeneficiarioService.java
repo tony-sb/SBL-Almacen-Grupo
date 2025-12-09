@@ -117,4 +117,8 @@ public class BeneficiarioService {
 
         return guardarBeneficiario(nuevo);
     }
+//
+    public List<Beneficiario> obtenerBeneficiariosOrdenadosPorFechaDesc() {
+        return beneficiarioRepository.findAllOrderByFechaRegistroDesc();
+    }
 }

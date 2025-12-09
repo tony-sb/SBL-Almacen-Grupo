@@ -65,6 +65,32 @@
             border: 1px solid #dee2e6;
         }
     </style>
+    <style>
+        /* Asegurar estructura de tabla */
+        table {
+            table-layout: fixed;
+            width: 100%;
+        }
+
+        /* Anchos específicos para cada columna */
+        th:nth-child(1), td:nth-child(1) { width: 12%; } /* Nº OA */
+        th:nth-child(2), td:nth-child(2) { width: 10%; } /* Fecha */
+        th:nth-child(3), td:nth-child(3) { width: 12%; } /* RUC */
+        th:nth-child(4), td:nth-child(4) { width: 20%; } /* Proveedor */
+        th:nth-child(5), td:nth-child(5) { width: 15%; } /* Usuario */
+        th:nth-child(6), td:nth-child(6) { width: 12%; text-align: center; } /* Estado */
+        th:nth-child(7), td:nth-child(7) { width: 19%; text-align: center; } /* Acciones */
+
+        /* Mejorar los badges */
+        .badge {
+            display: inline-block !important;
+            padding: 0.4em 0.8em !important;
+            font-size: 0.85em !important;
+            font-weight: 600 !important;
+            border-radius: 0.25rem !important;
+            min-width: 100px;
+        }
+    </style>
 </head>
 <body class="dashboard-body">
 <!-- Navbar -->
@@ -236,12 +262,13 @@
                                 <td th:text="${orden.proveedor?.nombre} ?: 'N/A'">XXXXXXXXXX</td>
                                 <td th:text="${orden.usuario?.nombre + ' ' + orden.usuario?.apellido} ?: 'N/A'">Usuario</td>
                                 <td>
-                        <span th:switch="${orden.estado}" class="badge">
-                            <span th:case="PENDIENTE" class="bg-warning text-dark">Pendiente</span>
-                            <span th:case="APROBADA" class="bg-success">Aprobada</span>
-                            <span th:case="COMPLETADA" class="bg-info">Completada</span>
-                            <span th:case="RECHAZADA" class="bg-danger">Rechazada</span>
-                        </span>
+    <span th:switch="${orden.estado?.toString()}">
+        <span th:case="'PENDIENTE'" class="badge bg-warning text-dark">Pendiente</span>
+        <span th:case="'APROBADA'" class="badge bg-success">Aprobada</span>
+        <span th:case="'COMPLETADA'" class="badge bg-info">Completada</span>
+        <span th:case="'RECHAZADA'" class="badge bg-danger">Rechazada</span>
+        <span th:case="*" class="badge bg-secondary">Sin Estado</span>
+    </span>
                                 </td>
                                 <td>
                                     <div class="btn-group btn-group-sm" role="group">

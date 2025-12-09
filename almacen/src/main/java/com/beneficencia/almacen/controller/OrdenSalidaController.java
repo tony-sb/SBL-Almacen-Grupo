@@ -84,8 +84,14 @@ public class OrdenSalidaController {
             } else {
                 ordenesSalida = ordenSalidaService.buscarPorNumeroTramite(busqueda);
             }
+
+            // Ordenar los resultados de búsqueda también
+            if (ordenesSalida != null && !ordenesSalida.isEmpty()) {
+                ordenesSalida.sort((o1, o2) -> o2.getFechaSalida().compareTo(o1.getFechaSalida()));
+            }
+
         } else {
-            ordenesSalida = ordenSalidaService.buscarPorFecha(inicioMes, finMes);
+            ordenesSalida = ordenSalidaService.obtenerTodasOrdenes();
         }
 
         model.addAttribute("ordenesSalida", ordenesSalida);
