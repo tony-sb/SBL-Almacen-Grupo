@@ -1,34 +1,124 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Agregar Beneficiario - Orden de Salida</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link th:href="@{/css/dashboard.css}" rel="stylesheet">
 </head>
-<body>
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <!-- Header -->
-            <div class="card border-primary mb-4">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0">
-                        <i class="bi bi-person-plus me-2"></i>
-                        Agregar Nuevo Beneficiario
-                    </h4>
-                    <p class="mb-0 mt-2">
-                        <i class="bi bi-info-circle me-1"></i>
-                        Complete los datos del beneficiario para continuar con la orden de salida
-                    </p>
-                </div>
+<body class="dashboard-body">
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm fixed-top">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/dashboard">
+            <img th:src="@{/img/logo.jpg}" alt="Logo" height="40" class="d-inline-block align-text-top">
+            Sistema de Almacén
+        </a>
+        <div class="navbar-nav ms-auto">
+            <div class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                    <i class="bi bi-person-circle me-1"></i>
+                    <span class="user-info" sec:authentication="name"></span>
+                </a>
+                <ul class="dropdown-menu">
+                    <li><span class="dropdown-item-text user-role" sec:authentication="principal.authorities"></span></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="/logout"><i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 col-lg-2 d-md-block sidebar">
+            <div class="position-sticky pt-3">
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="bi bi-speedometer2"></i>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/ordenes-abastecimiento">
+                            <i class="bi bi-cart-plus"></i>
+                            Orden de Abastecimiento
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/ordenes-salida">
+                            <i class="bi bi-box-arrow-up"></i>
+                            Orden de Salidas
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/inventario">
+                            <i class="bi bi-box-seam"></i>
+                            Inventario
+                        </a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                        <a class="nav-link" href="/usuarios">
+                            <i class="bi bi-people"></i>
+                            Usuarios
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/proveedores">
+                            <i class="bi bi-truck"></i>
+                            Proveedores
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/productos">
+                            <i class="bi bi-box"></i>
+                            Productos
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/beneficiario">
+                            <i class="bi bi-heart"></i>
+                            Beneficiarios
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 main-content px-md-4">
+            <!-- Page Header -->
+            <div class="page-header mt-4">
+                <h1 class="page-title">
+                    <i class="bi bi-person-plus me-2"></i>Agregar Nuevo Beneficiario
+                </h1>
+                <p class="page-subtitle">Complete los datos del beneficiario para continuar con la orden de salida</p>
+            </div>
+
+            <!-- Información de contexto -->
+            <div th:if="${redirigirDesdeOrden}" class="alert alert-info">
+                <h6><i class="bi bi-clipboard-check me-2"></i>Información de la Orden Pendiente</h6>
+                <p class="mb-0">
+                    Después de registrar al beneficiario, continuará con la orden de salida.
+                    Los datos de la orden han sido guardados temporalmente.
+                </p>
             </div>
 
             <!-- Formulario -->
-            <div class="card">
+            <div class="card dashboard-card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-person-plus me-2"></i>
+                        Agregar Nuevo Beneficiario
+                    </h5>
+                </div>
                 <div class="card-body">
-                    <!-- Mensajes -->
+                    <!-- Mensajes flash -->
                     <div th:if="${success}" class="alert alert-success alert-dismissible fade show">
                         <i class="bi bi-check-circle me-2"></i>
                         <span th:text="${success}"></span>
@@ -39,15 +129,6 @@
                         <i class="bi bi-exclamation-triangle me-2"></i>
                         <span th:text="${error}"></span>
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-
-                    <!-- Información de contexto -->
-                    <div th:if="${redirigirDesdeOrden}" class="alert alert-info">
-                        <h6><i class="bi bi-clipboard-check me-2"></i>Información de la Orden Pendiente</h6>
-                        <p class="mb-0">
-                            Después de registrar al beneficiario, continuará con la orden de salida.
-                            Los datos de la orden han sido guardados temporalmente.
-                        </p>
                     </div>
 
                     <!-- Formulario -->
@@ -63,58 +144,89 @@
                         <input type="hidden" name="fechaSalida" th:value="${fechaSalida}">
                         <input type="hidden" name="descripcion" th:value="${descripcion}">
 
-                        <!-- DNI (pre-llenado) -->
-                        <div class="mb-3">
-                            <label for="dni" class="form-label">DNI <span class="text-danger">*</span></label>
-                            <input type="text" th:field="*{dni}" class="form-control"
-                                   id="dni" placeholder="Ingrese el DNI" maxlength="8"
-                                   th:readonly="${beneficiario.dni != null}">
-                            <small class="text-muted">8 dígitos numéricos</small>
-                        </div>
+                        <div class="row g-3">
+                            <!-- DNI (pre-llenado) -->
+                            <div class="col-md-6">
+                                <label for="dni" class="form-label">DNI <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <input type="text" th:field="*{dni}" class="form-control"
+                                           th:classappend="${#fields.hasErrors('dni')} ? 'is-invalid' : ''"
+                                           id="dni" placeholder="Ingrese el DNI" maxlength="8"
+                                           th:readonly="${beneficiario.dni != null}">
+                                </div>
+                                <!-- Mostrar error de validación -->
+                                <div th:if="${#fields.hasErrors('dni')}" class="invalid-feedback d-block">
+                                    <span th:errors="*{dni}"></span>
+                                </div>
+                                <div class="form-text" id="dniFeedback">
+                                    8 dígitos numéricos
+                                </div>
+                            </div>
 
-                        <!-- Nombres -->
-                        <div class="mb-3">
-                            <label for="nombres" class="form-label">Nombres <span class="text-danger">*</span></label>
-                            <input type="text" th:field="*{nombres}" class="form-control"
-                                   id="nombres" placeholder="Ingrese los nombres" required>
-                        </div>
+                            <!-- Nombres -->
+                            <div class="col-md-6">
+                                <label for="nombres" class="form-label">Nombres <span class="text-danger">*</span></label>
+                                <input type="text" th:field="*{nombres}" class="form-control"
+                                       th:classappend="${#fields.hasErrors('nombres')} ? 'is-invalid' : ''"
+                                       id="nombres" placeholder="Ingrese los nombres" required>
+                                <!-- Mostrar error de validación -->
+                                <div th:if="${#fields.hasErrors('nombres')}" class="invalid-feedback d-block">
+                                    <span th:errors="*{nombres}"></span>
+                                </div>
+                            </div>
 
-                        <!-- Apellidos -->
-                        <div class="mb-3">
-                            <label for="apellidos" class="form-label">Apellidos <span class="text-danger">*</span></label>
-                            <input type="text" th:field="*{apellidos}" class="form-control"
-                                   id="apellidos" placeholder="Ingrese los apellidos" required>
-                        </div>
+                            <!-- Apellidos -->
+                            <div class="col-md-6">
+                                <label for="apellidos" class="form-label">Apellidos <span class="text-danger">*</span></label>
+                                <input type="text" th:field="*{apellidos}" class="form-control"
+                                       th:classappend="${#fields.hasErrors('apellidos')} ? 'is-invalid' : ''"
+                                       id="apellidos" placeholder="Ingrese los apellidos" required>
+                                <!-- Mostrar error de validación -->
+                                <div th:if="${#fields.hasErrors('apellidos')}" class="invalid-feedback d-block">
+                                    <span th:errors="*{apellidos}"></span>
+                                </div>
+                            </div>
 
-                        <!-- Teléfono -->
-                        <div class="mb-3">
-                            <label for="telefono" class="form-label">Teléfono/Celular</label>
-                            <input type="text" th:field="*{telefono}" class="form-control"
-                                   id="telefono" placeholder="Ej: 987654321 o 074-1234567">
-                        </div>
+                            <!-- Teléfono -->
+                            <div class="col-md-6">
+                                <label for="telefono" class="form-label">Teléfono/Celular</label>
+                                <input type="text" th:field="*{telefono}" class="form-control"
+                                       th:classappend="${#fields.hasErrors('telefono')} ? 'is-invalid' : ''"
+                                       id="telefono" placeholder="Ej: 987654321 o 074-1234567">
+                                <!-- Mostrar error de validación -->
+                                <div th:if="${#fields.hasErrors('telefono')}" class="invalid-feedback d-block">
+                                    <span th:errors="*{telefono}"></span>
+                                </div>
+                            </div>
 
-                        <!-- Dirección -->
-                        <div class="mb-3">
-                            <label for="direccion" class="form-label">Dirección <span class="text-danger">*</span></label>
-                            <textarea th:field="*{direccion}" class="form-control"
-                                      id="direccion" rows="2"
-                                      placeholder="Ingrese la dirección completa" required></textarea>
+                            <!-- Dirección -->
+                            <div class="col-12">
+                                <label for="direccion" class="form-label">Dirección <span class="text-danger">*</span></label>
+                                <textarea th:field="*{direccion}" class="form-control"
+                                          th:classappend="${#fields.hasErrors('direccion')} ? 'is-invalid' : ''"
+                                          id="direccion" rows="2"
+                                          placeholder="Ingrese la dirección completa" required></textarea>
+                                <!-- Mostrar error de validación -->
+                                <div th:if="${#fields.hasErrors('direccion')}" class="invalid-feedback d-block">
+                                    <span th:errors="*{direccion}"></span>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Botones -->
-                        <div class="d-flex justify-content-between mt-4">
-                            <a th:href="@{/ordenes-salida}" class="btn btn-secondary">
-                                <i class="bi bi-x-circle me-1"></i>Cancelar Orden
-                            </a>
-
-                            <div>
-                                <button type="reset" class="btn btn-outline-secondary me-2">
-                                    <i class="bi bi-arrow-clockwise me-1"></i>Limpiar
-                                </button>
-
-                                <button type="submit" class="btn btn-success">
-                                    <i class="bi bi-save me-1"></i>Guardar y Continuar
-                                </button>
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="bi bi-save me-1"></i>Guardar y Continuar
+                                    </button>
+                                    <button type="reset" class="btn btn-outline-secondary">
+                                        <i class="bi bi-arrow-clockwise me-1"></i>Limpiar
+                                    </button>
+                                    <a th:href="@{/ordenes-salida}" class="btn btn-secondary">
+                                        <i class="bi bi-x-circle me-1"></i>Cancelar Orden
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     </form>
@@ -122,7 +234,7 @@
             </div>
 
             <!-- Información adicional -->
-            <div class="card mt-3">
+            <div class="card dashboard-card mt-3">
                 <div class="card-body">
                     <h6><i class="bi bi-lightbulb me-2"></i>Recomendaciones</h6>
                     <ul class="mb-0">
@@ -133,59 +245,117 @@
                     </ul>
                 </div>
             </div>
-        </div>
+        </main>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // Validación del DNI
-    document.getElementById('dni').addEventListener('input', function(e) {
-        // Solo permitir números
-        this.value = this.value.replace(/[^0-9]/g, '');
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-ocultar alertas después de 5 segundos
+        setTimeout(() => {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 5000);
 
-        // Validar longitud
-        if (this.value.length > 8) {
-            this.value = this.value.substring(0, 8);
+        // Validación del DNI (solo números y longitud)
+        const dniInput = document.getElementById('dni');
+        if (dniInput) {
+            dniInput.addEventListener('input', function(e) {
+                // Solo permitir números
+                this.value = this.value.replace(/[^0-9]/g, '');
+
+                // Validar longitud
+                if (this.value.length > 8) {
+                    this.value = this.value.substring(0, 8);
+                }
+
+                // Cambiar color según validación
+                if (this.value.length === 8) {
+                    this.classList.remove('is-invalid');
+                    this.classList.add('is-valid');
+                } else if (this.value.length > 0) {
+                    this.classList.remove('is-valid');
+                    this.classList.add('is-invalid');
+                } else {
+                    this.classList.remove('is-valid', 'is-invalid');
+                }
+            });
         }
-    });
 
-    // Validación del teléfono
-    document.getElementById('telefono').addEventListener('input', function(e) {
-        let valor = this.value.replace(/[^0-9]/g, '');
+        // Formateo automático del teléfono
+        const telefonoInput = document.getElementById('telefono');
+        if (telefonoInput) {
+            telefonoInput.addEventListener('input', function(e) {
+                // Eliminar todo excepto números
+                let valor = this.value.replace(/[^0-9]/g, '');
 
-        // Si empieza con '9' -> formato de 9 dígitos
-        if (valor.startsWith('9') && valor.length === 9) {
-            this.value = valor;
+                // Si empieza con '9' -> formato de 9 dígitos
+                if (valor.startsWith('9') && valor.length === 9) {
+                    this.value = valor;
+                }
+                // Si empieza con '0' -> agregar guion después de 3 dígitos
+                else if (valor.startsWith('0') && valor.length >= 3) {
+                    const parte1 = valor.substring(0, 3);
+                    const parte2 = valor.substring(3);
+                    this.value = parte1 + (parte2 ? '-' + parte2 : '');
+                } else {
+                    this.value = valor;
+                }
+
+                // Validar formato
+                const regex = /^(|\d{9}|0\d{2}-\d{6})$/;
+                if (this.value === '' || regex.test(this.value)) {
+                    this.classList.remove('is-invalid');
+                    this.classList.add('is-valid');
+                } else if (this.value.length > 0) {
+                    this.classList.remove('is-valid');
+                    this.classList.add('is-invalid');
+                } else {
+                    this.classList.remove('is-valid', 'is-invalid');
+                }
+            });
+
+            telefonoInput.addEventListener('blur', function(e) {
+                // Asegurar formato correcto al salir del campo
+                let valor = this.value.replace(/[^0-9]/g, '');
+
+                if (valor.startsWith('9') && valor.length === 9) {
+                    this.value = valor;
+                } else if (valor.startsWith('0') && valor.length >= 3) {
+                    const parte1 = valor.substring(0, 3);
+                    const parte2 = valor.substring(3, 9);
+                    this.value = parte1 + (parte2 ? '-' + parte2 : '');
+                }
+            });
         }
-        // Si empieza con '0' -> agregar guion después de 3 dígitos
-        else if (valor.startsWith('0') && valor.length >= 3) {
-            const parte1 = valor.substring(0, 3);
-            const parte2 = valor.substring(3);
-            this.value = parte1 + (parte2 ? '-' + parte2 : '');
-        } else {
-            this.value = valor;
-        }
-    });
 
-    // Prevenir envío si hay errores
-    document.getElementById('formBeneficiario').addEventListener('submit', function(e) {
-        const dni = document.getElementById('dni').value;
-        if (dni.length !== 8) {
-            e.preventDefault();
-            alert('El DNI debe tener 8 dígitos');
-            return false;
-        }
-        return true;
-    });
-      // Limpiar localStorage cuando se envíe el formulario
-    document.getElementById('formBeneficiario').addEventListener('submit', function() {
-        localStorage.removeItem('ordenPendiente');
-    });
+        // Prevenir envío si hay errores en DNI
+        document.getElementById('formBeneficiario').addEventListener('submit', function(e) {
+            const dni = document.getElementById('dni').value;
+            if (dni.length !== 8) {
+                e.preventDefault();
+                alert('El DNI debe tener 8 dígitos');
+                return false;
+            }
+            return true;
+        });
 
-    // También limpiar si el usuario cancela
-    document.querySelector('a[href="/ordenes-salida"]').addEventListener('click', function() {
-        localStorage.removeItem('ordenPendiente');
+        // Limpiar localStorage cuando se envíe el formulario
+        document.getElementById('formBeneficiario').addEventListener('submit', function() {
+            localStorage.removeItem('ordenPendiente');
+        });
+
+        // También limpiar si el usuario cancela
+        const cancelBtn = document.querySelector('a[href="/ordenes-salida"]');
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', function() {
+                localStorage.removeItem('ordenPendiente');
+            });
+        }
     });
 </script>
 </body>
