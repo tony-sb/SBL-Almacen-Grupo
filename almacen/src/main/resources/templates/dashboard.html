@@ -108,6 +108,7 @@
                         </a>
                     </div>
                 </div>
+                <!-- En tu archivo dashboard.html -->
                 <div class="card-body">
                     <div class="table-responsive">
                         <table class="table table-hover table-striped table-bordered">
@@ -117,37 +118,59 @@
                                 <th>Fecha Salida</th>
                                 <th>Cantidad</th>
                                 <th>DNI Beneficiario</th>
+                                <th>N° Orden</th>
                             </tr>
                             </thead>
                             <tbody>
-                            <!-- PRODUCTOS CON MOVIMIENTOS RECIENTES desde BD -->
+                            <!-- MOVIMIENTOS RECIENTES (datos reales de órdenes de salida) -->
                             <tr th:each="movimiento : ${movimientosRecientes}">
-                                <td th:text="${movimiento.producto.nombre}">Augmentin 625 Duo Tablet</td>
-                                <td th:text="${#temporals.format(movimiento.fechaSalida, 'dd/MM/yyyy')}">15/01/2024</td>
+                                <td th:text="${movimiento.nombreProducto}">Producto X</td>
+                                <td th:text="${#temporals.format(movimiento.fechaSalida, 'dd/MM/yyyy')}">15/01/2025</td>
                                 <td th:text="${movimiento.cantidad}">2</td>
-                                <td th:text="${movimiento.dniBeneficiario != null} ? ${movimiento.dniBeneficiario} : '-'">-</td>
+                                <td th:text="${movimiento.dniBeneficiario}">12345678</td>
+                                <td th:text="${movimiento.numeroOrden}">OS-0001-2025</td>
                             </tr>
 
-                            <!-- PRODUCTOS SIN MOVIMIENTOS desde BD -->
-                            <tr th:each="producto : ${productosSinMovimientos}">
-                                <td th:text="${producto.nombre}">Azithral 500 Tablet</td>
-                                <td>-</td>
-                                <td>-</td>
-                                <td>-</td>
-                            </tr>
-
-                            <!-- Mensaje si no hay datos -->
-                            <tr th:if="${movimientosRecientes.empty and productosSinMovimientos.empty}">
-                                <td colspan="4" class="text-center text-muted py-4">
+                            <!-- Mostrar productos sin movimientos solo si no hay movimientos recientes -->
+                            <tr th:if="${#lists.isEmpty(movimientosRecientes)}">
+                                <td colspan="5" class="text-center text-muted py-4">
                                     <i class="bi bi-inbox display-6 d-block mb-2"></i>
-                                    No hay movimientos recientes
+                                    No hay movimientos recientes en los últimos 30 días
                                 </td>
                             </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
-            </div>
+
+                <!-- Sección separada para productos sin movimientos -->
+                <div th:if="${not #lists.isEmpty(productosSinMovimientos)}" class="card mt-4 dashboard-card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-exclamation-triangle me-2"></i>Productos Sin Movimientos (Últimos 90 días)</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered">
+                                <thead>
+                                <tr>
+                                    <th>Código</th>
+                                    <th>Nombre</th>
+                                    <th>Categoría</th>
+                                    <th>Stock</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:each="producto : ${productosSinMovimientos}">
+                                    <td th:text="${producto.codigo}"></td>
+                                    <td th:text="${producto.nombre}"></td>
+                                    <td th:text="${producto.categoria}"></td>
+                                    <td th:text="${producto.cantidad}"></td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
 
             <!-- Sección de Alertas de Stock Bajo -->
             <div th:if="${cantidadStockBajo > 0}" class="alert alert-warning alert-dismissible fade show">

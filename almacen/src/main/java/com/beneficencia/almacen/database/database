@@ -361,3 +361,53 @@ UPDATE productos SET fecha_vencimiento = NULL WHERE codigo = 'OFI-002';
 UPDATE productos SET fecha_vencimiento = NULL WHERE codigo = 'OFI-003';
 UPDATE productos SET fecha_vencimiento = NULL WHERE codigo = 'OFI-004';
 SELECT * FROM productos;
+
+-- Agregar esta tabla a tu script de base de datos
+CREATE TABLE movimientos_salida (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    cantidad INT NOT NULL,
+    descripcion VARCHAR(255),
+    dni_beneficiario VARCHAR(8),
+    fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    fecha_salida DATE NOT NULL,
+    nombre_beneficiario VARCHAR(255),
+    numero_tramite VARCHAR(100),
+    producto_id BIGINT NOT NULL,
+    usuario_id BIGINT NOT NULL,
+    FOREIGN KEY (producto_id) REFERENCES productos(id),
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id),
+    INDEX idx_ms_fecha_salida (fecha_salida),
+    INDEX idx_ms_producto (producto_id),
+    INDEX idx_ms_dni (dni_beneficiario)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+//-- Trigger para registrar movimientos de salida automáticamente
+CREATE TRIGGER after_orden_salida_item_insert
+AFTER INSERT ON orden_salida_items
+FOR EACH ROW
+BEGIN
+    INSERT INTO movimientos_salida (
+        cantidad,
+        descripcion,
+        dni_beneficiario,
+        fecha_salida,
+        nombre_beneficiario,
+        numero_tramite,
+        producto_id,
+        usuario_id
+    )
+    SELECT
+        NEW.cantidad,
+        os.descripcion,
+        os.dni_usuario,
+        os.fecha_salida,
+        os.nombre_usuario,
+        os.numero_tramite,
+        NEW.producto_id,
+        os.usuario_id
+    FROM ordenes_salida os
+    WHERE os.id = NEW.orden_salida_id;
+END$$
+
+DELIMITER ;

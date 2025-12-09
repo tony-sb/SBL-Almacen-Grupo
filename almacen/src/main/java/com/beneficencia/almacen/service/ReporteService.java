@@ -267,38 +267,7 @@ public class ReporteService {
                 table.addCell(cellDni);
             }
 
-            // Agregar productos sin movimientos (SOLO 4 COLUMNAS)
-            for (Producto producto : todosProductos) {
-                boolean tieneMovimientos = movimientos.stream()
-                        .anyMatch(m -> m.getProducto().getId().equals(producto.getId()));
-
-                if (!tieneMovimientos) {
-                    // Nombre del producto
-                    PdfPCell cellNombre = new PdfPCell(new Phrase(producto.getNombre()));
-                    cellNombre.setPadding(5);
-                    table.addCell(cellNombre);
-
-                    // Fecha de salida (vacío)
-                    PdfPCell cellFecha = new PdfPCell(new Phrase("-"));
-                    cellFecha.setPadding(5);
-                    cellFecha.setHorizontalAlignment(Element.ALIGN_CENTER);
-                    table.addCell(cellFecha);
-
-                    // Cantidad (vacío)
-                    PdfPCell cellCantidad = new PdfPCell(new Phrase("-"));
-                    cellCantidad.setPadding(5);
-                    cellCantidad.setHorizontalAlignment(Element.ALIGN_CENTER);
-                    table.addCell(cellCantidad);
-
-                    // DNI Beneficiario (vacío)
-                    PdfPCell cellDni = new PdfPCell(new Phrase("-"));
-                    cellDni.setPadding(5);
-                    cellDni.setHorizontalAlignment(Element.ALIGN_CENTER);
-                    table.addCell(cellDni);
-                }
-            }
-
-            document.add(table);
+                        document.add(table);
             document.close();
 
         } catch (DocumentException e) {

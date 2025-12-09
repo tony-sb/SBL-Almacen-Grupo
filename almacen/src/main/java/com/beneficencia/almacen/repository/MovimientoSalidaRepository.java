@@ -17,6 +17,14 @@ import java.util.List;
 @Repository
 public interface MovimientoSalidaRepository extends JpaRepository<MovimientoSalida, Long> {
 
+    //
+    @Query("SELECT ms FROM MovimientoSalida ms WHERE ms.fechaSalida BETWEEN :fechaInicio AND :fechaFin ORDER BY ms.fechaSalida DESC")
+    List<MovimientoSalida> findMovimientosRecientes(@Param("fechaInicio") LocalDate fechaInicio,
+                                                    @Param("fechaFin") LocalDate fechaFin);
+
+    @Query("SELECT ms FROM MovimientoSalida ms ORDER BY ms.fechaSalida DESC LIMIT 10")
+    List<MovimientoSalida> findTop10Recientes();
+
     /**
      * Busca movimientos de salida dentro de un rango de fechas específico.
      * Útil para generar reportes por período y análisis temporales.
