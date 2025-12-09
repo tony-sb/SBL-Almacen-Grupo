@@ -17,6 +17,11 @@ public class BeneficiarioService {
     @Autowired
     private BeneficiarioRepository beneficiarioRepository;
 
+    // Método para obtener beneficiario por DNI
+    public Optional<Beneficiario> obtenerBeneficiarioPorDni(String dni) {
+        return beneficiarioRepository.findByDni(dni);
+    }
+
     /**
      * Obtiene todos los beneficiarios registrados.
      */

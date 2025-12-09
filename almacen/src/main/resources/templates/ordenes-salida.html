@@ -412,7 +412,6 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script th:src="@{/js/ordenes-salida.js}"></script>
 <script>
-    // Mostrar fecha actual automáticamente
     document.addEventListener('DOMContentLoaded', function() {
         // Inicializar el manager
         if (typeof ordenSalidaManager !== 'undefined') {
@@ -440,9 +439,272 @@
         if (fechaSalidaInput) {
             fechaSalidaInput.max = hoy;
         }
+
+        // Verificar si hay orden pendiente para reabrir modal
+        verificarOrdenPendiente();
+
+        // Agregar validación de DNI en tiempo real
+        const dniInput = document.getElementById('user-dni');
+        if (dniInput) {
+            dniInput.addEventListener('blur', function() {
+                const dni = this.value.trim();
+                if (dni.length === 8 && /^\d+$/.test(dni)) {
+                    verificarDNI(dni);
+                }
+            });
+        }
+
+        // Limpiar localStorage cuando el modal se cierre manualmente
+        const modalElement = document.getElementById('nuevaSalidaModal');
+        if (modalElement) {
+            modalElement.addEventListener('hidden.bs.modal', function() {
+                const datosOrden = localStorage.getItem('ordenPendiente');
+                if (datosOrden) {
+                    const orden = JSON.parse(datosOrden);
+                    if (!orden.ordenPendiente) {
+                        localStorage.removeItem('ordenPendiente');
+                    }
+                }
+            });
+
+            modalElement.addEventListener('shown.bs.modal', function() {
+                const datosOrden = localStorage.getItem('ordenPendiente');
+                if (datosOrden) {
+                    const orden = JSON.parse(datosOrden);
+                    if (orden.ordenPendiente) {
+                        orden.ordenPendiente = false;
+                        localStorage.setItem('ordenPendiente', JSON.stringify(orden));
+                    }
+                }
+            });
+        }
     });
 
-    // Función para validar DNI en tiempo real
+    // ================================================
+    // FUNCIÓN PRINCIPAL PARA VERIFICAR DNI
+    // ================================================
+    function verificarDNI(dni) {
+        if (!dni || dni.length !== 8) return;
+
+        console.log('Verificando DNI:', dni);
+
+        fetch(`/ordenes-salida/verificar-dni/${dni}`)
+            .then(response => response.json())
+            .then(data => {
+                console.log('Respuesta DNI:', data);
+
+                if (data.valido) {
+                    if (data.existe) {
+                        // Si existe, completar automáticamente
+                        const nombreInput = document.getElementById('user-name');
+                        if (nombreInput) {
+                            nombreInput.value = data.nombreCompleto;
+                            nombreInput.readOnly = true;
+                            nombreInput.style.backgroundColor = '#e9ecef';
+                            showAlert('success', `Beneficiario encontrado: ${data.nombreCompleto}`);
+                        }
+                    } else {
+                        // Si no existe, mostrar opción para agregar
+                        const nombreInput = document.getElementById('user-name');
+                        if (nombreInput) {
+                            nombreInput.readOnly = false;
+                            nombreInput.style.backgroundColor = '';
+                            nombreInput.focus();
+
+                            // Mostrar alerta con opción para agregar beneficiario
+                            showAlertWithOption(
+                                'warning',
+                                'DNI no registrado. ¿Desea agregar este beneficiario?',
+                                'Agregar Beneficiario',
+                                function() {
+                                    guardarDatosOrdenTemporal();
+                                    window.location.href = `/beneficiario/formulario-con-redireccion?dni=${dni}`;
+                                }
+                            );
+                        }
+                    }
+                } else {
+                    showAlert('warning', data.mensaje || 'DNI inválido');
+                }
+            })
+            .catch(error => {
+                console.error('Error al verificar DNI:', error);
+                showAlert('danger', 'Error al conectar con el servidor');
+            });
+    }
+
+    // ================================================
+    // FUNCIONES AUXILIARES
+    // ================================================
+
+    // Función para guardar datos de orden temporalmente
+    function guardarDatosOrdenTemporal() {
+        const datosOrden = {
+            productoId: document.getElementById('product-id').value,
+            cantidad: document.getElementById('product-quantity').value,
+            numeroTramite: document.getElementById('numero-tramite').value,
+            fechaSalida: document.getElementById('fecha-salida').value,
+            descripcion: document.getElementById('description').value,
+            nombreUsuario: document.getElementById('user-name').value,
+            dniUsuario: document.getElementById('user-dni').value,
+            productoCodigo: document.getElementById('product-code').value,
+            productNombre: document.getElementById('product-name').value,
+            productStock: document.getElementById('available-stock').value,
+            ordenPendiente: true,
+            timestamp: new Date().getTime()
+        };
+
+        localStorage.setItem('ordenPendiente', JSON.stringify(datosOrden));
+        console.log('Datos de orden guardados temporalmente:', datosOrden);
+    }
+
+    // Función para verificar y reabrir modal si hay orden pendiente
+    function verificarOrdenPendiente() {
+        const datosOrden = localStorage.getItem('ordenPendiente');
+        if (datosOrden) {
+            const orden = JSON.parse(datosOrden);
+
+            const ahora = new Date().getTime();
+            if (ahora - orden.timestamp < 3600000) {
+
+                setTimeout(() => {
+                    showAlert('info', 'Continuando con orden pendiente...');
+
+                    const modal = new bootstrap.Modal(document.getElementById('nuevaSalidaModal'));
+                    modal.show();
+
+                    setTimeout(() => {
+                        restaurarDatosOrdenCompleta();
+                    }, 500);
+
+                }, 1000);
+            } else {
+                localStorage.removeItem('ordenPendiente');
+            }
+        }
+    }
+
+    // Función mejorada para restaurar todos los datos de la orden
+    function restaurarDatosOrdenCompleta() {
+        const datosOrden = localStorage.getItem('ordenPendiente');
+        if (datosOrden) {
+            const orden = JSON.parse(datosOrden);
+            console.log('Restaurando datos completos de orden:', orden);
+
+            if (orden.productoId) document.getElementById('product-id').value = orden.productoId;
+            if (orden.cantidad) {
+                document.getElementById('product-quantity').value = orden.cantidad;
+                document.getElementById('product-quantity').disabled = false;
+            }
+            if (orden.numeroTramite) document.getElementById('numero-tramite').value = orden.numeroTramite;
+            if (orden.fechaSalida) document.getElementById('fecha-salida').value = orden.fechaSalida;
+            if (orden.descripcion) document.getElementById('description').value = orden.descripcion;
+            if (orden.nombreUsuario) document.getElementById('user-name').value = orden.nombreUsuario;
+            if (orden.dniUsuario) {
+                document.getElementById('user-dni').value = orden.dniUsuario;
+                setTimeout(() => validarDniInput(document.getElementById('user-dni')), 100);
+            }
+
+            if (orden.productoCodigo) document.getElementById('product-code').value = orden.productoCodigo;
+            if (orden.productNombre) document.getElementById('product-name').value = orden.productNombre;
+            if (orden.productStock) document.getElementById('available-stock').value = orden.productStock;
+
+            marcarProductoSeleccionado(orden.productoId);
+
+            showAlert('success', 'Orden restaurada. Complete los datos faltantes.');
+        }
+    }
+
+    // Función para marcar producto como seleccionado en la tabla
+    function marcarProductoSeleccionado(productoId) {
+        if (!productoId) return;
+
+        setTimeout(() => {
+            const radios = document.querySelectorAll(`#tabla-productos input[type="radio"][value="${productoId}"]`);
+            if (radios.length > 0) {
+                radios[0].checked = true;
+                const fila = radios[0].closest('tr');
+                if (fila) {
+                    fila.classList.add('table-success');
+                    fila.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+        }, 800);
+    }
+
+    // Función para mostrar alerta con opción
+    function showAlertWithOption(type, message, buttonText, buttonAction) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 400px;';
+
+        alertDiv.innerHTML = `
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <i class="bi ${type === 'warning' ? 'bi-exclamation-triangle' : 'bi-info-circle'} me-2"></i>
+                    ${message}
+                </div>
+                <div>
+                    <button type="button" class="btn btn-sm btn-secondary me-2" id="alertCancelBtn">
+                        Cancelar
+                    </button>
+                    <button type="button" class="btn btn-sm btn-${type === 'warning' ? 'warning' : 'primary'}" id="alertActionBtn">
+                        ${buttonText}
+                    </button>
+                </div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+
+        document.body.appendChild(alertDiv);
+
+        document.getElementById('alertActionBtn').addEventListener('click', function() {
+            guardarDatosOrdenTemporal();
+            buttonAction();
+            const bsAlert = new bootstrap.Alert(alertDiv);
+            bsAlert.close();
+        });
+
+        document.getElementById('alertCancelBtn').addEventListener('click', function() {
+            localStorage.removeItem('ordenPendiente');
+            const bsAlert = new bootstrap.Alert(alertDiv);
+            bsAlert.close();
+            const nombreInput = document.getElementById('user-name');
+            if (nombreInput) {
+                nombreInput.readOnly = false;
+                nombreInput.style.backgroundColor = '';
+                nombreInput.focus();
+            }
+        });
+
+        setTimeout(() => {
+            if (alertDiv.parentNode) {
+                alertDiv.parentNode.removeChild(alertDiv);
+            }
+        }, 15000);
+    }
+
+    // Función para mostrar alertas simples
+    function showAlert(type, message) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        alertDiv.innerHTML = `
+            <i class="bi ${type === 'success' ? 'bi-check-circle' : type === 'warning' ? 'bi-exclamation-triangle' : 'bi-info-circle'} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+
+        document.body.appendChild(alertDiv);
+
+        setTimeout(() => {
+            if (alertDiv.parentNode) {
+                alertDiv.parentNode.removeChild(alertDiv);
+            }
+        }, 5000);
+    }
+
+    // Función para validar DNI en tiempo real (en input)
     function validarDniInput(input) {
         const dni = input.value;
 
@@ -469,9 +731,7 @@
         const timestamp = Date.now();
         const random = Math.floor(Math.random() * 1000);
 
-        // Formato: OS-YYYYMMDD-TIMESTAMP-RANDOM
         const numeroOrden = `OS-${año}${mes}${dia}-${timestamp.toString().slice(-4)}${random.toString().padStart(3, '0')}`;
-
         return numeroOrden;
     }
 
@@ -505,7 +765,6 @@
             return false;
         }
 
-        // Generar y establecer número de orden automático
         const numeroOrden = generarNumeroOrden();
         document.getElementById('numero-tramite-preview').value = numeroOrden;
         document.getElementById('numero-tramite').value = numeroOrden;
