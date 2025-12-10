@@ -23,9 +23,12 @@
                 </div>
                 <div class="card-body p-4">
                     <!-- Mensajes de error/success -->
+                    <!-- En la sección de mensajes de error, reemplaza esto: -->
                     <div th:if="${param.error}" class="alert alert-danger alert-dismissible fade show" role="alert">
                         <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                        <strong>Error:</strong> Usuario o contraseña incorrectos
+                        <!-- Muestra el mensaje del modelo en lugar de uno fijo -->
+                        <strong>Error:</strong>
+                        <span th:text="${error}">Usuario o contraseña incorrectos</span>
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
                     <div th:if="${param.logout}" class="alert alert-success alert-dismissible fade show" role="alert">

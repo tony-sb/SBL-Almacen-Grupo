@@ -18,7 +18,6 @@ public class SecurityConfig {
     @Autowired
     private UserDetailsService userDetailsService;
 
-    // ¡IMPORTANTE! Debes tener esto:
     @Autowired
     private CustomAuthenticationFailureHandler customAuthenticationFailureHandler;
 
@@ -43,7 +42,7 @@ public class SecurityConfig {
                         // Recursos estáticos accesibles sin autenticación
                         .requestMatchers("/css/**", "/js/**", "/img/**", "/webjars/**").permitAll()
                         // Páginas de login, registro y ERROR deben ser accesibles sin autenticación
-                        .requestMatchers("/login", "/registro", "/error/**").permitAll() // ← ¡AGREGA ESTO!
+                        .requestMatchers("/login", "/registro", "/error/**", "/access-denied").permitAll()
                         // Rutas de usuarios solo accesibles por ADMIN
                         .requestMatchers("/usuarios/**").hasRole("ADMIN")
                         // Rutas de órdenes, productos y dashboard accesibles por ADMIN, ALMACENERO y USUARIO
@@ -56,7 +55,7 @@ public class SecurityConfig {
                 .formLogin(form -> form
                         .loginPage("/login")
                         .defaultSuccessUrl("/dashboard", true)
-                        .failureUrl("/error/access-denied?reason=disabled") // Esta ruta ahora será permitida
+                        .failureHandler(customAuthenticationFailureHandler) // Usa el handler personalizado
                         .permitAll()
                 )
                 .logout(logout -> logout

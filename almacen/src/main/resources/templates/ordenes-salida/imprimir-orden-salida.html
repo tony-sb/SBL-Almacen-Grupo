@@ -240,8 +240,6 @@
                 <th>#</th>
                 <th>Producto</th>
                 <th>Cantidad</th>
-                <th>Precio Unit.</th>
-                <th>Subtotal</th>
             </tr>
             </thead>
             <tbody>
@@ -249,20 +247,12 @@
                 <td th:text="${iter.count}"></td>
                 <td th:text="${item.producto?.nombre} ?: 'Producto no especificado'"></td>
                 <td th:text="${item.cantidad}"></td>
-                <td class="text-right" th:text="'S/ ' + ${#numbers.formatDecimal(item.precioUnitario != null ? item.precioUnitario : 0, 1, 'COMMA', 2, 'POINT')}"></td>
-                <td class="text-right" th:text="'S/ ' + ${#numbers.formatDecimal(item.subtotal != null ? item.subtotal : 0, 1, 'COMMA', 2, 'POINT')}"></td>
             </tr>
             <!-- Mensaje si no hay items -->
             <tr th:if="${#lists.isEmpty(ordenSalida.items)}">
-                <td colspan="5" class="text-center">No hay detalles de productos disponibles</td>
+                <td colspan="3" class="text-center">No hay detalles de productos disponibles</td>
             </tr>
             </tbody>
-            <tfoot>
-            <tr>
-                <td colspan="4" class="text-right fw-bold">TOTAL</td>
-                <td class="fw-bold text-right" th:text="'S/ ' + ${#numbers.formatDecimal(ordenSalida.totalOrden != null ? ordenSalida.totalOrden : 0, 1, 'COMMA', 2, 'POINT')}"></td>
-            </tr>
-            </tfoot>
         </table>
     </div>
 
