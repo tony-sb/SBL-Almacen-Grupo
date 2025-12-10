@@ -233,6 +233,7 @@
 </div>
 
 <!-- Modal para Nueva Orden de Salida -->
+<!-- Modal para Nueva Orden de Salida -->
 <div class="modal fade" id="nuevaSalidaModal" tabindex="-1" aria-labelledby="nuevaSalidaModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
@@ -242,7 +243,8 @@
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form th:action="@{/ordenes-salida/guardar}" method="post" id="formSalidaModal" onsubmit="return validarFormularioSalida()">
+            <!-- CAMBIA EL FORMULARIO PARA USAR guardar-multiples -->
+            <form th:action="@{/ordenes-salida/guardar-multiples}" method="post" id="formSalidaModal" onsubmit="return validarFormularioSalida()">
                 <div class="modal-body">
                     <!-- Sección de Fecha -->
                     <div class="card mb-4">
@@ -316,10 +318,15 @@
                         </div>
                     </div>
 
-                    <!-- BÚSQUEDA DE PRODUCTOS -->
+                    <!-- BÚSQUEDA DE PRODUCTOS (MÚLTIPLES) -->
                     <div class="card mb-4">
-                        <div class="card-header">
+                        <div class="card-header d-flex justify-content-between align-items-center">
                             <h6 class="mb-0"><i class="bi bi-search me-2"></i>BÚSQUEDA DE PRODUCTOS</h6>
+                            <div>
+                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="agregarProductoSeleccionado()">
+                                    <i class="bi bi-plus-circle me-1"></i>Agregar Producto
+                                </button>
+                            </div>
                         </div>
                         <div class="card-body">
                             <div class="mb-3">
@@ -332,11 +339,11 @@
                             <div class="mb-3">
                                 <input type="text" class="form-control" id="search-term"
                                        placeholder="Cadena de Búsqueda (Cod/Art):"
-                                       onkeyup="ordenSalidaManager.buscarProductos()">
+                                       onkeyup="buscarProductos()">
                             </div>
 
-                            <!-- Tabla de productos -->
-                            <div class="table-responsive">
+                            <!-- Tabla de productos para selección -->
+                            <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
                                 <table class="table table-hover table-striped">
                                     <thead class="table-dark">
                                     <tr>
@@ -356,8 +363,37 @@
                         </div>
                     </div>
 
-                    <!-- DETALLES DEL PRODUCTO SELECCIONADO -->
+                    <!-- PRODUCTOS SELECCIONADOS (NUEVA SECCIÓN PARA MÚLTIPLES) -->
                     <div class="card mb-4">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0"><i class="bi bi-cart-check me-2"></i>PRODUCTOS SELECCIONADOS</h6>
+                            <div>
+                                <span id="contador-productos" class="badge bg-secondary">0 productos</span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered">
+                                    <thead class="table-light">
+                                    <tr>
+                                        <th width="5%">#</th>
+                                        <th width="30%">Producto</th>
+                                        <th width="15%">Código</th>
+                                        <th width="15%">Stock</th>
+                                        <th width="15%">Cantidad</th>
+                                        <th width="10%">Acción</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="productos-seleccionados-container">
+                                    <!-- Los productos seleccionados aparecerán aquí -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- DETALLES DEL PRODUCTO SELECCIONADO (OCULTAR ESTA SECCIÓN) -->
+                    <div class="card mb-4" style="display: none;">
                         <div class="card-header">
                             <h6 class="mb-0"><i class="bi bi-box me-2"></i>DETALLES DEL PRODUCTO SELECCIONADO</h6>
                         </div>
@@ -393,7 +429,6 @@
                         </div>
                     </div>
 
-
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
@@ -407,7 +442,6 @@
         </div>
     </div>
 </div>
-
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script th:src="@{/js/ordenes-salida.js}"></script>
@@ -771,6 +805,367 @@
 
         console.log('Número de orden generado:', numeroOrden);
         return true;
+    }
+</script>
+<script>
+    // ================================================
+    // FUNCIONALIDAD PARA MÚLTIPLES PRODUCTOS
+    // (MANTENIENDO LA INTERFAZ ANTERIOR)
+    // ================================================
+
+    // Variables globales
+    let productosSeleccionados = [];
+    let productoSeleccionadoActual = null;
+
+    // Función para cargar productos en la tabla
+    function cargarProductosEnTabla() {
+        fetch('/ordenes-salida/productos')
+            .then(response => response.json())
+            .then(productos => {
+                const tabla = document.getElementById('tabla-productos');
+                if (!tabla) return;
+
+                tabla.innerHTML = '';
+
+                productos.forEach(producto => {
+                    const fila = document.createElement('tr');
+                    fila.innerHTML = `
+                        <td>
+                            <input type="radio" name="productoSeleccionado"
+                                   value="${producto.id}"
+                                   onclick="seleccionarProductoParaMultiples(
+                                       '${producto.id}',
+                                       '${producto.codigo || ''}',
+                                       '${producto.nombre}',
+                                       ${producto.cantidad}
+                                   )">
+                        </td>
+                        <td>${producto.codigo || 'N/A'}</td>
+                        <td>${producto.unidadMedida || 'UNIDAD'}</td>
+                        <td>${producto.nombre}</td>
+                        <td>${producto.grupo || 'GENERAL'}</td>
+                        <td class="text-center">
+                            <span class="badge ${producto.cantidad <= 5 ? 'bg-warning' : 'bg-success'}">
+                                ${producto.cantidad}
+                            </span>
+                        </td>
+                    `;
+                    tabla.appendChild(fila);
+                });
+
+                // Seleccionar automáticamente el primer producto
+                if (productos.length > 0) {
+                    const primerProducto = productos[0];
+                    seleccionarProductoParaMultiples(
+                        primerProducto.id,
+                        primerProducto.codigo || '',
+                        primerProducto.nombre,
+                        primerProducto.cantidad
+                    );
+                }
+            })
+            .catch(error => console.error('Error al cargar productos:', error));
+    }
+
+    // Función para seleccionar producto (MÚLTIPLES)
+    function seleccionarProductoParaMultiples(id, codigo, nombre, stock) {
+        productoSeleccionadoActual = {
+            id: id,
+            codigo: codigo,
+            nombre: nombre,
+            stock: parseInt(stock)
+        };
+
+        // Resaltar la fila seleccionada
+        const filas = document.querySelectorAll('#tabla-productos tr');
+        filas.forEach(fila => {
+            fila.classList.remove('table-success');
+            const radio = fila.querySelector('input[type="radio"]');
+            if (radio && radio.value === id) {
+                radio.checked = true;
+                fila.classList.add('table-success');
+            }
+        });
+
+        // Actualizar campos individuales (para compatibilidad)
+        document.getElementById('product-id').value = id;
+        document.getElementById('product-code').value = codigo;
+        document.getElementById('product-name').value = nombre;
+        document.getElementById('available-stock').value = stock;
+
+        // Activar cantidad
+        const cantidadInput = document.getElementById('product-quantity');
+        if (cantidadInput) {
+            cantidadInput.disabled = false;
+            cantidadInput.max = stock;
+            cantidadInput.value = 1;
+        }
+
+        console.log('Producto seleccionado para múltiples:', productoSeleccionadoActual);
+    }
+
+    // Función para agregar producto a la lista (se llama desde el botón)
+    function agregarProductoSeleccionado() {
+        if (!productoSeleccionadoActual) {
+            alert('⚠️ Por favor, seleccione un producto de la tabla primero');
+            return;
+        }
+
+        // Verificar si ya está en la lista
+        if (productosSeleccionados.some(p => p.id === productoSeleccionadoActual.id)) {
+            alert('❌ Este producto ya está en la lista');
+            return;
+        }
+
+        // Agregar a la lista
+        const nuevoProducto = {
+            ...productoSeleccionadoActual,
+            cantidad: 1
+        };
+
+        productosSeleccionados.push(nuevoProducto);
+        actualizarTablaProductosSeleccionados();
+
+        // Mostrar mensaje de éxito
+        showAlert('success', `✅ Producto "${productoSeleccionadoActual.nombre}" agregado a la lista`);
+
+        console.log('Productos en la lista:', productosSeleccionados);
+    }
+
+    // Función para actualizar la tabla de productos seleccionados
+    function actualizarTablaProductosSeleccionados() {
+        const container = document.getElementById('productos-seleccionados-container');
+        if (!container) return;
+
+        container.innerHTML = '';
+
+        productosSeleccionados.forEach((producto, index) => {
+            const fila = document.createElement('tr');
+            fila.innerHTML = `
+                <td class="text-center">${index + 1}</td>
+                <td>${producto.nombre}</td>
+                <td>${producto.codigo}</td>
+                <td class="text-center">
+                    <span class="badge ${producto.stock <= 5 ? 'bg-warning' : 'bg-success'}">
+                        ${producto.stock}
+                    </span>
+                </td>
+                <td>
+                    <input type="number" class="form-control form-control-sm cantidad-producto"
+                           data-producto-id="${producto.id}"
+                           min="1" max="${producto.stock}"
+                           value="${producto.cantidad}"
+                           onchange="actualizarCantidadProducto('${producto.id}', this.value)"
+                           style="width: 80px;">
+                </td>
+                <td class="text-center">
+                    <button type="button" class="btn btn-outline-danger btn-sm btn-eliminar-producto"
+                            onclick="removerProductoDeLista('${producto.id}')"
+                            title="Eliminar producto">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            `;
+            container.appendChild(fila);
+        });
+
+        // Actualizar contador
+        actualizarContadorProductos();
+    }
+
+    // Función para actualizar cantidad de un producto
+    function actualizarCantidadProducto(productoId, cantidad) {
+        const cantidadNum = parseInt(cantidad);
+        const producto = productosSeleccionados.find(p => p.id === productoId);
+
+        if (producto) {
+            // Validar stock
+            if (cantidadNum > producto.stock) {
+                alert(`⚠️ La cantidad no puede ser mayor al stock disponible (${producto.stock})`);
+                // Corregir el valor
+                const input = document.querySelector(`input[data-producto-id="${productoId}"]`);
+                if (input) input.value = producto.stock;
+                producto.cantidad = producto.stock;
+            } else if (cantidadNum < 1) {
+                alert('⚠️ La cantidad debe ser al menos 1');
+                const input = document.querySelector(`input[data-producto-id="${productoId}"]`);
+                if (input) input.value = 1;
+                producto.cantidad = 1;
+            } else {
+                producto.cantidad = cantidadNum;
+            }
+        }
+
+        actualizarContadorProductos();
+    }
+
+    // Función para remover producto de la lista
+    function removerProductoDeLista(productoId) {
+        if (confirm('¿Está seguro de eliminar este producto de la lista?')) {
+            // Eliminar de la lista interna
+            productosSeleccionados = productosSeleccionados.filter(p => p.id !== productoId);
+
+            // Actualizar tabla
+            actualizarTablaProductosSeleccionados();
+
+            showAlert('info', '✅ Producto eliminado de la lista');
+        }
+    }
+
+    // Actualizar contador de productos
+    function actualizarContadorProductos() {
+        const contadorElement = document.getElementById('contador-productos');
+        if (contadorElement) {
+            contadorElement.textContent = `${productosSeleccionados.length} producto(s)`;
+            contadorElement.className = productosSeleccionados.length > 0 ?
+                'badge bg-success' : 'badge bg-secondary';
+        }
+    }
+
+    // Función de búsqueda (si no la tienes)
+    function buscarProductos() {
+        const termino = document.getElementById('search-term').value.toLowerCase();
+        const filas = document.querySelectorAll('#tabla-productos tr');
+
+        filas.forEach(fila => {
+            const textoFila = fila.textContent.toLowerCase();
+            if (textoFila.includes(termino)) {
+                fila.style.display = '';
+            } else {
+                fila.style.display = 'none';
+            }
+        });
+    }
+
+    // Preparar datos para enviar al backend (MÚLTIPLES)
+    function prepararDatosEnvioMultiples() {
+        const form = document.getElementById('formSalidaModal');
+
+        // Limpiar campos ocultos anteriores
+        document.querySelectorAll('input[name="productoIds"]').forEach(el => el.remove());
+        document.querySelectorAll('input[name="cantidades"]').forEach(el => el.remove());
+
+        // Agregar campos para cada producto
+        productosSeleccionados.forEach(producto => {
+            // Campo para producto ID
+            const inputProductoId = document.createElement('input');
+            inputProductoId.type = 'hidden';
+            inputProductoId.name = 'productoIds';
+            inputProductoId.value = producto.id;
+            form.appendChild(inputProductoId);
+
+            // Campo para cantidad
+            const inputCantidad = document.createElement('input');
+            inputCantidad.type = 'hidden';
+            inputCantidad.name = 'cantidades';
+            inputCantidad.value = producto.cantidad;
+            form.appendChild(inputCantidad);
+        });
+
+        console.log('📦 Datos preparados para envío:', productosSeleccionados);
+    }
+
+    // Modificar la función validarFormularioSalida para MÚLTIPLES productos
+    function validarFormularioSalida() {
+        console.log('Validando formulario con MÚLTIPLES productos...');
+
+        // 1. Validar DNI
+        const dniValido = validarDniInput(document.getElementById('user-dni'));
+
+        // 2. Validar que haya productos seleccionados
+        if (productosSeleccionados.length === 0) {
+            alert('❌ Error: Debe agregar al menos un producto a la lista');
+            // Enfocar el botón de agregar producto
+            const botonAgregar = document.querySelector('[onclick="agregarProductoSeleccionado()"]');
+            if (botonAgregar) botonAgregar.focus();
+            return false;
+        }
+
+        // 3. Validar cada producto
+        let errores = [];
+
+        productosSeleccionados.forEach((producto, index) => {
+            if (!producto.cantidad || producto.cantidad < 1) {
+                errores.push(`• Producto ${index + 1} (${producto.nombre}): La cantidad debe ser al menos 1`);
+            }
+
+            if (producto.cantidad > producto.stock) {
+                errores.push(`• Producto ${index + 1} (${producto.nombre}): La cantidad (${producto.cantidad}) excede el stock disponible (${producto.stock})`);
+            }
+        });
+
+        if (!dniValido) {
+            errores.push('• El DNI debe tener 8 dígitos numéricos');
+        }
+
+        if (errores.length > 0) {
+            alert('❌ Errores encontrados:\n\n' + errores.join('\n'));
+            return false;
+        }
+
+        // 4. Preparar datos para envío
+        prepararDatosEnvioMultiples();
+
+        // 5. Generar número de orden
+        const numeroOrden = generarNumeroOrden();
+        document.getElementById('numero-tramite-preview').value = numeroOrden;
+        document.getElementById('numero-tramite').value = numeroOrden;
+
+        console.log('✅ Formulario validado con éxito');
+        console.log('📦 Productos a enviar:', productosSeleccionados);
+
+        return true;
+    }
+
+    // Inicializar cuando se abre el modal
+    document.addEventListener('DOMContentLoaded', function() {
+        const modal = document.getElementById('nuevaSalidaModal');
+        if (modal) {
+            modal.addEventListener('show.bs.modal', function() {
+                console.log('Modal abierto - inicializando múltiples productos');
+
+                // Reiniciar variables
+                productosSeleccionados = [];
+                productoSeleccionadoActual = null;
+
+                // Limpiar tabla de productos seleccionados
+                const container = document.getElementById('productos-seleccionados-container');
+                if (container) container.innerHTML = '';
+
+                // Actualizar contador
+                actualizarContadorProductos();
+
+                // Cargar productos en la tabla
+                setTimeout(() => {
+                    cargarProductosEnTabla();
+                }, 300);
+            });
+
+            modal.addEventListener('hidden.bs.modal', function() {
+                console.log('Modal cerrado');
+                // Opcional: mantener los productos para edición
+            });
+        }
+    });
+
+    // Función para mostrar alertas (si no la tienes)
+    function showAlert(type, message) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        alertDiv.innerHTML = `
+            <i class="bi ${type === 'success' ? 'bi-check-circle' : type === 'warning' ? 'bi-exclamation-triangle' : 'bi-info-circle'} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+
+        document.body.appendChild(alertDiv);
+
+        setTimeout(() => {
+            if (alertDiv.parentNode) {
+                alertDiv.parentNode.removeChild(alertDiv);
+            }
+        }, 5000);
     }
 </script>
 </body>

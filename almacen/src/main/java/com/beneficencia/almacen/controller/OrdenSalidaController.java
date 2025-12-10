@@ -19,10 +19,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
-import java.util.List;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Controlador para la gestión de órdenes de salida del almacén.
@@ -447,5 +444,104 @@ public class OrdenSalidaController {
             return "redirect:/ordenes-salida?error";
         }
     }
+    /**
+     * Guarda una orden de salida con múltiples productos.
+     */
+    @PostMapping("/guardar-multiples")
+    public String guardarOrdenSalidaMultiples(
+            @RequestParam(required = false) String numeroTramite,
+            @RequestParam String fechaSalida,
+            @RequestParam String nombreUsuario,
+            @RequestParam String dniUsuario,
+            @RequestParam String descripcion,
+            @RequestParam List<Long> productoIds,
+            @RequestParam List<Integer> cantidades,
+            RedirectAttributes redirectAttributes) {
 
+        try {
+            // Validar DNI
+            if (dniUsuario == null || !dniUsuario.matches("\\d{8}")) {
+                throw new RuntimeException("El DNI debe tener exactamente 8 dígitos");
+            }
+
+            // Validar que haya productos
+            if (productoIds == null || productoIds.isEmpty()) {
+                throw new RuntimeException("Debe seleccionar al menos un producto");
+            }
+
+            // Validar que las listas tengan el mismo tamaño
+            if (productoIds.size() != cantidades.size()) {
+                throw new RuntimeException("Error en los datos de productos");
+            }
+
+            // Verificar o crear beneficiario
+            boolean beneficiarioExiste = beneficiarioService.existePorDni(dniUsuario);
+
+            if (!beneficiarioExiste) {
+                // Redirigir al formulario de beneficiario
+                redirectAttributes.addFlashAttribute("dni", dniUsuario);
+                redirectAttributes.addFlashAttribute("nombreCompleto", nombreUsuario);
+                redirectAttributes.addFlashAttribute("redirigirDesdeOrden", true);
+                redirectAttributes.addFlashAttribute("numeroTramite", numeroTramite);
+                redirectAttributes.addFlashAttribute("fechaSalida", fechaSalida);
+                redirectAttributes.addFlashAttribute("descripcion", descripcion);
+
+                // Guardar productos temporalmente (puedes usar sesión o localStorage en el frontend)
+                redirectAttributes.addFlashAttribute("productoIds", productoIds);
+                redirectAttributes.addFlashAttribute("cantidades", cantidades);
+
+                return "redirect:/beneficiario/formulario-con-redireccion";
+            }
+
+            // Obtener beneficiario
+            Beneficiario beneficiario = beneficiarioService.obtenerBeneficiarioPorDni(dniUsuario)
+                    .orElseThrow(() -> new RuntimeException("Beneficiario no encontrado"));
+
+            // Crear la orden de salida
+            OrdenSalida ordenSalida = new OrdenSalida();
+            ordenSalida.setNumeroTramite(numeroTramite);
+            ordenSalida.setFechaSalida(LocalDate.parse(fechaSalida));
+            ordenSalida.setNombreUsuario(nombreUsuario);
+            ordenSalida.setDniUsuario(dniUsuario);
+            ordenSalida.setDescripcion(descripcion);
+            ordenSalida.setBeneficiario(beneficiario);
+
+            // Crear items para cada producto
+            List<OrdenSalidaItem> items = new ArrayList<>();
+
+            for (int i = 0; i < productoIds.size(); i++) {
+                Long productoId = productoIds.get(i);
+                Integer cantidad = cantidades.get(i);
+
+                // Obtener producto
+                Producto producto = productoService.obtenerProductoPorId(productoId)
+                        .orElseThrow(() -> new RuntimeException("Producto no encontrado con ID: " + productoId));
+
+                // Validar stock
+                if (producto.getCantidad() < cantidad) {
+                    throw new RuntimeException("Stock insuficiente para " + producto.getNombre() +
+                            ". Disponible: " + producto.getCantidad() + ", Solicitado: " + cantidad);
+                }
+
+                // Crear item
+                OrdenSalidaItem item = new OrdenSalidaItem();
+                item.setProducto(producto);
+                item.setCantidad(cantidad);
+                item.setPrecioUnitario(producto.getPrecioUnitario());
+
+                items.add(item);
+            }
+
+            // Guardar la orden con todos los items
+            ordenSalidaService.guardarOrdenConItems(ordenSalida, items);
+
+            redirectAttributes.addFlashAttribute("success", "Orden de salida guardada exitosamente");
+            redirectAttributes.addFlashAttribute("numeroOrden", ordenSalida.getNumeroOrden());
+            return "redirect:/ordenes-salida?success";
+
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Error al guardar la orden: " + e.getMessage());
+            return "redirect:/ordenes-salida?error";
+        }
+    }
 }
