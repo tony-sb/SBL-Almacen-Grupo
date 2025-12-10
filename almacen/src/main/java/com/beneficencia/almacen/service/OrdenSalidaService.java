@@ -165,7 +165,7 @@ public class OrdenSalidaService {
                 item.setOrdenSalida(ordenGuardada);
                 if (item.getPrecioUnitario() == null || item.getPrecioUnitario().compareTo(BigDecimal.ZERO) == 0) {
                     item.setPrecioUnitario(producto.getPrecioUnitario());
-                    }
+                }
 
                 // Guardar item
                 ordenSalidaItemRepository.save(item);
