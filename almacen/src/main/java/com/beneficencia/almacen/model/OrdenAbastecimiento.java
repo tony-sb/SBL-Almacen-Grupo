@@ -120,7 +120,7 @@ public class OrdenAbastecimiento {
     public OrdenAbastecimiento() {
         this.fechaCreacion = LocalDateTime.now();
         this.fechaActualizacion = LocalDateTime.now();
-        this.estado = EstadoOrden.PENDIENTE;
+        this.estado = EstadoOrden.COMPLETADA;
         this.total = BigDecimal.ZERO;
     }
 

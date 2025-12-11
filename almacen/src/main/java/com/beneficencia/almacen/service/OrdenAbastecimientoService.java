@@ -37,6 +37,9 @@ public class OrdenAbastecimientoService {
     @Autowired
     private OrdenAbastecimientoItemRepository ordenAbastecimientoItemRepository;
 
+    @Autowired  //
+    private ProductoService productoService;
+
     @PersistenceContext
     private EntityManager entityManager;
     /**
@@ -220,6 +223,7 @@ public class OrdenAbastecimientoService {
             // Guardar la orden (esto incluirá los nuevos items)
             OrdenAbastecimiento ordenGuardada = ordenAbastecimientoRepository.save(ordenAbastecimiento);
 
+            actualizarInventarioProductos(ordenGuardada);System.out.println("✅ Orden guardada exitosamente con ID: " + ordenGuardada.getId());
             System.out.println("✅ Orden guardada exitosamente con ID: " + ordenGuardada.getId());
             System.out.println("Total de orden: S/ " + ordenGuardada.getTotal());
             System.out.println("Items en orden guardada: " +
@@ -232,6 +236,57 @@ public class OrdenAbastecimientoService {
             e.printStackTrace();
             throw new RuntimeException("Error al guardar la orden: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * ACTUALIZA el inventario de productos (cantidad Y precio) después de guardar una orden
+     */
+    private void actualizarInventarioProductos(OrdenAbastecimiento orden) {
+        System.out.println("🔄 ACTUALIZANDO INVENTARIO DE PRODUCTOS PARA ORDEN: " + orden.getNumeroOA());
+
+        if (orden.getItems() == null || orden.getItems().isEmpty()) {
+            System.out.println("⚠️  Orden sin items, no hay inventario que actualizar");
+            return;
+        }
+
+        for (OrdenAbastecimientoItem item : orden.getItems()) {
+            try {
+                Producto producto = item.getProducto();
+                Integer cantidadOrdenada = item.getCantidad();
+                BigDecimal precioOrdenado = item.getPrecioUnitario();
+
+                if (producto != null && cantidadOrdenada != null && cantidadOrdenada > 0) {
+                    // Obtener producto actual de la base de datos
+                    Producto productoActual = productoService.obtenerProductoPorId(producto.getId())
+                            .orElseThrow(() -> new RuntimeException("Producto no encontrado: " + producto.getId()));
+
+                    // 1️⃣ ACTUALIZAR CANTIDAD (sumar)
+                    Integer cantidadActual = productoActual.getCantidad() != null ? productoActual.getCantidad() : 0;
+                    Integer nuevaCantidad = cantidadActual + cantidadOrdenada;
+                    productoActual.setCantidad(nuevaCantidad);
+
+                    // 2️⃣ ACTUALIZAR PRECIO UNITARIO (reemplazar con el de la orden)
+                    if (precioOrdenado != null && precioOrdenado.compareTo(BigDecimal.ZERO) > 0) {
+                        productoActual.setPrecioUnitario(precioOrdenado);
+                        System.out.println("💰 Precio actualizado: " + productoActual.getNombre() +
+                                " - Precio anterior: " + productoActual.getPrecioUnitario() +
+                                " -> Nuevo: " + precioOrdenado);
+                    }
+
+                    // Guardar producto actualizado
+                    productoService.actualizarProducto(productoActual);
+
+                    System.out.println("✅ Producto actualizado: " + productoActual.getNombre() +
+                            " - Stock: " + cantidadActual + " + " + cantidadOrdenada + " = " + nuevaCantidad +
+                            " - Precio: " + productoActual.getPrecioUnitario());
+                }
+            } catch (Exception e) {
+                System.err.println("❌ Error actualizando producto: " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
+
+        System.out.println("📦 Inventario actualizado para " + orden.getItems().size() + " productos");
     }
 
     /**

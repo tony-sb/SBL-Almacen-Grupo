@@ -255,25 +255,32 @@
                           method="post" th:object="${producto}">
 
                         <div class="row g-3">
+
                             <!-- Código -->
                             <div class="col-md-6">
                                 <label for="codigo" class="form-label required-field">Código</label>
-                                <div th:if="${modo == 'nuevo'}">
-                                    <!-- Para nuevo producto: mostrar como solo lectura o generar automático -->
-                                    <div class="input-group">
-                                        <input type="text" th:field="*{codigo}" class="form-control" id="codigo"
-                                               placeholder="Se generará automáticamente" readonly
-                                               th:attr="data-categoria='categoria'">
-                                        <button type="button" class="btn btn-outline-secondary" onclick="generarCodigoManual()">
-                                            <i class="bi bi-arrow-clockwise"></i> Generar Manual
-                                        </button>
-                                    </div>
-                                    <div class="form-text">El código se generará automáticamente basado en la categoría</div>
+
+                                <!-- SOLO UN INPUT - SIN DIVS DUPLICADOS -->
+                                <input type="text"
+                                       th:field="*{codigo}"
+                                       class="form-control"
+                                       id="codigo"
+                                       th:placeholder="${modo == 'nuevo'} ? 'Se generará automáticamente' : ''"
+                                       readonly>
+
+                                <!-- BOTÓN SOLO PARA MODO NUEVO -->
+                                <div th:if="${modo == 'nuevo'}" class="mt-2">
+                                    <button type="button"
+                                            class="btn btn-outline-secondary"
+                                            onclick="generarCodigoManual()">
+                                        <i class="bi bi-arrow-clockwise"></i> Generar Manual
+                                    </button>
                                 </div>
-                                <div th:unless="${modo == 'nuevo'}">
-                                    <!-- Para edición: solo lectura -->
-                                    <input type="text" th:field="*{codigo}" class="form-control" id="codigo" readonly>
-                                    <div class="form-text">Código único (no editable después de creado)</div>
+
+                                <!-- TEXTO DE AYUDA - CONDICIONAL -->
+                                <div class="form-text">
+                                    <span th:if="${modo == 'nuevo'}">El código se generará automáticamente basado en la categoría</span>
+                                    <span th:if="${modo == 'editar'}">Código único (no editable después de creado)</span>
                                 </div>
                             </div>
 
