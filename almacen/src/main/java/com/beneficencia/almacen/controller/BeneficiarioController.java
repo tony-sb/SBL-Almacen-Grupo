@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/beneficiario")
@@ -48,7 +49,7 @@ public class BeneficiarioController {
                                     (b.getNombres() != null && b.getNombres().toLowerCase().contains(busquedaLower)) ||
                                     (b.getApellidos() != null && b.getApellidos().toLowerCase().contains(busquedaLower))
                     )
-                    .toList();
+                    .collect(Collectors.toList());
 
             // **ORDENAR RESULTADOS DE BÚSQUEDA** - Los más recientes primero
             if (beneficiarios != null && !beneficiarios.isEmpty()) {
