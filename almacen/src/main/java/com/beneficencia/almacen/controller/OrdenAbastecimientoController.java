@@ -10,13 +10,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.*;
 
-/**
- * Controlador para la gestión de órdenes de abastecimiento.
- * Maneja las operaciones CRUD de órdenes de compra y abastecimiento del almacén.
- */
 @Controller
 @RequestMapping("/ordenes-abastecimiento")
 public class OrdenAbastecimientoController {
@@ -33,21 +28,10 @@ public class OrdenAbastecimientoController {
     @Autowired
     private UsuarioService usuarioService;
 
-    /**
-     * Muestra la lista de todas las órdenes de abastecimiento (página principal).
-     * Carga las órdenes existentes junto con los proveedores y productos necesarios
-     * para las operaciones del formulario.
-     *
-     * @param model Modelo para pasar datos a la vista
-     * @param authentication Información de autenticación del usuario
-     * @return Nombre de la vista 'ordenes-abastecimiento'
-     */
     @GetMapping
     public String listarOrdenesAbastecimiento(Model model, Authentication authentication) {
         try {
-            System.out.println("=== CARGANDO PÁGINA PRINCIPAL DE ÓRDENES DE ABASTECIMIENTO ===");
 
-            // Cargar datos necesarios
             List<OrdenAbastecimiento> ordenes = ordenAbastecimientoService.obtenerTodasOrdenes();
             List<Proveedor> proveedores = proveedorService.obtenerTodosProveedores();
             List<Producto> productos = productoService.obtenerTodosProductos();
@@ -56,7 +40,6 @@ public class OrdenAbastecimientoController {
             System.out.println("Proveedores encontrados: " + proveedores.size());
             System.out.println("Productos encontrados: " + productos.size());
 
-            // Agregar atributos al modelo
             model.addAttribute("ordenes", ordenes);
             model.addAttribute("proveedores", proveedores);
             model.addAttribute("productos", productos);
@@ -79,26 +62,13 @@ public class OrdenAbastecimientoController {
         }
     }
 
-    /**
-     * Muestra el formulario para crear una nueva orden de abastecimiento.
-     * Carga los proveedores y productos disponibles para seleccionar en la orden.
-     *
-     * @param model Modelo para pasar datos a la vista
-     * @return Nombre de la vista 'form-orden-abastecimiento'
-     */
     @GetMapping("/nueva")
     public String mostrarFormularioNuevaOrden(Model model) {
         try {
-            System.out.println("=== CARGANDO FORMULARIO NUEVA ORDEN DE ABASTECIMIENTO ===");
 
-            // Cargar datos necesarios
             List<Proveedor> proveedores = proveedorService.obtenerTodosProveedores();
             List<Producto> productos = productoService.obtenerTodosProductos();
 
-            System.out.println("Proveedores cargados: " + proveedores.size());
-            System.out.println("Productos cargados: " + productos.size());
-
-            // Log de productos para debugging
             for (Producto producto : productos) {
                 System.out.println("Producto: " + producto.getNombre() +
                         " - ID: " + producto.getId() +
@@ -122,20 +92,6 @@ public class OrdenAbastecimientoController {
         }
     }
 
-    /**
-     * Procesa el guardado de una nueva orden de abastecimiento.
-     * Valida los datos, procesa los items y asigna el usuario autenticado.
-     *
-     * @param ordenAbastecimiento Objeto de orden con datos básicos
-     * @param proveedorId ID del proveedor seleccionado
-     * @param productoIds Lista de IDs de productos incluidos en la orden
-     * @param cantidades Lista de cantidades correspondientes a cada producto
-     * @param precios Lista de precios unitarios correspondientes a cada producto
-     * @param authentication Información de autenticación del usuario
-     * @param model Modelo para pasar datos a la vista en caso de error
-     * @param redirectAttributes Atributos para mensajes flash en redirección
-     * @return Redirección a la lista de órdenes o recarga del formulario en caso de error
-     */
     @PostMapping("/guardar")
     public String guardarOrdenAbastecimiento(@ModelAttribute OrdenAbastecimiento ordenAbastecimiento,
                                              @RequestParam Long proveedorId,
@@ -146,38 +102,28 @@ public class OrdenAbastecimientoController {
                                              Model model,
                                              RedirectAttributes redirectAttributes) {
         try {
-            System.out.println("=== INICIANDO GUARDADO DE NUEVA ORDEN DE ABASTECIMIENTO ===");
-            System.out.println("Tipo orden: " + ordenAbastecimiento.getTipoOrden());
-            System.out.println("Proveedor ID: " + proveedorId);
 
-            // Validaciones básicas
             if (proveedorId == null) {
                 throw new IllegalArgumentException("Debe seleccionar un proveedor");
             }
 
-            // Obtener el usuario autenticado
             String username = authentication.getName();
             Usuario usuario = usuarioService.obtenerUsuarioPorUsername(username)
                     .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado: " + username));
             System.out.println("Usuario autenticado: " + usuario.getNombre());
 
-            // Establecer proveedor
             Proveedor proveedor = proveedorService.obtenerProveedorPorId(proveedorId)
                     .orElseThrow(() -> new IllegalArgumentException("Proveedor no encontrado con ID: " + proveedorId));
             ordenAbastecimiento.setProveedor(proveedor);
             System.out.println("Proveedor asignado: " + proveedor.getNombre());
 
-            // Establecer usuario
             ordenAbastecimiento.setUsuario(usuario);
 
-            // Procesar items de la orden
             procesarItemsOrden(ordenAbastecimiento, productoIds, cantidades, precios);
 
-            // Guardar la orden
             OrdenAbastecimiento ordenGuardada = ordenAbastecimientoService.guardarOrden(ordenAbastecimiento);
             System.out.println("Orden guardada exitosamente: " + ordenGuardada.getNumeroOA());
 
-            // Mensaje de éxito
             redirectAttributes.addFlashAttribute("success",
                     "Orden de abastecimiento " + ordenGuardada.getNumeroOA() + " creada exitosamente");
 
@@ -192,28 +138,17 @@ public class OrdenAbastecimientoController {
         }
     }
 
-    /**
-     * Muestra el formulario para editar una orden de abastecimiento existente.
-     * Carga los datos de la orden especificada por ID para su modificación.
-     *
-     * @param id ID de la orden a editar
-     * @param model Modelo para pasar datos a la vista
-     * @return Nombre de la vista 'form-orden-abastecimiento' o redirección en caso de error
-     */
     @GetMapping("/editar/{id}")
     public String mostrarFormularioEditarOrden(@PathVariable Long id, Model model) {
         try {
-            System.out.println("=== CARGANDO ORDEN PARA EDITAR - ID: " + id + " ===");
 
             OrdenAbastecimiento ordenAbastecimiento = ordenAbastecimientoService.obtenerOrdenPorId(id)
                     .orElseThrow(() -> new IllegalArgumentException("Orden no encontrada con ID: " + id));
 
-            // Forzar carga de items (evitar LazyInitializationException)
             if (ordenAbastecimiento.getItems() != null) {
                 System.out.println("Items encontrados: " + ordenAbastecimiento.getItems().size());
-                ordenAbastecimiento.getItems().size(); // Force initialization
+                ordenAbastecimiento.getItems().size();
 
-                // Log de items para debugging
                 for (OrdenAbastecimientoItem item : ordenAbastecimiento.getItems()) {
                     System.out.println("   - " + item.getProducto().getNombre() +
                             " x " + item.getCantidad() +
@@ -221,7 +156,6 @@ public class OrdenAbastecimientoController {
                 }
             }
 
-            // Cargar datos necesarios
             List<Proveedor> proveedores = proveedorService.obtenerTodosProveedores();
             List<Producto> productos = productoService.obtenerTodosProductos();
 
@@ -242,21 +176,6 @@ public class OrdenAbastecimientoController {
         }
     }
 
-    /**
-     * Procesa la actualización de una orden de abastecimiento existente.
-     * Actualiza los datos básicos y reprocesa todos los items de la orden.
-     *
-     * @param id ID de la orden a actualizar
-     * @param ordenAbastecimiento Objeto de orden con datos actualizados
-     * @param proveedorId ID del proveedor seleccionado
-     * @param productoIds Lista de IDs de productos actualizados
-     * @param cantidades Lista de cantidades actualizadas
-     * @param precios Lista de precios unitarios actualizados
-     * @param authentication Información de autenticación del usuario
-     * @param model Modelo para pasar datos a la vista en caso de error
-     * @param redirectAttributes Atributos para mensajes flash en redirección
-     * @return Redirección a la lista de órdenes o recarga del formulario en caso de error
-     */
     @PostMapping("/editar/{id}")
     public String actualizarOrdenAbastecimiento(@PathVariable Long id,
                                                 @ModelAttribute OrdenAbastecimiento ordenAbastecimiento,
@@ -268,18 +187,14 @@ public class OrdenAbastecimientoController {
                                                 Model model,
                                                 RedirectAttributes redirectAttributes) {
         try {
-            System.out.println("=== ACTUALIZANDO ORDEN EXISTENTE - ID: " + id + " ===");
 
-            // Obtener usuario autenticado
             String username = authentication.getName();
             Usuario usuario = usuarioService.obtenerUsuarioPorUsername(username)
                     .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado: " + username));
 
-            // Obtener proveedor
             Proveedor proveedor = proveedorService.obtenerProveedorPorId(proveedorId)
                     .orElseThrow(() -> new IllegalArgumentException("Proveedor no encontrado con ID: " + proveedorId));
 
-            // Crear objeto orden con los datos actualizados
             OrdenAbastecimiento ordenActualizada = new OrdenAbastecimiento();
             ordenActualizada.setId(id); // IMPORTANTE: Mantener el ID
             ordenActualizada.setTipoOrden(ordenAbastecimiento.getTipoOrden());
@@ -288,34 +203,29 @@ public class OrdenAbastecimientoController {
             ordenActualizada.setUsuario(usuario);
             ordenActualizada.setObservaciones(ordenAbastecimiento.getObservaciones());
 
-            // Procesar items
             List<OrdenAbastecimientoItem> items = procesarItemsParaController(productoIds, cantidades, precios);
             ordenActualizada.setItems(items);
 
-            // IMPORTANTE: Asegurarse que cada item tenga referencia a la orden
             if (items != null) {
                 for (OrdenAbastecimientoItem item : items) {
                     item.setOrdenAbastecimiento(ordenActualizada);
                 }
             }
 
-            System.out.println("📋 Datos preparados para actualización:");
+            System.out.println("Datos preparados para actualización:");
             System.out.println("   - ID: " + ordenActualizada.getId());
             System.out.println("   - Items: " + (items != null ? items.size() : 0));
 
-            // Guardar la orden actualizada
-            // El service manejará la lógica de actualización
             OrdenAbastecimiento ordenGuardada = ordenAbastecimientoService.guardarOrden(ordenActualizada);
-            System.out.println("✅ Orden actualizada exitosamente: " + ordenGuardada.getNumeroOA());
+            System.out.println("Orden actualizada exitosamente: " + ordenGuardada.getNumeroOA());
 
-            // Mensaje de éxito
             redirectAttributes.addFlashAttribute("success",
                     "Orden de abastecimiento " + ordenGuardada.getNumeroOA() + " actualizada exitosamente");
 
             return "redirect:/ordenes-abastecimiento";
 
         } catch (Exception e) {
-            System.err.println("❌ ERROR al actualizar orden: " + e.getMessage());
+            System.err.println("ERROR al actualizar orden: " + e.getMessage());
             e.printStackTrace();
 
             return recargarFormularioConError(model, ordenAbastecimiento,
@@ -323,15 +233,12 @@ public class OrdenAbastecimientoController {
         }
     }
 
-    /**
-     * Método auxiliar para procesar items en el controller
-     */
     private List<OrdenAbastecimientoItem> procesarItemsParaController(List<Long> productoIds,
                                                                       List<Integer> cantidades,
                                                                       List<BigDecimal> precios) {
 
         if (productoIds == null || productoIds.isEmpty() || productoIds.stream().allMatch(Objects::isNull)) {
-            System.out.println("⚠️  No hay items para procesar en el controller");
+            System.out.println(" No hay items para procesar en el controller");
             return new ArrayList<>();
         }
 
@@ -344,13 +251,11 @@ public class OrdenAbastecimientoController {
             Integer cantidad = cantidades != null && i < cantidades.size() ? cantidades.get(i) : null;
             BigDecimal precio = precios != null && i < precios.size() ? precios.get(i) : null;
 
-            // Validar datos
             if (productoId != null && cantidad != null && precio != null &&
                     productoId > 0 && cantidad > 0 && precio.compareTo(BigDecimal.ZERO) >= 0) {
 
-                // Evitar duplicados
                 if (productosYaProcesados.contains(productoId)) {
-                    System.out.println("⚠️  Producto duplicado ignorado: ID " + productoId);
+                    System.out.println("Producto duplicado ignorado: ID " + productoId);
                     continue;
                 }
 
@@ -363,13 +268,12 @@ public class OrdenAbastecimientoController {
                     item.setCantidad(cantidad);
                     item.setPrecioUnitario(precio);
                     item.setSubtotal(precio.multiply(BigDecimal.valueOf(cantidad)));
-                    // NOTA: NO establecer ordenAbastecimiento aquí, se hará en el controller principal
 
                     items.add(item);
                     productosYaProcesados.add(productoId);
                     itemsValidos++;
 
-                    System.out.println("✅ Item preparado: " + producto.getNombre() +
+                    System.out.println("Item preparado: " + producto.getNombre() +
                             " x " + cantidad + " = S/ " + item.getSubtotal());
 
                 } catch (Exception e) {
@@ -382,23 +286,15 @@ public class OrdenAbastecimientoController {
             throw new IllegalArgumentException("Debe agregar al menos un producto válido a la orden");
         }
 
-        System.out.println("📦 Total items preparados en controller: " + itemsValidos);
+        System.out.println("Total items preparados en controller: " + itemsValidos);
         return items;
     }
-    /**
-     * Elimina una orden de abastecimiento del sistema.
-     * Realiza validaciones antes de proceder con la eliminación.
-     *
-     * @param id ID de la orden a eliminar
-     * @param redirectAttributes Atributos para mensajes flash en redirección
-     * @return Redirección a la lista de órdenes
-     */
+
     @GetMapping("/eliminar/{id}")
     public String eliminarOrdenAbastecimiento(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         try {
             System.out.println("=== ELIMINANDO ORDEN - ID: " + id + " ===");
 
-            // Verificar que la orden existe antes de eliminar
             OrdenAbastecimiento orden = ordenAbastecimientoService.obtenerOrdenPorId(id)
                     .orElseThrow(() -> new IllegalArgumentException("Orden no encontrada con ID: " + id));
 
@@ -407,7 +303,6 @@ public class OrdenAbastecimientoController {
 
             System.out.println("Orden eliminada: " + numeroOA);
 
-            // Mensaje de éxito
             redirectAttributes.addFlashAttribute("success",
                     "Orden de abastecimiento " + numeroOA + " eliminada exitosamente");
 
@@ -422,14 +317,6 @@ public class OrdenAbastecimientoController {
         return "redirect:/ordenes-abastecimiento";
     }
 
-    /**
-     * Muestra la vista optimizada para imprimir una orden de abastecimiento.
-     * Carga todos los datos de la orden incluyendo items para generar un formato imprimible.
-     *
-     * @param id ID de la orden a imprimir
-     * @param model Modelo para pasar datos a la vista
-     * @return Nombre de la vista 'imprimir-orden-abastecimiento' o redirección en caso de error
-     */
     @GetMapping("/imprimir/{id}")
     public String imprimirOrdenAbastecimiento(@PathVariable Long id, Model model) {
         try {
@@ -438,7 +325,6 @@ public class OrdenAbastecimientoController {
             OrdenAbastecimiento ordenAbastecimiento = ordenAbastecimientoService.obtenerOrdenPorId(id)
                     .orElseThrow(() -> new IllegalArgumentException("Orden no encontrada con ID: " + id));
 
-            // Forzar la carga de los items (LAZY loading)
             if (ordenAbastecimiento.getItems() != null) {
                 ordenAbastecimiento.getItems().size(); // Force initialization
                 System.out.println("Items cargados para impresión: " + ordenAbastecimiento.getItems().size());
@@ -457,17 +343,6 @@ public class OrdenAbastecimientoController {
         }
     }
 
-    // ================= MÉTODOS PRIVADOS AUXILIARES =================
-
-    /**
-     * Procesa los items para una nueva orden de abastecimiento.
-     * Valida y crea los items basados en los IDs de producto, cantidades y precios proporcionados.
-     *
-     * @param ordenAbastecimiento Orden a la que se agregarán los items
-     * @param productoIds Lista de IDs de productos
-     * @param cantidades Lista de cantidades correspondientes
-     * @param precios Lista de precios unitarios correspondientes
-     */
     private void procesarItemsOrden(OrdenAbastecimiento ordenAbastecimiento,
                                     List<Long> productoIds,
                                     List<Integer> cantidades,
@@ -518,44 +393,29 @@ public class OrdenAbastecimientoController {
         System.out.println("Total items procesados: " + itemsValidos);
     }
 
-    /**
-     * Procesa items para edición de una orden existente.
-     * Limpia los items actuales y agrega los nuevos items proporcionados.
-     *
-     * @param ordenExistente Orden existente a actualizar
-     * @param productoIds Lista de IDs de productos actualizados
-     * @param cantidades Lista de cantidades actualizadas
-     * @param precios Lista de precios unitarios actualizados
-     */
     private void procesarItemsParaEdicion(OrdenAbastecimiento ordenExistente,
                                           List<Long> productoIds,
                                           List<Integer> cantidades,
                                           List<BigDecimal> precios) {
 
-        // CORRECCIÓN: Usar el repositorio para eliminar items en lugar de solo limpiar la lista
-        // Esto evita el error de FK constraint
         if (ordenExistente.getItems() != null && !ordenExistente.getItems().isEmpty()) {
-            // IMPORTANTE: Crear una copia de la lista para evitar ConcurrentModificationException
             List<OrdenAbastecimientoItem> itemsAEliminar = new ArrayList<>(ordenExistente.getItems());
 
-            // Romper la relación bidireccional antes de eliminar
             for (OrdenAbastecimientoItem item : itemsAEliminar) {
                 item.setOrdenAbastecimiento(null);
                 ordenExistente.getItems().remove(item);
             }
 
-            System.out.println("✅ Items existentes eliminados correctamente: " + itemsAEliminar.size());
+            System.out.println("Items existentes eliminados correctamente: " + itemsAEliminar.size());
         } else {
             ordenExistente.setItems(new ArrayList<>());
         }
 
-        // Procesar nuevos items solo si hay datos válidos
         if (productoIds != null && cantidades != null && precios != null) {
 
             List<OrdenAbastecimientoItem> nuevosItems = new ArrayList<>();
             int itemsValidos = 0;
 
-            // Usar un Set para evitar duplicados por producto
             Set<Long> productosYaAgregados = new HashSet<>();
 
             for (int i = 0; i < productoIds.size(); i++) {
@@ -563,14 +423,13 @@ public class OrdenAbastecimientoController {
                 Integer cantidad = cantidades.get(i);
                 BigDecimal precio = precios.get(i);
 
-                // Validar que todos los datos del item son válidos
                 if (productoId != null && cantidad != null && precio != null &&
                         productoId > 0 && cantidad > 0 && precio.compareTo(BigDecimal.ZERO) >= 0) {
 
                     try {
                         // Verificar que no sea un duplicado en los nuevos items
                         if (productosYaAgregados.contains(productoId)) {
-                            System.out.println("⚠️  Producto duplicado ignorado: ID " + productoId);
+                            System.out.println("Producto duplicado ignorado: ID " + productoId);
                             continue;
                         }
 
@@ -588,7 +447,7 @@ public class OrdenAbastecimientoController {
                         productosYaAgregados.add(productoId);
                         itemsValidos++;
 
-                        System.out.println("✅ Item procesado: " + producto.getNombre() +
+                        System.out.println("Item procesado: " + producto.getNombre() +
                                 " x " + cantidad + " = S/ " + item.getSubtotal());
 
                     } catch (Exception e) {
@@ -603,23 +462,15 @@ public class OrdenAbastecimientoController {
 
             // Agregar los nuevos items a la orden
             ordenExistente.getItems().addAll(nuevosItems);
-            System.out.println("📦 Total items actualizados: " + itemsValidos);
+            System.out.println("Total items actualizados: " + itemsValidos);
         } else {
-            System.out.println("ℹ️  No hay items para actualizar");
+            System.out.println(" No hay items para actualizar");
             if (productoIds != null && productoIds.size() > 0) {
                 throw new IllegalArgumentException("Los datos de los productos no son válidos");
             }
         }
     }
-    /**
-     * Recarga el formulario con los datos actuales y un mensaje de error.
-     * Utilizado cuando ocurre un error durante el guardado o actualización.
-     *
-     * @param model Modelo para pasar datos a la vista
-     * @param ordenAbastecimiento Orden con datos actuales
-     * @param mensajeError Mensaje de error a mostrar
-     * @return Nombre de la vista 'form-orden-abastecimiento' con datos recargados
-     */
+
     private String recargarFormularioConError(Model model, OrdenAbastecimiento ordenAbastecimiento, String mensajeError) {
         try {
             List<Proveedor> proveedores = proveedorService.obtenerTodosProveedores();

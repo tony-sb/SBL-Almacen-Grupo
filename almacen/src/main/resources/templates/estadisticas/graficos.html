@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reportes Gráficos - Sistema de Almacén</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link th:href="@{/css/dashboard.css}" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+
+<body class="dashboard-body">
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm fixed-top">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/dashboard">
+            <img th:src="@{/img/logo.jpg}" alt="Logo" height="40" class="d-inline-block align-text-top">
+            Sistema de Almacén
+        </a>
+
+        <div class="navbar-nav ms-auto">
+            <div class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                    <i class="bi bi-person-circle me-1"></i>
+                    <span class="user-info" sec:authentication="name"></span>
+                </a>
+                <ul class="dropdown-menu">
+                    <li><span class="dropdown-item-text user-role" sec:authentication="principal.authorities"></span></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="/logout"><i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-3 col-lg-2 d-md-block sidebar">
+            <div class="position-sticky pt-3">
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/dashboard">
+                            <i class="bi bi-speedometer2"></i>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/ordenes-abastecimiento"> <!-- CAMBIADO: /ordenes-compra → /ordenes-abastecimiento -->
+                            <i class="bi bi-cart-plus"></i>
+                            Orden de Abastecimiento
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/ordenes-salida">
+                            <i class="bi bi-box-arrow-up"></i>
+                            Orden de Salidas
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/inventario">
+                            <i class="bi bi-box-seam"></i>
+                            Inventario
+                        </a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                        <a class="nav-link" href="/usuarios">
+                            <i class="bi bi-people"></i>
+                            Usuarios
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/proveedores">
+                            <i class="bi bi-truck"></i>
+                            Proveedores
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/productos">
+                            <i class="bi bi-box"></i>
+                            Productos
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/beneficiario">
+                            <i class="bi bi-heart"></i>
+                            Beneficiarios
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/estadisticas">
+                            <i class="bi bi-bar-chart-line"></i>
+                            Reportes Gráficos
+                        </a>
+                    </li> active
+                </ul>
+            </div>
+        </div>
+
+        <!-- CONTENIDO PRINCIPAL -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 main-content px-md-4">
+            <div class="page-header mt-4">
+                <h1 class="page-title"> Reportes Gráficos Estadísticos</h1>
+                <p class="page-subtitle">Análisis de productos más solicitados, beneficiarios y distribución mensual</p>
+            </div>
+
+            <!-- CARDS -->
+            <div class="row mb-4">
+                <div class="col-md-3"><div class="stat-card bg-primary text-white"><h5>Total Beneficiarios</h5><h2 th:text="${totalBeneficiarios}">0</h2></div></div>
+                <div class="col-md-3"><div class="stat-card bg-success text-white"><h5>Productos Entregados</h5><h2 th:text="${totalProductosEntregados}">0</h2></div></div>
+                <div class="col-md-3"><div class="stat-card bg-warning text-white"><h5>Mes con Más Apoyo</h5><h2 th:text="${mesConMasEntregas}">Sin datos</h2></div></div>
+                <div class="col-md-3"><div class="stat-card bg-info text-white"><h5>Año Actual</h5><h2 th:text="${#dates.format(#dates.createNow(), 'yyyy')}">2025</h2></div></div>
+            </div>
+
+            <!-- GRAFICO 1 -->
+            <div class="row mb-4">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header"><h5 class="mb-0">Productos Más Solicitados</h5></div>
+                        <div class="card-body">
+                            <div th:if="${productosMasSolicitados.empty}" class="alert alert-info">No hay datos.</div>
+                            <div th:unless="${productosMasSolicitados.empty}" class="chart-container">
+                                <canvas id="productosChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TABLA -->
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header"><h5 class="mb-0">Top 10 Productos</h5></div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-statistics">
+                                    <thead><tr><th>Producto</th><th>Cantidad</th><th>Categoría</th></tr></thead>
+                                    <tbody>
+                                    <tr th:each="p : ${productosMasSolicitados}">
+                                        <td th:text="${p.producto}">Producto</td>
+                                        <td th:text="${p.cantidadTotal}">0</td>
+                                        <td th:text="${p.categoria}">Categoría</td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GRAFICO 2 -->
+            <div class="row mb-4">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header"><h5 class="mb-0"> Beneficiarios Activos</h5></div>
+                        <div class="card-body">
+                            <div th:if="${beneficiariosMasActivos.empty}" class="alert alert-info">No hay datos.</div>
+                            <div th:unless="${beneficiariosMasActivos.empty}" class="chart-container">
+                                <canvas id="beneficiariosChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TABLA -->
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header"><h5 class="mb-0">Top Beneficiarios</h5></div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-statistics">
+                                    <thead><tr><th>Beneficiario</th><th>DNI</th><th>Productos</th></tr></thead>
+                                    <tbody>
+                                    <tr th:each="b : ${beneficiariosMasActivos}">
+                                        <td th:text="${b.beneficiario}"></td>
+                                        <td th:text="${b.dni}"></td>
+                                        <td th:text="${b.totalProductos}"></td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GRAFICO 3 -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header"><h5 class="mb-0"> Entregas por Mes</h5></div>
+                        <div class="card-body">
+                            <div th:if="${entregasPorMes.empty}" class="alert alert-info">No hay datos.</div>
+                            <div th:unless="${entregasPorMes.empty}" class="chart-container">
+                                <canvas id="mesesChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    const productosMasSolicitados = /[[${productosMasSolicitados}]]/ [];
+    const beneficiariosMasActivos = /[[${beneficiariosMasActivos}]]/ [];
+    const entregasPorMes = /[[${entregasPorMes}]]/ [];
+
+    // === GRAFICO 1 ===
+    if (productosMasSolicitados.length > 0) {
+        new Chart(document.getElementById('productosChart'), {
+            type: 'bar',
+            data: {
+                labels: productosMasSolicitados.map(p => p.producto),
+                datasets: [{
+                    label: 'Cantidad entregada',
+                    data: productosMasSolicitados.map(p => p.cantidadTotal)
+                }]
+            }
+        });
+    }
+
+
+    if (beneficiariosMasActivos.length > 0) {
+        new Chart(document.getElementById('beneficiariosChart'), {
+            type: 'bar',
+            data: {
+                labels: beneficiariosMasActivos.map(b => b.beneficiario),
+                datasets: [{
+                    label: 'Productos solicitados',
+                    data: beneficiariosMasActivos.map(b => b.totalProductos)
+                }]
+            }
+        });
+    }
+
+
+    if (entregasPorMes.length > 0) {
+        new Chart(document.getElementById('mesesChart'), {
+            type: 'line',
+            data: {
+                labels: entregasPorMes.map(m => m.mesNombre),
+                datasets: [{
+                    label: 'Entregas por mes',
+                    data: entregasPorMes.map(m => m.totalEntregas),
+                    fill: false
+                }]
+            }
+        });
+    }
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>

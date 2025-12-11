@@ -43,13 +43,11 @@ public class MovimientoInventario {
         ENTRADA, SALIDA
     }
 
-    // Constructor que establece valores por defecto
     public MovimientoInventario() {
         this.fechaMovimiento = LocalDateTime.now();
         this.tipoMovimiento = TipoMovimiento.SALIDA; // Valor por defecto
     }
 
-    // Constructor con parámetros
     public MovimientoInventario(Producto producto, TipoMovimiento tipoMovimiento,
                                 Integer cantidad, String motivo, Usuario usuario) {
         this();
@@ -60,7 +58,6 @@ public class MovimientoInventario {
         this.usuario = usuario;
     }
 
-    // Getters y Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -92,7 +89,6 @@ public class MovimientoInventario {
     public String getObservaciones() { return observaciones; }
     public void setObservaciones(String observaciones) { this.observaciones = observaciones; }
 
-    // Método toString para debugging
     @Override
     public String toString() {
         return "MovimientoInventario{" +

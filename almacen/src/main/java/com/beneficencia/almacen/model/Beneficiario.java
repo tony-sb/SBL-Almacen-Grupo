@@ -43,13 +43,11 @@ public class Beneficiario {
     @Column(name = "fecha_actualizacion")
     private LocalDateTime fechaActualizacion;
 
-    // Constructor
     public Beneficiario() {
         this.fechaRegistro = LocalDateTime.now();
         this.fechaActualizacion = LocalDateTime.now();
     }
 
-    // Getters y Setters (mantener los existentes)
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -74,7 +72,6 @@ public class Beneficiario {
     public LocalDateTime getFechaActualizacion() { return fechaActualizacion; }
     public void setFechaActualizacion(LocalDateTime fechaActualizacion) { this.fechaActualizacion = fechaActualizacion; }
 
-    // Método para nombre completo
     public String getNombreCompleto() {
         return nombres + " " + apellidos;
     }

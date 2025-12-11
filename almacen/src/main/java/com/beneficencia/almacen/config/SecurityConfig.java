@@ -41,21 +41,16 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authz -> authz
                         // Recursos estáticos accesibles sin autenticación
                         .requestMatchers("/css/**", "/js/**", "/img/**", "/webjars/**").permitAll()
-                        // Páginas de login, registro y ERROR deben ser accesibles sin autenticación
                         .requestMatchers("/login", "/registro", "/error/**", "/access-denied").permitAll()
-                        // Rutas de usuarios solo accesibles por ADMIN
                         .requestMatchers("/usuarios/**").hasRole("ADMIN")
-                        // Rutas de órdenes, productos y dashboard accesibles por ADMIN, ALMACENERO y USUARIO
                         .requestMatchers("/ordenes-salida/**", "/ordenes-abastecimiento/**", "/productos/**", "/dashboard").hasAnyRole("ADMIN", "ALMACENERO", "USUARIO")
-                        // Rutas raíz e inicio requieren autenticación básica
                         .requestMatchers("/", "/inicio").authenticated()
-                        // Cualquier otra request requiere autenticación
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
                         .loginPage("/login")
                         .defaultSuccessUrl("/dashboard", true)
-                        .failureHandler(customAuthenticationFailureHandler) // Usa el handler personalizado
+                        .failureHandler(customAuthenticationFailureHandler)
                         .permitAll()
                 )
                 .logout(logout -> logout

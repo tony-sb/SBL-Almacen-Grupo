@@ -15,18 +15,13 @@ public class AuthController {
             @RequestParam(value = "logout", required = false) String logout,
             Model model,
             HttpServletRequest request) {
-
-        // Recuperar mensaje de error de la sesión si existe
         String errorMessage = (String) request.getSession().getAttribute("errorMessage");
 
-        // Limpiar atributo de sesión después de usarlo
         if (errorMessage != null) {
             model.addAttribute("error", errorMessage);
             request.getSession().removeAttribute("errorMessage");
         }
-        // Si hay parámetro de error pero no mensaje en sesión
         else if (errorParam != null) {
-            // Solo para errores que no sean de usuario inactivo
             if ("bad_credentials".equals(errorParam)) {
                 model.addAttribute("error", "Usuario o contraseña incorrectos.");
             } else if ("locked".equals(errorParam)) {

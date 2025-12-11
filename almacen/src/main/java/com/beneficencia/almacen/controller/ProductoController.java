@@ -14,11 +14,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Controlador para la gestión de productos del almacén.
- * Maneja las operaciones CRUD (Crear, Leer, Actualizar, Eliminar) de productos
- * a través de interfaces web utilizando el patrón MVC.
- */
 @Controller
 @RequestMapping("/productos")
 public class ProductoController {
@@ -26,7 +21,6 @@ public class ProductoController {
     @Autowired
     private ProductoService productoService;
 
-    // Lista de opciones predefinidas
     private final List<String> CATEGORIAS = Arrays.asList(
             "Medicamentos",
             "Insumos Médicos",
@@ -50,13 +44,6 @@ public class ProductoController {
             "Rollo"
     );
 
-    /**
-     * Muestra la lista de todos los productos del inventario.
-     * Recupera todos los productos existentes y los pasa a la vista para su visualización.
-     *
-     * @param model Modelo para pasar datos a la vista
-     * @return Nombre de la vista JSP 'productos/lista'
-     */
     @GetMapping
     public String listarProductos(
             @RequestParam(value = "q", required = false) String terminoBusqueda,
@@ -83,33 +70,15 @@ public class ProductoController {
         return "productos/lista";
     }
 
-    /**
-     * Muestra el formulario para crear un nuevo producto.
-     * Prepara el modelo con un producto vacío y las opciones predefinidas
-     * para categorías y unidades de medida.
-     *
-     * @param model Modelo para pasar datos a la vista
-     * @return Nombre de la vista JSP 'productos/formulario'
-     */
     @GetMapping("/nuevo")
     public String mostrarFormularioNuevoProducto(Model model) {
         model.addAttribute("producto", new Producto());
         model.addAttribute("categorias", CATEGORIAS);
         model.addAttribute("unidades", UNIDADES);
-        model.addAttribute("fechaHoy", LocalDate.now().plusDays(30)); // Fecha por defecto: 30 días después
+        model.addAttribute("fechaHoy", LocalDate.now().plusDays(30));
         model.addAttribute("modo", "nuevo");
         return "productos/formulario";
     }
-
-    /**
-     * Procesa el formulario para guardar un nuevo producto.
-     * Recibe los datos del formulario, valida y persiste el producto en la base de datos.
-     * Maneja excepciones y proporciona retroalimentación al usuario mediante mensajes flash.
-     *
-     * @param producto Objeto Producto con los datos del formulario
-     * @param redirectAttributes Atributos para mensajes flash en redirección
-     * @return Redirección a la lista de productos
-     */
 
     @PostMapping("/guardar")
     public String guardarProducto(
@@ -124,14 +93,12 @@ public class ProductoController {
         System.out.println("Producto código: " + producto.getCodigo());
         System.out.println("Producto nombre: " + producto.getNombre());
 
-        // Imprimir todos los parámetros de la request
         System.out.println("Parámetros de la request:");
         request.getParameterMap().forEach((key, value) ->
                 System.out.println(key + " = " + Arrays.toString(value))
         );
 
         try {
-            // Si no tiene vencimiento, establecer fecha como null
             if (tieneVencimiento == null || !tieneVencimiento) {
                 producto.setFechaVencimiento(null);
                 System.out.println("Checkbox NO marcado - Fecha establecida como null");
@@ -148,16 +115,7 @@ public class ProductoController {
         }
         return "redirect:/productos";
     }
-    /**
-     * Muestra el formulario para editar un producto existente.
-     * Busca el producto por ID y carga sus datos en el formulario para edición.
-     * Si el producto no existe, redirige con un mensaje de error.
-     *
-     * @param id ID del producto a editar
-     * @param model Modelo para pasar datos a la vista
-     * @param redirectAttributes Atributos para mensajes flash en redirección
-     * @return Nombre de la vista JSP 'productos/formulario' o redirección en caso de error
-     */
+
     @GetMapping("/editar/{id}")
     public String mostrarFormularioEditarProducto(
             @PathVariable Long id,
@@ -177,19 +135,7 @@ public class ProductoController {
             return "redirect:/productos";
         }
     }
-    /**
-     * Procesa la actualización de un producto existente en el sistema.
-     * Recibe los datos modificados del formulario, valida la existencia del producto,
-     * aplica las modificaciones y persiste los cambios en la base de datos.
-     * Maneja la lógica de fecha de vencimiento (opcional) y provee retroalimentación
-     * al usuario sobre el resultado de la operación.
-     *
-     * @param id ID único del producto a actualizar, obtenido de la URL
-     * @param producto Objeto Producto con los datos modificados del formulario
-     * @param tieneVencimiento Parámetro opcional que indica si el producto tiene fecha de vencimiento
-     * @param redirectAttributes Atributos para enviar mensajes flash tras la redirección
-     * @return Redirección a la lista principal de productos
-     * **/
+
     @PostMapping("/actualizar/{id}")
     public String actualizarProducto(
             @PathVariable Long id,
@@ -198,16 +144,13 @@ public class ProductoController {
             RedirectAttributes redirectAttributes) {
 
         try {
-            // Verificar que el producto existe
             Producto productoExistente = productoService.obtenerProductoPorId(id)
                     .orElseThrow(() -> new IllegalArgumentException("Producto no encontrado"));
 
-            // Si no tiene vencimiento, establecer fecha como null
             if (tieneVencimiento == null || !tieneVencimiento) {
                 producto.setFechaVencimiento(null);
             }
 
-            // Mantener el ID original
             producto.setId(id);
             productoService.actualizarProducto(producto);
 
@@ -220,15 +163,6 @@ public class ProductoController {
         return "redirect:/productos";
     }
 
-    /**
-     * Elimina un producto del inventario.
-     * Busca el producto por ID y procede con su eliminación si existe.
-     * Maneja excepciones y proporciona retroalimentación al usuario.
-     *
-     * @param id ID del producto a eliminar
-     * @param redirectAttributes Atributos para mensajes flash en redirección
-     * @return Redirección a la lista de productos
-     */
     @GetMapping("/eliminar/{id}")
     public String eliminarProducto(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         try {
@@ -240,17 +174,6 @@ public class ProductoController {
         return "redirect:/productos";
     }
 
-    /**
-     * Muestra la vista de detalles de un producto específico.
-     * Recupera un producto por su ID único y presenta toda su información
-     * en una vista de solo lectura diseñada para visualización detallada.
-     *
-     * @param id ID único del producto cuyos detalles se desean visualizar
-     * @param model Modelo Spring para pasar datos a la vista
-     * @param redirectAttributes Atributos para mensajes flash en caso de redirección
-     * @return Vista 'productos/detalle' si el producto existe,
-     *         redirección a la lista de productos con mensaje de error si no existe
-     */
     @GetMapping("/detalle/{id}")
     public String verDetalleProducto(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
         Optional<Producto> producto = productoService.obtenerProductoPorId(id);

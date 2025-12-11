@@ -23,9 +23,6 @@ public class CuadreInventarioController {
     @Autowired
     private ProductoService productoService;
 
-    /**
-     * Muestra TODOS los cuadres (pendientes y procesados)
-     */
     @GetMapping
     public String mostrarCuadreInventario(Model model) {
         // Obtener TODOS los cuadres
@@ -41,9 +38,6 @@ public class CuadreInventarioController {
         return "cuadre-inventario/lista";
     }
 
-    /**
-     * Procesa un nuevo cuadre de inventario
-     */
     @PostMapping("/guardar")
     public String guardarCuadre(
             @RequestParam Long productoId,
@@ -83,9 +77,6 @@ public class CuadreInventarioController {
         return "redirect:/cuadre-inventario";
     }
 
-    /**
-     * Confirma un cuadre (reingresa a inventario)
-     */
     @PostMapping("/confirmar/{id}")
     public String confirmarCuadre(
             @PathVariable Long id,
@@ -101,9 +92,6 @@ public class CuadreInventarioController {
         return "redirect:/cuadre-inventario";
     }
 
-    /**
-     * Cancelar cuadre (no procesar)
-     */
     @PostMapping("/cancelar/{id}")
     public String cancelarCuadre(
             @PathVariable Long id,

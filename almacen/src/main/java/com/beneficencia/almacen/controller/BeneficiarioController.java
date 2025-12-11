@@ -27,9 +27,6 @@ public class BeneficiarioController {
     @Autowired
     private ProductoService productoService;
 
-    /**
-     * Página principal - LISTA de beneficiarios
-     */
     @GetMapping
     public String listarBeneficiarios(
             @RequestParam(value = "busqueda", required = false) String busqueda,
@@ -51,18 +48,16 @@ public class BeneficiarioController {
                     )
                     .collect(Collectors.toList());
 
-            // **ORDENAR RESULTADOS DE BÚSQUEDA** - Los más recientes primero
             if (beneficiarios != null && !beneficiarios.isEmpty()) {
                 beneficiarios.sort((b1, b2) -> {
                     if (b1.getFechaRegistro() != null && b2.getFechaRegistro() != null) {
                         return b2.getFechaRegistro().compareTo(b1.getFechaRegistro());
                     }
-                    return 0; // Si no hay fecha, mantener orden
+                    return 0;
                 });
             }
 
         } else {
-            // **CAMBIO AQUÍ**: Obtener beneficiarios ordenados por fecha descendente
             beneficiarios = beneficiarioService.obtenerBeneficiariosOrdenadosPorFechaDesc();
         }
 
@@ -75,9 +70,6 @@ public class BeneficiarioController {
         return "beneficiario/lista";
     }
 
-    /**
-     * Mostrar formulario para NUEVO beneficiario
-     */
     @GetMapping("/formulario")
     public String mostrarFormularioNuevo(Model model) {
         System.out.println("GET /beneficiario/formulario");
@@ -85,9 +77,6 @@ public class BeneficiarioController {
         return "beneficiario/formulario";
     }
 
-    /**
-     * Guardar NUEVO beneficiario con validación
-     */
     @PostMapping("/guardar")
     public String guardarBeneficiario(
             @Valid @ModelAttribute Beneficiario beneficiario,
@@ -97,20 +86,17 @@ public class BeneficiarioController {
         try {
             System.out.println("POST /beneficiario/guardar - DNI: " + beneficiario.getDni());
 
-            // Validar campos con BindingResult
             if (bindingResult.hasErrors()) {
                 System.err.println("Errores de validación encontrados: " + bindingResult.getAllErrors());
                 return "beneficiario/formulario";
             }
 
-            // Validar DNI único (además de las validaciones de Bean)
             if (beneficiarioService.existePorDni(beneficiario.getDni())) {
                 bindingResult.rejectValue("dni", "error.beneficiario",
                         "Ya existe un beneficiario con el DNI: " + beneficiario.getDni());
                 return "beneficiario/formulario";
             }
 
-            // Establecer fechas
             beneficiario.setFechaRegistro(LocalDateTime.now());
             beneficiario.setFechaActualizacion(LocalDateTime.now());
 
@@ -130,9 +116,6 @@ public class BeneficiarioController {
         }
     }
 
-    /**
-     * Mostrar formulario para EDITAR beneficiario
-     */
     @GetMapping("/editar/{id}")
     public String mostrarFormularioEditar(@PathVariable Long id, Model model) {
         System.out.println("GET /beneficiario/editar/" + id);
@@ -148,9 +131,6 @@ public class BeneficiarioController {
         }
     }
 
-    /**
-     * Actualizar beneficiario existente con validación
-     */
     @PostMapping("/actualizar/{id}")
     public String actualizarBeneficiario(
             @PathVariable Long id,
@@ -161,13 +141,11 @@ public class BeneficiarioController {
         try {
             System.out.println("POST /beneficiario/actualizar/" + id);
 
-            // Validar campos con BindingResult
             if (bindingResult.hasErrors()) {
                 System.err.println("Errores de validación encontrados: " + bindingResult.getAllErrors());
                 return "beneficiario/formulario";
             }
 
-            // Verificar que exista
             Optional<Beneficiario> existenteOpt = beneficiarioService.obtenerBeneficiarioPorId(id);
             if (existenteOpt.isEmpty()) {
                 redirectAttributes.addFlashAttribute("error", "Beneficiario no encontrado");
@@ -176,7 +154,6 @@ public class BeneficiarioController {
 
             Beneficiario existente = existenteOpt.get();
 
-            // Si cambió el DNI, verificar que no exista otro
             if (!existente.getDni().equals(beneficiario.getDni())) {
                 if (beneficiarioService.existePorDni(beneficiario.getDni())) {
                     bindingResult.rejectValue("dni", "error.beneficiario",
@@ -185,7 +162,6 @@ public class BeneficiarioController {
                 }
             }
 
-            // Mantener datos existentes que no están en el formulario
             beneficiario.setId(id);
             beneficiario.setFechaRegistro(existente.getFechaRegistro());
             beneficiario.setFechaActualizacion(LocalDateTime.now());
@@ -206,9 +182,6 @@ public class BeneficiarioController {
         }
     }
 
-    /**
-     * ELIMINAR beneficiario
-     */
     @GetMapping("/eliminar/{id}")
     public String eliminarBeneficiario(
             @PathVariable Long id,
@@ -237,10 +210,8 @@ public class BeneficiarioController {
     public String mostrarFormularioConRedireccion(Model model) {
         System.out.println("GET /beneficiario/formulario-con-redireccion");
 
-        // Crear nuevo beneficiario con datos prefijados si vienen de orden de salida
         Beneficiario beneficiario = new Beneficiario();
 
-        // Obtener datos de flash attributes
         Map<String, ?> flashAttributes = model.asMap();
 
         if (flashAttributes.containsKey("dni")) {
@@ -255,7 +226,6 @@ public class BeneficiarioController {
         model.addAttribute("beneficiario", beneficiario);
         model.addAttribute("redirigirDesdeOrden", true);
 
-        // Pasar datos de la orden pendiente
         if (flashAttributes.containsKey("productoId")) {
             model.addAttribute("productoId", flashAttributes.get("productoId"));
         }
@@ -288,32 +258,26 @@ public class BeneficiarioController {
         try {
             System.out.println("POST /beneficiario/guardar-y-continuar");
 
-            // Validar campos
             if (bindingResult.hasErrors()) {
                 System.err.println("Errores de validación encontrados: " + bindingResult.getAllErrors());
                 return "beneficiario/formulario-con-redireccion";
             }
 
-            // Validar DNI único
             if (beneficiarioService.existePorDni(beneficiario.getDni())) {
                 bindingResult.rejectValue("dni", "error.beneficiario",
                         "Ya existe un beneficiario con el DNI: " + beneficiario.getDni());
                 return "beneficiario/formulario-con-redireccion";
             }
 
-            // Establecer fechas
             beneficiario.setFechaRegistro(LocalDateTime.now());
             beneficiario.setFechaActualizacion(LocalDateTime.now());
 
-            // Guardar beneficiario
             Beneficiario guardado = beneficiarioService.guardarBeneficiario(beneficiario);
 
-            // Si hay datos de orden pendiente, redirigir a completar la orden
             if (productoId != null && cantidad != null) {
                 redirectAttributes.addFlashAttribute("success",
                         "Beneficiario " + guardado.getNombreCompleto() + " registrado exitosamente. Complete la orden de salida.");
 
-                // Pasar datos a la vista de continuar orden
                 redirectAttributes.addFlashAttribute("beneficiarioId", guardado.getId());
                 redirectAttributes.addFlashAttribute("productoId", productoId);
                 redirectAttributes.addFlashAttribute("cantidad", cantidad);
@@ -341,7 +305,6 @@ public class BeneficiarioController {
     public String mostrarConfirmacionOrden(Model model) {
         System.out.println("GET /beneficiario/confirmar-orden");
 
-        // Obtener datos de flash attributes
         Map<String, ?> flashAttributes = model.asMap();
 
         if (!flashAttributes.containsKey("beneficiarioId") ||
@@ -350,7 +313,6 @@ public class BeneficiarioController {
             return "redirect:/ordenes-salida?error=Datos+de+orden+no+disponibles";
         }
 
-        // Obtener datos del beneficiario
         Long beneficiarioId = (Long) flashAttributes.get("beneficiarioId");
         Beneficiario beneficiario = beneficiarioService.obtenerBeneficiarioPorId(beneficiarioId)
                 .orElseThrow(() -> new RuntimeException("Beneficiario no encontrado"));
@@ -370,7 +332,6 @@ public class BeneficiarioController {
         return "beneficiario/confirmar-orden";
     }
 
-    // Métodos auxiliares para extraer nombres y apellidos
     private String extraerNombres(String nombreCompleto) {
         if (nombreCompleto == null || nombreCompleto.trim().isEmpty()) {
             return "";

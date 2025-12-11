@@ -18,14 +18,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.YearMonth;
 import java.util.*;
 
-/**
- * Controlador para la gestión de órdenes de salida del almacén.
- * Maneja las operaciones de creación, consulta, edición, eliminación e impresión
- * de órdenes de salida de productos del inventario.
- */
 @Controller
 @RequestMapping("/ordenes-salida")
 public class OrdenSalidaController {
@@ -45,17 +39,6 @@ public class OrdenSalidaController {
     @Autowired
     private UsuarioRepository usuarioRepository;
 
-    /**
-     * Muestra la página principal de órdenes de salida con opciones de filtrado.
-     * Permite filtrar órdenes por período (año/mes) o realizar búsquedas por DNI o número de trámite.
-     *
-     * @param periodo Año para filtrar las órdenes (por defecto 2025)
-     * @param mes Mes para filtrar las órdenes (0 para todo el año)
-     * @param busqueda Término de búsqueda por DNI o número de trámite
-     * @param model Modelo para pasar datos a la vista
-     * @return Nombre de la vista 'ordenes-salida'
-     */
-    // Array de meses en español (para usar en la vista)
     private final String[] MESES_ESPANOL = {
             "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
             "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
@@ -101,20 +84,6 @@ public class OrdenSalidaController {
         return "ordenes-salida";
     }
 
-    /**
-     * Procesa el guardado de una nueva orden de salida.
-     * Valida el stock disponible, actualiza el inventario y genera número de orden automático.
-     *
-     * @param numeroTramite      Número de trámite asociado a la orden
-     * @param fechaSalida        Fecha de salida de los productos
-     * @param nombreUsuario      Nombre del usuario que recibe los productos
-     * @param dniUsuario         DNI del usuario que recibe los productos
-     * @param descripcion        Descripción o motivo de la salida
-     * @param productoId         ID del producto a retirar
-     * @param cantidad           Cantidad de productos a retirar
-     * @param redirectAttributes Atributos para mensajes flash en redirección
-     * @return Redirección a la lista de órdenes de salida
-     */
     @PostMapping("/guardar")
     public String guardarOrdenSalida(
             @RequestParam(required = false) String numeroTramite,
@@ -127,12 +96,10 @@ public class OrdenSalidaController {
             RedirectAttributes redirectAttributes) {
 
         try {
-            // Validar DNI (8 dígitos)
             if (dniUsuario == null || !dniUsuario.matches("\\d{8}")) {
                 throw new RuntimeException("El DNI debe tener exactamente 8 dígitos");
             }
 
-            // 1. Verificar si el beneficiario existe
             boolean beneficiarioExiste = beneficiarioService.existePorDni(dniUsuario);
 
             if (!beneficiarioExiste) {
@@ -149,11 +116,9 @@ public class OrdenSalidaController {
                 return "redirect:/beneficiario/formulario-con-redireccion";
             }
 
-            // 2. Obtener el beneficiario
             Beneficiario beneficiario = beneficiarioService.obtenerBeneficiarioPorDni(dniUsuario)
                     .orElseThrow(() -> new RuntimeException("Beneficiario no encontrado"));
 
-            // 3. Crear la orden de salida
             OrdenSalida ordenSalida = new OrdenSalida();
             ordenSalida.setNumeroTramite(numeroTramite);
             ordenSalida.setFechaSalida(LocalDate.parse(fechaSalida));
@@ -162,7 +127,6 @@ public class OrdenSalidaController {
             ordenSalida.setDescripcion(descripcion);
             ordenSalida.setBeneficiario(beneficiario);
 
-            // 4. Obtener el producto
             Producto producto = productoService.obtenerProductoPorId(productoId)
                     .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
 
@@ -170,13 +134,11 @@ public class OrdenSalidaController {
                 throw new RuntimeException("Stock insuficiente. Stock disponible: " + producto.getCantidad());
             }
 
-            // 5. Crear el item de la orden
             OrdenSalidaItem item = new OrdenSalidaItem();
             item.setProducto(producto);
             item.setCantidad(cantidad);
             item.setPrecioUnitario(producto.getPrecioUnitario());
 
-            // 6. Guardar la orden con el item
             ordenSalida.agregarItem(item);
             ordenSalidaService.guardarOrdenConItems(ordenSalida, ordenSalida.getItems());
 
@@ -189,7 +151,7 @@ public class OrdenSalidaController {
             return "redirect:/ordenes-salida?error";
         }
     }
-    // Métodos auxiliares para separar nombres y apellidos
+
     private String extraerNombres(String nombreCompleto) {
         if (nombreCompleto == null || nombreCompleto.trim().isEmpty()) {
             return "";
@@ -220,7 +182,7 @@ public class OrdenSalidaController {
         }
         return "";
     }
-    // Nuevo método para continuar la orden después de registrar beneficiario
+
     @PostMapping("/continuar-con-beneficiario")
     public String continuarOrdenConBeneficiario(
             @RequestParam Long beneficiarioId,
@@ -232,11 +194,9 @@ public class OrdenSalidaController {
             RedirectAttributes redirectAttributes) {
 
         try {
-            // Obtener beneficiario
             Beneficiario beneficiario = beneficiarioService.obtenerBeneficiarioPorId(beneficiarioId)
                     .orElseThrow(() -> new RuntimeException("Beneficiario no encontrado"));
 
-            // Crear orden de salida
             OrdenSalida ordenSalida = new OrdenSalida();
             ordenSalida.setNumeroTramite(numeroTramite);
             ordenSalida.setFechaSalida(LocalDate.parse(fechaSalida));
@@ -245,7 +205,6 @@ public class OrdenSalidaController {
             ordenSalida.setDescripcion(descripcion);
             ordenSalida.setBeneficiario(beneficiario);
 
-            // Obtener producto
             Producto producto = productoService.obtenerProductoPorId(productoId)
                     .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
 
@@ -253,13 +212,11 @@ public class OrdenSalidaController {
                 throw new RuntimeException("Stock insuficiente. Stock disponible: " + producto.getCantidad());
             }
 
-            // Crear item
             OrdenSalidaItem item = new OrdenSalidaItem();
             item.setProducto(producto);
             item.setCantidad(cantidad);
             item.setPrecioUnitario(producto.getPrecioUnitario());
 
-            // Guardar orden
             ordenSalida.agregarItem(item);
             ordenSalidaService.guardarOrdenConItems(ordenSalida, ordenSalida.getItems());
 
@@ -273,14 +230,12 @@ public class OrdenSalidaController {
         }
     }
 
-    // Nuevo endpoint para verificar DNI
     @GetMapping("/verificar-dni/{dni}")
     @ResponseBody
     public Map<String, Object> verificarDni(@PathVariable String dni) {
         Map<String, Object> response = new HashMap<>();
 
         try {
-            // Validar formato DNI
             if (dni == null || !dni.matches("\\d{8}")) {
                 response.put("valido", false);
                 response.put("mensaje", "DNI debe tener 8 dígitos");
@@ -312,25 +267,12 @@ public class OrdenSalidaController {
         return response;
     }
 
-    /**
-     * Endpoint REST para obtener la lista de todos los productos disponibles.
-     * Utilizado para cargar dinámicamente los productos en los formularios.
-     *
-     * @return Lista de todos los productos en formato JSON
-     */
     @GetMapping("/productos")
     @ResponseBody
     public List<Producto> obtenerProductos() {
         return productoService.obtenerTodosProductos();
     }
 
-    /**
-     * Elimina una orden de salida mediante una petición AJAX.
-     * Retorna una respuesta JSON indicando el resultado de la operación.
-     *
-     * @param id ID de la orden a eliminar
-     * @return Map con el resultado de la operación (success y message)
-     */
     @DeleteMapping("/eliminar/{id}")
     @ResponseBody
     public Map<String, Object> eliminarOrden(@PathVariable Long id) {
@@ -346,14 +288,6 @@ public class OrdenSalidaController {
         return response;
     }
 
-    /**
-     * Muestra la vista optimizada para imprimir una orden de salida.
-     * Busca la orden por su número de orden y carga todos los datos para la impresión.
-     *
-     * @param numeroOrden Número de orden a imprimir
-     * @param model       Modelo para pasar datos a la vista
-     * @return Nombre de la vista 'ordenes-salida/imprimir-orden-salida' o vista de error
-     */
     @GetMapping("/imprimir/{numeroOrden}")
     public String imprimirOrden(@PathVariable String numeroOrden, Model model) {
         try {
@@ -370,14 +304,6 @@ public class OrdenSalidaController {
         }
     }
 
-    /**
-     * Muestra el formulario para editar una orden de salida existente.
-     * Carga los datos de la orden especificada por ID para su modificación.
-     *
-     * @param id    ID de la orden a editar
-     * @param model Modelo para pasar datos a la vista
-     * @return Nombre de la vista 'ordenes-salida/editar-orden-salida'
-     */
     @GetMapping("/editar/{id}")
     public String editarOrden(@PathVariable Long id, Model model) {
         try {
@@ -393,14 +319,6 @@ public class OrdenSalidaController {
         }
     }
 
-    /**
-     * Procesa la actualización de una orden de salida existente.
-     * Actualiza los campos modificados de la orden sin afectar el stock.
-     *
-     * @param ordenSalida        Objeto de orden con los datos actualizados
-     * @param redirectAttributes Atributos para mensajes flash en redirección
-     * @return Redirección a la lista de órdenes de salida
-     */
     @PostMapping("/actualizar")
     @Transactional
     public String actualizarOrdenSalida(
@@ -410,7 +328,6 @@ public class OrdenSalidaController {
             OrdenSalida ordenExistente = ordenSalidaService.obtenerOrdenPorId(ordenSalida.getId())
                     .orElseThrow(() -> new RuntimeException("Orden no encontrada con ID: " + ordenSalida.getId()));
 
-            // Actualizar datos básicos
             ordenExistente.setNumeroTramite(ordenSalida.getNumeroTramite());
             ordenExistente.setFechaSalida(ordenSalida.getFechaSalida());
             ordenExistente.setNombreUsuario(ordenSalida.getNombreUsuario());
@@ -418,12 +335,10 @@ public class OrdenSalidaController {
             ordenExistente.setDescripcion(ordenSalida.getDescripcion());
             ordenExistente.setFechaActualizacion(LocalDateTime.now());
 
-            // Verificar si cambió el DNI y actualizar beneficiario
             if (!ordenExistente.getDniUsuario().equals(ordenSalida.getDniUsuario())) {
                 Beneficiario beneficiario = beneficiarioService.obtenerBeneficiarioPorDni(ordenSalida.getDniUsuario())
                         .orElse(null);
                 if (beneficiario == null) {
-                    // Crear nuevo beneficiario
                     beneficiario = new Beneficiario();
                     beneficiario.setDni(ordenSalida.getDniUsuario());
                     beneficiario.setNombres(extraerNombres(ordenSalida.getNombreUsuario()));
@@ -444,9 +359,7 @@ public class OrdenSalidaController {
             return "redirect:/ordenes-salida?error";
         }
     }
-    /**
-     * Guarda una orden de salida con múltiples productos.
-     */
+
     @PostMapping("/guardar-multiples")
     public String guardarOrdenSalidaMultiples(
             @RequestParam(required = false) String numeroTramite,
@@ -459,26 +372,21 @@ public class OrdenSalidaController {
             RedirectAttributes redirectAttributes) {
 
         try {
-            // Validar DNI
             if (dniUsuario == null || !dniUsuario.matches("\\d{8}")) {
                 throw new RuntimeException("El DNI debe tener exactamente 8 dígitos");
             }
 
-            // Validar que haya productos
             if (productoIds == null || productoIds.isEmpty()) {
                 throw new RuntimeException("Debe seleccionar al menos un producto");
             }
 
-            // Validar que las listas tengan el mismo tamaño
             if (productoIds.size() != cantidades.size()) {
                 throw new RuntimeException("Error en los datos de productos");
             }
 
-            // Verificar o crear beneficiario
             boolean beneficiarioExiste = beneficiarioService.existePorDni(dniUsuario);
 
             if (!beneficiarioExiste) {
-                // Redirigir al formulario de beneficiario
                 redirectAttributes.addFlashAttribute("dni", dniUsuario);
                 redirectAttributes.addFlashAttribute("nombreCompleto", nombreUsuario);
                 redirectAttributes.addFlashAttribute("redirigirDesdeOrden", true);
@@ -486,18 +394,15 @@ public class OrdenSalidaController {
                 redirectAttributes.addFlashAttribute("fechaSalida", fechaSalida);
                 redirectAttributes.addFlashAttribute("descripcion", descripcion);
 
-                // Guardar productos temporalmente (puedes usar sesión o localStorage en el frontend)
                 redirectAttributes.addFlashAttribute("productoIds", productoIds);
                 redirectAttributes.addFlashAttribute("cantidades", cantidades);
 
                 return "redirect:/beneficiario/formulario-con-redireccion";
             }
 
-            // Obtener beneficiario
             Beneficiario beneficiario = beneficiarioService.obtenerBeneficiarioPorDni(dniUsuario)
                     .orElseThrow(() -> new RuntimeException("Beneficiario no encontrado"));
 
-            // Crear la orden de salida
             OrdenSalida ordenSalida = new OrdenSalida();
             ordenSalida.setNumeroTramite(numeroTramite);
             ordenSalida.setFechaSalida(LocalDate.parse(fechaSalida));
@@ -506,14 +411,12 @@ public class OrdenSalidaController {
             ordenSalida.setDescripcion(descripcion);
             ordenSalida.setBeneficiario(beneficiario);
 
-            // Crear items para cada producto
             List<OrdenSalidaItem> items = new ArrayList<>();
 
             for (int i = 0; i < productoIds.size(); i++) {
                 Long productoId = productoIds.get(i);
                 Integer cantidad = cantidades.get(i);
 
-                // Obtener producto
                 Producto producto = productoService.obtenerProductoPorId(productoId)
                         .orElseThrow(() -> new RuntimeException("Producto no encontrado con ID: " + productoId));
 

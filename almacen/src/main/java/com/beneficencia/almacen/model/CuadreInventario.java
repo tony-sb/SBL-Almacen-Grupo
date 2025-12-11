@@ -26,10 +26,10 @@ public class CuadreInventario {
     private String observaciones;
 
     @Column(nullable = false)
-    private String accion; // REINGRESAR, DESCARTAR
+    private String accion;
 
     @Column(nullable = false)
-    private String estado; // PENDIENTE, CONFIRMADO, DESCARTADO
+    private String estado;
 
     @Column(name = "fecha_registro")
     private LocalDateTime fechaRegistro = LocalDateTime.now();
@@ -37,7 +37,6 @@ public class CuadreInventario {
     @Column(name = "fecha_confirmacion")
     private LocalDateTime fechaConfirmacion;
 
-    // Constructores
     public CuadreInventario() {}
 
     public CuadreInventario(Producto producto, Integer cantidad, String accion) {
@@ -47,7 +46,6 @@ public class CuadreInventario {
         this.estado = "PENDIENTE";
     }
 
-    // Getters y Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 

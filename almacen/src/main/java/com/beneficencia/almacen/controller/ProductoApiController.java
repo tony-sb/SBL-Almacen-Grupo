@@ -11,11 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-/**
- * Controlador REST para operaciones de inventario con el frontend.
- * Proporciona endpoints API para gestionar productos, categorías, alertas de stock
- * y estadísticas del inventario. Diseñado para ser consumido por aplicaciones frontend.
- */
 @RestController
 @RequestMapping("/api/inventario")
 @CrossOrigin(origins = "*")
@@ -24,12 +19,6 @@ public class ProductoApiController {
     @Autowired
     private ProductoService productoService;
 
-    /**
-     * Obtiene el inventario completo con información de alertas y estadísticas.
-     * Incluye todos los productos, total de productos y conteo de productos con stock bajo.
-     *
-     * @return ResponseEntity con mapa conteniendo los datos del inventario
-     */
     @GetMapping
     public ResponseEntity<Map<String, Object>> obtenerInventarioCompleto() {
         try {
@@ -48,12 +37,6 @@ public class ProductoApiController {
         }
     }
 
-    /**
-     * Obtiene solo los productos con stock bajo para mostrar alertas.
-     * Utilizado para notificaciones y dashboard de alertas.
-     *
-     * @return ResponseEntity con lista de productos con stock bajo
-     */
     @GetMapping("/alertas")
     public ResponseEntity<Map<String, Object>> obtenerAlertasStockBajo() {
         try {
@@ -70,13 +53,6 @@ public class ProductoApiController {
         }
     }
 
-    /**
-     * Busca productos por término en nombre o código.
-     * Realiza búsqueda case-insensitive en campos de nombre y código del producto.
-     *
-     * @param q Término de búsqueda
-     * @return ResponseEntity con productos que coinciden con el término de búsqueda
-     */
     @GetMapping("/buscar")
     public ResponseEntity<Map<String, Object>> buscarProductos(@RequestParam String q) {
         try {
@@ -94,12 +70,6 @@ public class ProductoApiController {
         }
     }
 
-    /**
-     * Obtiene productos filtrados por categoría específica.
-     *
-     * @param categoria Categoría por la cual filtrar los productos
-     * @return ResponseEntity con productos de la categoría especificada
-     */
     @GetMapping("/categoria/{categoria}")
     public ResponseEntity<Map<String, Object>> obtenerProductosPorCategoria(@PathVariable String categoria) {
         try {
@@ -117,12 +87,6 @@ public class ProductoApiController {
         }
     }
 
-    /**
-     * Obtiene todas las categorías disponibles en el inventario.
-     * Retorna una lista única de categorías para filtros y agrupaciones.
-     *
-     * @return ResponseEntity con lista de categorías únicas
-     */
     @GetMapping("/categorias")
     public ResponseEntity<Map<String, Object>> obtenerCategorias() {
         try {
@@ -138,21 +102,11 @@ public class ProductoApiController {
         }
     }
 
-    /**
-     * Endpoint para simular solicitud de abastecimiento de producto.
-     * En una implementación real, esto generaría una orden de abastecimiento.
-     *
-     * @param request Mapa con productoId y cantidad a abastecer
-     * @return ResponseEntity confirmando la solicitud de abastecimiento
-     */
     @PostMapping("/abastecer")
     public ResponseEntity<Map<String, Object>> solicitarAbastecimiento(@RequestBody Map<String, Object> request) {
         try {
             Long productoId = Long.valueOf(request.get("productoId").toString());
             Integer cantidad = Integer.valueOf(request.get("cantidad").toString());
-
-            // Aquí iría la lógica real de abastecimiento
-            // Por ahora simulamos la respuesta
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -167,12 +121,6 @@ public class ProductoApiController {
         }
     }
 
-    /**
-     * Obtiene estadísticas detalladas del inventario.
-     * Incluye totales por categoría, productos con stock bajo, y otras métricas.
-     *
-     * @return ResponseEntity con mapa de estadísticas del inventario
-     */
     @GetMapping("/estadisticas")
     public ResponseEntity<Map<String, Object>> obtenerEstadisticas() {
         try {
@@ -184,18 +132,11 @@ public class ProductoApiController {
         }
     }
 
-    /**
-     * Obtiene grupos únicos de productos basados en la categoría.
-     * Similar a obtener categorías pero con un enfoque diferente en la agrupación.
-     *
-     * @return ResponseEntity con lista de grupos únicos
-     */
     @GetMapping("/grupos")
     public ResponseEntity<Map<String, Object>> obtenerGruposUnicos() {
         try {
             List<Producto> productos = productoService.obtenerTodosProductos();
 
-            // Obtener grupos únicos de la categoría
             List<String> gruposUnicos = productos.stream()
                     .map(Producto::getCategoria)
                     .filter(Objects::nonNull)
@@ -213,12 +154,6 @@ public class ProductoApiController {
         }
     }
 
-    /**
-     * Crea una respuesta de error estandarizada para los endpoints.
-     *
-     * @param mensaje Mensaje de error descriptivo
-     * @return Mapa con la estructura de error estandarizada
-     */
     private Map<String, Object> crearErrorResponse(String mensaje) {
         Map<String, Object> errorResponse = new HashMap<>();
         errorResponse.put("success", false);

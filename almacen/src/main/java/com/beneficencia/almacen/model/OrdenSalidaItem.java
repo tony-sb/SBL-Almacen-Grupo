@@ -32,7 +32,6 @@ public class OrdenSalidaItem {
     @Column(name = "fecha_registro")
     private LocalDateTime fechaRegistro;
 
-    // Constructor
     public OrdenSalidaItem() {
         this.fechaRegistro = LocalDateTime.now();
     }
@@ -46,7 +45,6 @@ public class OrdenSalidaItem {
         calcularSubtotal();
     }
 
-    // Getters y Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -74,7 +72,6 @@ public class OrdenSalidaItem {
     public LocalDateTime getFechaRegistro() { return fechaRegistro; }
     public void setFechaRegistro(LocalDateTime fechaRegistro) { this.fechaRegistro = fechaRegistro; }
 
-    // Métodos auxiliares
     private void calcularSubtotal() {
         if (this.cantidad != null && this.precioUnitario != null) {
             this.subtotal = this.precioUnitario.multiply(BigDecimal.valueOf(this.cantidad));

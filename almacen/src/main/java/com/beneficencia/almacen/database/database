@@ -341,18 +341,18 @@ UPDATE productos SET fecha_vencimiento = '2025-12-10' WHERE codigo = 'MED-005';
 
 UPDATE productos SET fecha_vencimiento = '2027-01-01' WHERE codigo = 'INS-001';
 UPDATE productos SET fecha_vencimiento = '2026-08-15' WHERE codigo = 'INS-002';
-UPDATE productos SET fecha_vencimiento = '2026-08-15'  WHERE codigo = 'INS-003'; -- Sin fecha
+UPDATE productos SET fecha_vencimiento = '2026-08-15'  WHERE codigo = 'INS-003';
 UPDATE productos SET fecha_vencimiento = '2028-12-31' WHERE codigo = 'INS-004';
 UPDATE productos SET fecha_vencimiento = '2026-04-10' WHERE codigo = 'INS-005';
 
 UPDATE productos SET fecha_vencimiento = '2027-06-30' WHERE codigo = 'LIM-001';
-UPDATE productos SET fecha_vencimiento = '2025-12-25' WHERE codigo = 'LIM-002'; -- PRÓXIMO
-UPDATE productos SET fecha_vencimiento = '2026-08-15'  WHERE codigo = 'LIM-003'; -- Sin fecha
+UPDATE productos SET fecha_vencimiento = '2025-12-25' WHERE codigo = 'LIM-002';
+UPDATE productos SET fecha_vencimiento = '2026-08-15'  WHERE codigo = 'LIM-003';
 UPDATE productos SET fecha_vencimiento = '2026-11-15' WHERE codigo = 'LIM-004';
 
-UPDATE productos SET fecha_vencimiento = '2025-12-05' WHERE codigo = 'ALI-001'; -- VENCIDO
+UPDATE productos SET fecha_vencimiento = '2025-12-05' WHERE codigo = 'ALI-001';
 UPDATE productos SET fecha_vencimiento = '2027-08-01' WHERE codigo = 'ALI-002';
-UPDATE productos SET fecha_vencimiento = '2025-11-20' WHERE codigo = 'ALI-003'; -- VENCIDO
+UPDATE productos SET fecha_vencimiento = '2025-11-20' WHERE codigo = 'ALI-003';
 UPDATE productos SET fecha_vencimiento = '2028-01-01' WHERE codigo = 'ALI-004';
 
 -- Material de oficina generalmente no tiene fecha
