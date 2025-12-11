@@ -28,11 +28,6 @@ public class EstadisticaController {
             List<Map<String, Object>> beneficiariosMasActivos = estadisticaService.obtenerBeneficiariosMasActivos();
             List<Map<String, Object>> entregasPorMes = estadisticaService.obtenerEntregasPorMes();
 
-            System.out.println("Productos más solicitados: " + productosMasSolicitados.size());
-            System.out.println("Beneficiarios más activos: " + beneficiariosMasActivos.size());
-            System.out.println("Entregas por mes: " + entregasPorMes.size());
-
-
             model.addAttribute("productosMasSolicitados", productosMasSolicitados);
             model.addAttribute("beneficiariosMasActivos", beneficiariosMasActivos);
             model.addAttribute("entregasPorMes", entregasPorMes);

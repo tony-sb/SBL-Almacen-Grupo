@@ -92,28 +92,35 @@ public class EstadisticaService {
     public List<Map<String, Object>> obtenerEntregasPorMes() {
         try {
             String sql = "SELECT " +
-                    "    MONTH(os.fecha_salida) AS mes_numero, " +
-                    "    CASE MONTH(os.fecha_salida) " +
-                    "        WHEN 1 THEN 'Enero' " +
-                    "        WHEN 2 THEN 'Febrero' " +
-                    "        WHEN 3 THEN 'Marzo' " +
-                    "        WHEN 4 THEN 'Abril' " +
-                    "        WHEN 5 THEN 'Mayo' " +
-                    "        WHEN 6 THEN 'Junio' " +
-                    "        WHEN 7 THEN 'Julio' " +
-                    "        WHEN 8 THEN 'Agosto' " +
-                    "        WHEN 9 THEN 'Septiembre' " +
-                    "        WHEN 10 THEN 'Octubre' " +
-                    "        WHEN 11 THEN 'Noviembre' " +
-                    "        WHEN 12 THEN 'Diciembre' " +
-                    "    END AS mes_nombre, " +
-                    "    COUNT(DISTINCT os.id) AS total_entregas, " +
-                    "    COALESCE(SUM(osi.cantidad), 0) AS total_productos " +
-                    "FROM ordenes_salida os " +
-                    "LEFT JOIN orden_salida_items osi ON os.id = osi.orden_salida_id " +
-                    "WHERE YEAR(os.fecha_salida) = YEAR(CURDATE()) " +
-                    "GROUP BY MONTH(os.fecha_salida) " +
-                    "ORDER BY mes_numero";
+                    "    mes_numero, " +
+                    "    mes_nombre, " +
+                    "    COALESCE(total_entregas, 0) AS total_entregas, " +
+                    "    COALESCE(total_productos, 0) AS total_productos " +
+                    "FROM ( " +
+                    "    SELECT 1 AS mes_numero, 'Enero' AS mes_nombre " +
+                    "    UNION SELECT 2, 'Febrero' " +
+                    "    UNION SELECT 3, 'Marzo' " +
+                    "    UNION SELECT 4, 'Abril' " +
+                    "    UNION SELECT 5, 'Mayo' " +
+                    "    UNION SELECT 6, 'Junio' " +
+                    "    UNION SELECT 7, 'Julio' " +
+                    "    UNION SELECT 8, 'Agosto' " +
+                    "    UNION SELECT 9, 'Septiembre' " +
+                    "    UNION SELECT 10, 'Octubre' " +
+                    "    UNION SELECT 11, 'Noviembre' " +
+                    "    UNION SELECT 12, 'Diciembre' " +
+                    ") meses " +
+                    "LEFT JOIN ( " +
+                    "    SELECT " +
+                    "        MONTH(fecha_salida) AS mes, " +
+                    "        COUNT(DISTINCT os.id) AS total_entregas, " +
+                    "        COALESCE(SUM(osi.cantidad), 0) AS total_productos " +
+                    "    FROM ordenes_salida os " +
+                    "    LEFT JOIN orden_salida_items osi ON os.id = osi.orden_salida_id " +
+                    "    WHERE YEAR(fecha_salida) = YEAR(CURDATE()) " +
+                    "    GROUP BY MONTH(fecha_salida) " +
+                    ") datos ON meses.mes_numero = datos.mes " +
+                    "ORDER BY meses.mes_numero";
 
             Query query = entityManager.createNativeQuery(sql);
             List<Object[]> resultados = query.getResultList();
@@ -122,7 +129,7 @@ public class EstadisticaService {
             for (Object[] fila : resultados) {
                 Map<String, Object> dato = new HashMap<>();
                 dato.put("mesNumero", fila[0] != null ? ((Number) fila[0]).intValue() : 0);
-                dato.put("mesNombre", fila[1] != null ? fila[1].toString() : "Sin mes");
+                dato.put("mesNombre", fila[1] != null ? fila[1].toString() : "");
                 dato.put("totalEntregas", fila[2] != null ? ((Number) fila[2]).intValue() : 0);
                 dato.put("totalProductos", fila[3] != null ? ((Number) fila[3]).intValue() : 0);
                 estadisticas.add(dato);
@@ -137,7 +144,6 @@ public class EstadisticaService {
             return new ArrayList<>();
         }
     }
-
 
     public Long contarTotalBeneficiarios() {
         try {
@@ -166,7 +172,7 @@ public class EstadisticaService {
     public String obtenerMesConMasEntregas() {
         try {
             String sql = "SELECT " +
-                    "    CASE MONTH(fecha_salida) " +
+                    "    CASE mes " +
                     "        WHEN 1 THEN 'Enero' " +
                     "        WHEN 2 THEN 'Febrero' " +
                     "        WHEN 3 THEN 'Marzo' " +
@@ -179,12 +185,15 @@ public class EstadisticaService {
                     "        WHEN 10 THEN 'Octubre' " +
                     "        WHEN 11 THEN 'Noviembre' " +
                     "        WHEN 12 THEN 'Diciembre' " +
-                    "    END AS mes " +
-                    "FROM ordenes_salida " +
-                    "WHERE YEAR(fecha_salida) = YEAR(CURDATE()) " +
-                    "GROUP BY MONTH(fecha_salida) " +
-                    "ORDER BY COUNT(id) DESC " +
-                    "LIMIT 1";
+                    "    END AS mes_nombre " +
+                    "FROM ( " +
+                    "    SELECT MONTH(fecha_salida) AS mes " +
+                    "    FROM ordenes_salida " +
+                    "    WHERE YEAR(fecha_salida) = YEAR(CURDATE()) " +
+                    "    GROUP BY MONTH(fecha_salida) " +
+                    "    ORDER BY COUNT(id) DESC " +
+                    "    LIMIT 1 " +
+                    ") AS subquery";
 
             Query query = entityManager.createNativeQuery(sql);
             Object resultado = query.getSingleResult();
@@ -195,9 +204,6 @@ public class EstadisticaService {
         }
     }
 
-    /**
-     * NUEVO: Obtiene estadísticas generales para debug
-     */
     public Map<String, Object> obtenerEstadisticasDebug() {
         Map<String, Object> debug = new HashMap<>();
         try {

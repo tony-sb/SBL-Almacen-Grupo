@@ -9,7 +9,49 @@
     <link th:href="@{/css/dashboard.css}" rel="stylesheet">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .chart-container {
+            position: relative;
+            height: 400px;
+            width: 100%;
+        }
 
+        canvas {
+            max-height: 400px;
+            width: 100% !important;
+        }
+
+        /* Para asegurar que las tablas se vean bien */
+        .table-statistics {
+            font-size: 0.9rem;
+        }
+
+        .table-statistics th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+
+        /* Para las tarjetas de estadísticas */
+        .stat-card {
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            height: 100%;
+        }
+
+        .stat-card h5 {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+
+        .stat-card h2 {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 0;
+        }
+    </style>
 </head>
 
 <body class="dashboard-body">
@@ -90,11 +132,11 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/estadisticas">
+                        <a class="nav-link active" href="/estadisticas">
                             <i class="bi bi-bar-chart-line"></i>
                             Reportes Gráficos
                         </a>
-                    </li> active
+                    </li>
                 </ul>
             </div>
         </div>
@@ -205,54 +247,174 @@
 </div>
 
 <script th:inline="javascript">
-    const productosMasSolicitados = /[[${productosMasSolicitados}]]/ [];
-    const beneficiariosMasActivos = /[[${beneficiariosMasActivos}]]/ [];
-    const entregasPorMes = /[[${entregasPorMes}]]/ [];
+    /*<![CDATA[*/
 
-    // === GRAFICO 1 ===
-    if (productosMasSolicitados.length > 0) {
-        new Chart(document.getElementById('productosChart'), {
-            type: 'bar',
-            data: {
-                labels: productosMasSolicitados.map(p => p.producto),
-                datasets: [{
-                    label: 'Cantidad entregada',
-                    data: productosMasSolicitados.map(p => p.cantidadTotal)
-                }]
+    // Obtener datos desde Thymeleaf
+    const productosMasSolicitados = /*[[${productosMasSolicitados}]]*/ [];
+    const beneficiariosMasActivos = /*[[${beneficiariosMasActivos}]]*/ [];
+    const entregasPorMes = /*[[${entregasPorMes}]]*/ [];
+
+    console.log("Datos recibidos:");
+    console.log("Productos:", productosMasSolicitados);
+    console.log("Beneficiarios:", beneficiariosMasActivos);
+    console.log("Meses:", entregasPorMes);
+
+    // === GRAFICO 1: Productos Más Solicitados ===
+    if (productosMasSolicitados && productosMasSolicitados.length > 0) {
+        const productosCtx = document.getElementById('productosChart');
+        if (productosCtx) {
+            try {
+                new Chart(productosCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: productosMasSolicitados.map(p => p.producto || 'Sin nombre'),
+                        datasets: [{
+                            label: 'Cantidad entregada',
+                            data: productosMasSolicitados.map(p => p.cantidadTotal || 0),
+                            backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Cantidad'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Productos'
+                                }
+                            }
+                        }
+                    }
+                });
+                console.log("Gráfico 1 creado correctamente");
+            } catch (error) {
+                console.error("Error creando gráfico 1:", error);
             }
-        });
+        }
+    } else {
+        console.warn("No hay datos para el gráfico 1");
     }
 
-
-    if (beneficiariosMasActivos.length > 0) {
-        new Chart(document.getElementById('beneficiariosChart'), {
-            type: 'bar',
-            data: {
-                labels: beneficiariosMasActivos.map(b => b.beneficiario),
-                datasets: [{
-                    label: 'Productos solicitados',
-                    data: beneficiariosMasActivos.map(b => b.totalProductos)
-                }]
+    // === GRAFICO 2: Beneficiarios Activos ===
+    if (beneficiariosMasActivos && beneficiariosMasActivos.length > 0) {
+        const beneficiariosCtx = document.getElementById('beneficiariosChart');
+        if (beneficiariosCtx) {
+            try {
+                new Chart(beneficiariosCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: beneficiariosMasActivos.map(b => b.beneficiario || 'Sin nombre'),
+                        datasets: [{
+                            label: 'Productos solicitados',
+                            data: beneficiariosMasActivos.map(b => b.totalProductos || 0),
+                            backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Cantidad de productos'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Beneficiarios'
+                                }
+                            }
+                        }
+                    }
+                });
+                console.log("Gráfico 2 creado correctamente");
+            } catch (error) {
+                console.error("Error creando gráfico 2:", error);
             }
-        });
+        }
+    } else {
+        console.warn("No hay datos para el gráfico 2");
     }
 
-
-    if (entregasPorMes.length > 0) {
-        new Chart(document.getElementById('mesesChart'), {
-            type: 'line',
-            data: {
-                labels: entregasPorMes.map(m => m.mesNombre),
-                datasets: [{
-                    label: 'Entregas por mes',
-                    data: entregasPorMes.map(m => m.totalEntregas),
-                    fill: false
-                }]
+    // === GRAFICO 3: Entregas por Mes ===
+    if (entregasPorMes && entregasPorMes.length > 0) {
+        const mesesCtx = document.getElementById('mesesChart');
+        if (mesesCtx) {
+            try {
+                new Chart(mesesCtx, {
+                    type: 'line',
+                    data: {
+                        labels: entregasPorMes.map(m => m.mesNombre || 'Sin mes'),
+                        datasets: [{
+                            label: 'Entregas por mes',
+                            data: entregasPorMes.map(m => m.totalEntregas || 0),
+                            fill: false,
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                            tension: 0.1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Número de entregas'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Meses'
+                                }
+                            }
+                        }
+                    }
+                });
+                console.log("Gráfico 3 creado correctamente");
+            } catch (error) {
+                console.error("Error creando gráfico 3:", error);
             }
-        });
+        }
+    } else {
+        console.warn("No hay datos para el gráfico 3");
     }
+
+    /*]]>*/
 </script>
-
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 
 </body>
