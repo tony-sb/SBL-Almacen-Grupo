@@ -13,10 +13,7 @@ import jakarta.persistence.PersistenceContext;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.Year;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -172,6 +169,16 @@ public class OrdenAbastecimientoService {
         try {
             System.out.println("=== INICIANDO GUARDADO DE ORDEN DE ABASTECIMIENTO ===");
 
+            boolean esNuevaOrden = (ordenAbastecimiento.getId() == null);
+
+            System.out.println("¿Es nueva orden? " + esNuevaOrden +
+                    " - ID: " + ordenAbastecimiento.getId());
+
+            // Si es una orden existente, eliminar items antiguos PRIMERO
+            if (!esNuevaOrden) {
+                eliminarItemsAntiguosDirectamente(ordenAbastecimiento.getId());
+            }
+
             // Si es una orden existente, eliminar items antiguos PRIMERO
             if (ordenAbastecimiento.getId() != null) {
                 eliminarItemsAntiguosDirectamente(ordenAbastecimiento.getId());
@@ -223,7 +230,8 @@ public class OrdenAbastecimientoService {
             // Guardar la orden (esto incluirá los nuevos items)
             OrdenAbastecimiento ordenGuardada = ordenAbastecimientoRepository.save(ordenAbastecimiento);
 
-            actualizarInventarioProductos(ordenGuardada);System.out.println("✅ Orden guardada exitosamente con ID: " + ordenGuardada.getId());
+            actualizarInventarioProductos(ordenGuardada, esNuevaOrden);
+
             System.out.println("✅ Orden guardada exitosamente con ID: " + ordenGuardada.getId());
             System.out.println("Total de orden: S/ " + ordenGuardada.getTotal());
             System.out.println("Items en orden guardada: " +
@@ -239,16 +247,30 @@ public class OrdenAbastecimientoService {
     }
 
     /**
-     * ACTUALIZA el inventario de productos (cantidad Y precio) después de guardar una orden
+     * ACTUALIZA el inventario de productos considerando si es nueva orden o edición
      */
-    private void actualizarInventarioProductos(OrdenAbastecimiento orden) {
-        System.out.println("🔄 ACTUALIZANDO INVENTARIO DE PRODUCTOS PARA ORDEN: " + orden.getNumeroOA());
+    private void actualizarInventarioProductos(OrdenAbastecimiento orden, boolean esNuevaOrden) {
+        System.out.println("🔄 ACTUALIZANDO INVENTARIO - Orden: " + orden.getNumeroOA() +
+                " - Tipo: " + (esNuevaOrden ? "NUEVA" : "EDITAR"));
 
         if (orden.getItems() == null || orden.getItems().isEmpty()) {
             System.out.println("⚠️  Orden sin items, no hay inventario que actualizar");
             return;
         }
 
+        if (esNuevaOrden) {
+            System.out.println("📥 Sumando items al inventario (orden nueva)");
+            sumarAlInventario(orden);
+        } else {
+            System.out.println("✏️  Ajustando inventario (orden editada)");
+            ajustarInventarioPorEdicion(orden);
+        }
+    }
+
+    /**
+     * PARA ÓRDENES NUEVAS: Suma los items al inventario
+     */
+    private void sumarAlInventario(OrdenAbastecimiento orden) {
         for (OrdenAbastecimientoItem item : orden.getItems()) {
             try {
                 Producto producto = item.getProducto();
@@ -256,37 +278,115 @@ public class OrdenAbastecimientoService {
                 BigDecimal precioOrdenado = item.getPrecioUnitario();
 
                 if (producto != null && cantidadOrdenada != null && cantidadOrdenada > 0) {
-                    // Obtener producto actual de la base de datos
                     Producto productoActual = productoService.obtenerProductoPorId(producto.getId())
                             .orElseThrow(() -> new RuntimeException("Producto no encontrado: " + producto.getId()));
 
-                    // 1️⃣ ACTUALIZAR CANTIDAD (sumar)
                     Integer cantidadActual = productoActual.getCantidad() != null ? productoActual.getCantidad() : 0;
                     Integer nuevaCantidad = cantidadActual + cantidadOrdenada;
                     productoActual.setCantidad(nuevaCantidad);
 
-                    // 2️⃣ ACTUALIZAR PRECIO UNITARIO (reemplazar con el de la orden)
+                    // Actualizar precio si es mayor a cero
                     if (precioOrdenado != null && precioOrdenado.compareTo(BigDecimal.ZERO) > 0) {
                         productoActual.setPrecioUnitario(precioOrdenado);
-                        System.out.println("💰 Precio actualizado: " + productoActual.getNombre() +
-                                " - Precio anterior: " + productoActual.getPrecioUnitario() +
-                                " -> Nuevo: " + precioOrdenado);
                     }
 
-                    // Guardar producto actualizado
                     productoService.actualizarProducto(productoActual);
 
-                    System.out.println("✅ Producto actualizado: " + productoActual.getNombre() +
-                            " - Stock: " + cantidadActual + " + " + cantidadOrdenada + " = " + nuevaCantidad +
-                            " - Precio: " + productoActual.getPrecioUnitario());
+                    System.out.println("✅ Producto sumado: " + productoActual.getNombre() +
+                            " - Stock: " + cantidadActual + " + " + cantidadOrdenada + " = " + nuevaCantidad);
                 }
             } catch (Exception e) {
-                System.err.println("❌ Error actualizando producto: " + e.getMessage());
-                e.printStackTrace();
+                System.err.println("❌ Error sumando producto: " + e.getMessage());
             }
         }
+    }
 
-        System.out.println("📦 Inventario actualizado para " + orden.getItems().size() + " productos");
+    /**
+     * PARA EDICIÓN DE ÓRDENES: Calcula la diferencia y ajusta
+     */
+    private void ajustarInventarioPorEdicion(OrdenAbastecimiento orden) {
+        try {
+            // Obtener la orden ORIGINAL de la base de datos
+            OrdenAbastecimiento ordenOriginal = ordenAbastecimientoRepository
+                    .findByIdWithItems(orden.getId())
+                    .orElseThrow(() -> new RuntimeException("Orden original no encontrada: " + orden.getId()));
+
+            System.out.println("🔄 Comparando orden editada con original:");
+            System.out.println("   - Original: " + (ordenOriginal.getItems() != null ? ordenOriginal.getItems().size() : 0) + " items");
+            System.out.println("   - Editada: " + (orden.getItems() != null ? orden.getItems().size() : 0) + " items");
+
+            // Crear mapa de items originales por producto ID
+            Map<Long, Integer> itemsOriginales = new HashMap<>();
+            if (ordenOriginal.getItems() != null) {
+                for (OrdenAbastecimientoItem item : ordenOriginal.getItems()) {
+                    if (item.getProducto() != null) {
+                        itemsOriginales.put(item.getProducto().getId(), item.getCantidad());
+                        System.out.println("   📦 Original - Producto " + item.getProducto().getId() +
+                                ": " + item.getCantidad() + " unidades");
+                    }
+                }
+            }
+
+            // Procesar items editados
+            for (OrdenAbastecimientoItem itemEditado : orden.getItems()) {
+                try {
+                    if (itemEditado.getProducto() == null || itemEditado.getCantidad() == null) continue;
+
+                    Long productoId = itemEditado.getProducto().getId();
+                    Integer cantidadEditada = itemEditado.getCantidad();
+                    BigDecimal precioEditado = itemEditado.getPrecioUnitario();
+
+                    // Obtener producto actual
+                    Producto productoActual = productoService.obtenerProductoPorId(productoId)
+                            .orElseThrow(() -> new RuntimeException("Producto no encontrado: " + productoId));
+
+                    Integer cantidadActual = productoActual.getCantidad() != null ? productoActual.getCantidad() : 0;
+                    Integer cantidadOriginal = itemsOriginales.getOrDefault(productoId, 0);
+
+                    // Calcular diferencia
+                    Integer diferencia = cantidadEditada - cantidadOriginal;
+
+                    System.out.println("   🔄 Producto " + productoId + " - " + productoActual.getNombre() +
+                            ": Original=" + cantidadOriginal +
+                            ", Editado=" + cantidadEditada +
+                            ", Diferencia=" + diferencia +
+                            ", Stock actual=" + cantidadActual);
+
+                    if (diferencia != 0) {
+                        // Ajustar inventario según la diferencia
+                        Integer nuevaCantidad = cantidadActual + diferencia;
+
+                        // Validar que no sea negativo
+                        if (nuevaCantidad < 0) {
+                            System.err.println("⚠️  ADVERTENCIA: Stock negativo para " + productoActual.getNombre() +
+                                    " - Diferencia: " + diferencia);
+                            nuevaCantidad = 0; // No permitir stock negativo
+                        }
+
+                        productoActual.setCantidad(nuevaCantidad);
+
+                        System.out.println("   📊 Ajuste: " + cantidadActual + " + " + diferencia + " = " + nuevaCantidad);
+                    }
+
+                    // Actualizar precio si cambió
+                    if (precioEditado != null && precioEditado.compareTo(BigDecimal.ZERO) > 0) {
+                        productoActual.setPrecioUnitario(precioEditado);
+                        System.out.println("   💰 Precio actualizado: " + productoActual.getPrecioUnitario());
+                    }
+
+                    productoService.actualizarProducto(productoActual);
+
+                } catch (Exception e) {
+                    System.err.println("❌ Error ajustando producto: " + e.getMessage());
+                }
+            }
+
+        } catch (Exception e) {
+            System.err.println("❌ Error al obtener orden original: " + e.getMessage());
+            // Fallback: Tratar como nueva orden
+            System.out.println("⚠️  Fallback: Tratando como nueva orden");
+            sumarAlInventario(orden);
+        }
     }
 
     /**
