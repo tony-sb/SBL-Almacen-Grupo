@@ -1,6 +1,3 @@
-/**
- * Módulo principal para la gestión de Órdenes de Salida
- */
 const ordenSalidaManager = (function() {
     'use strict';
 
@@ -13,16 +10,13 @@ const ordenSalidaManager = (function() {
         }
     };
 
-    // Inicialización
     function init() {
         setupEventListeners();
         setCurrentPeriod();
-        console.log("✅ Módulo de Órdenes de Salida inicializado");
+        console.log("Módulo de Órdenes de Salida inicializado");
     }
 
-    // Configurar event listeners
     function setupEventListeners() {
-        // Filtros de búsqueda
         const btnFiltrar = document.getElementById('btn-filtrar');
         const btnLimpiar = document.getElementById('btn-limpiar');
         const busquedaInput = document.getElementById('busqueda');
@@ -35,21 +29,18 @@ const ordenSalidaManager = (function() {
             });
         }
 
-        // Modal de nueva orden
         const modal = document.getElementById('nuevaSalidaModal');
         if (modal) {
             modal.addEventListener('show.bs.modal', handleModalShow);
             modal.addEventListener('hidden.bs.modal', handleModalHide);
         }
 
-        // Validación del formulario
         const formSalida = document.getElementById('formSalidaModal');
         if (formSalida) {
             formSalida.addEventListener('submit', validarFormulario);
         }
     }
 
-    // Establecer período actual
     function setCurrentPeriod() {
         const now = new Date();
         const currentYear = now.getFullYear().toString();
@@ -62,13 +53,11 @@ const ordenSalidaManager = (function() {
         if (mesSelect) mesSelect.value = currentMonth;
     }
 
-    // Manejar apertura del modal
     function handleModalShow() {
         console.log('Modal abierto - cargando productos...');
         cargarProductos();
     }
 
-    // Manejar cierre del modal
     function handleModalHide() {
         const form = document.getElementById('formSalidaModal');
         if (form) form.reset();
@@ -79,11 +68,9 @@ const ordenSalidaManager = (function() {
         resetProductoSeleccionado();
     }
 
-    // Buscar órdenes - ADAPTADO A TU ESTRUCTURA
     function buscarOrdenes() {
         const busqueda = document.getElementById('busqueda').value.trim();
 
-        // Construir URL según tu estructura de controlador
         let url = `/ordenes-salida`;
 
         if (busqueda) {
@@ -94,7 +81,6 @@ const ordenSalidaManager = (function() {
         window.location.href = url;
     }
 
-    // Limpiar búsqueda
     function limpiarBusqueda() {
         const busquedaInput = document.getElementById('busqueda');
         if (busquedaInput) {
@@ -103,7 +89,6 @@ const ordenSalidaManager = (function() {
         buscarOrdenes();
     }
 
-    // Cargar productos para el modal
     function cargarProductos() {
         showLoading(true);
 
@@ -127,7 +112,6 @@ const ordenSalidaManager = (function() {
             });
     }
 
-    // Mostrar productos en la tabla
     function mostrarProductos(productos) {
         const tabla = document.getElementById('tabla-productos');
         if (!tabla) {
@@ -165,7 +149,6 @@ const ordenSalidaManager = (function() {
         });
     }
 
-    // Seleccionar primer producto automáticamente
     function seleccionarPrimerProducto(producto) {
         setTimeout(() => {
             seleccionarProducto(
@@ -183,7 +166,6 @@ const ordenSalidaManager = (function() {
         }, 100);
     }
 
-    // Buscar productos en el modal
     function buscarProductos() {
         const termino = document.getElementById('search-term').value.toLowerCase();
         const filas = document.querySelectorAll('#tabla-productos tr');
@@ -198,7 +180,6 @@ const ordenSalidaManager = (function() {
         });
     }
 
-    // Seleccionar producto
     function seleccionarProducto(id, codigo, nombre, stock) {
         document.getElementById('product-id').value = id;
         document.getElementById('product-code').value = codigo;
@@ -215,7 +196,6 @@ const ordenSalidaManager = (function() {
         resaltarFilaSeleccionada();
     }
 
-    // Resaltar fila seleccionada
     function resaltarFilaSeleccionada() {
         const filas = document.querySelectorAll('#tabla-productos tr');
         filas.forEach(fila => {
@@ -227,7 +207,6 @@ const ordenSalidaManager = (function() {
         });
     }
 
-    // Resetear producto seleccionado
     function resetProductoSeleccionado() {
         document.getElementById('product-id').value = '';
         document.getElementById('product-code').value = '';
@@ -241,7 +220,6 @@ const ordenSalidaManager = (function() {
         }
     }
 
-    // Validar formulario antes de enviar
     function validarFormulario(e) {
         const productoId = document.getElementById('product-id').value;
         const cantidad = document.getElementById('product-quantity').value;
@@ -249,7 +227,6 @@ const ordenSalidaManager = (function() {
 
         let errores = [];
 
-        // Validar DNI
         if (!dniUsuario || !dniUsuario.match(/^\d{8}$/)) {
             errores.push('El DNI debe tener 8 dígitos numéricos');
         }
@@ -276,7 +253,6 @@ const ordenSalidaManager = (function() {
         return true;
     }
 
-    // Imprimir orden de salida
     function imprimirSalida(numeroOrden) {
         if (!numeroOrden) {
             alert('Error: Número de orden no válido');
@@ -288,11 +264,9 @@ const ordenSalidaManager = (function() {
         const url = `/ordenes-salida/imprimir/${encodeURIComponent(numeroOrden)}`;
         console.log('URL de impresión:', url);
 
-        // Redirigir a la misma página para imprimir
         window.location.href = url;
     }
 
-    // Editar orden de salida
     function editarSalida(id) {
         if (!id) {
             showError('ID de orden no válido');
@@ -303,7 +277,6 @@ const ordenSalidaManager = (function() {
         window.location.href = `/ordenes-salida/editar/${id}`;
     }
 
-    // Eliminar orden de salida
     function eliminarSalida(id, numeroOrden) {
         if (!id || !numeroOrden) {
             showError('Datos de orden no válidos');
@@ -338,7 +311,6 @@ const ordenSalidaManager = (function() {
         }
     }
 
-    // Utilidades
     function escapeHtml(text) {
         if (!text) return '';
         const div = document.createElement('div');
@@ -368,7 +340,6 @@ const ordenSalidaManager = (function() {
         }
     }
 
-    // API Pública
     return {
         init,
         buscarOrdenes,
@@ -383,7 +354,6 @@ const ordenSalidaManager = (function() {
 
 })();
 
-// Inicializar cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', function() {
     ordenSalidaManager.init();
 });

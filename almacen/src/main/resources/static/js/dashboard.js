@@ -1,14 +1,11 @@
-// Dashboard functionality
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Dashboard cargado correctamente');
 
-    // Inicializar tooltips de Bootstrap
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl);
     });
 
-    // Efectos hover para las tarjetas
     const productCards = document.querySelectorAll('.card');
 
     productCards.forEach(card => {
@@ -24,13 +21,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Animación para las tarjetas de estadísticas
     animateStatsCards();
 
-    // Actualizar timestamp cada minuto
     setInterval(updateTimestamp, 60000);
 
-    // Inicializar funcionalidades
     initDashboardFeatures();
 });
 
@@ -81,7 +75,6 @@ function initDashboardFeatures() {
         });
     }
 
-    // Alertas dinámicas
     const alertSection = document.querySelector('.alert.alert-warning');
     if (alertSection) {
         alertSection.addEventListener('click', function() {
@@ -92,7 +85,6 @@ function initDashboardFeatures() {
         });
     }
 
-    // Mejorar la interactividad de la tabla
     const tableRows = document.querySelectorAll('tbody tr');
     tableRows.forEach(row => {
         row.addEventListener('mouseenter', function() {
@@ -104,16 +96,13 @@ function initDashboardFeatures() {
             this.style.backgroundColor = '';
         });
 
-        // Click en fila para más detalles (futura implementación)
         row.addEventListener('click', function() {
             const productName = this.cells[0].textContent;
             console.log('Ver detalles de:', productName);
-            // Aquí puedes redirigir a la página de detalles del producto
         });
     });
 }
 
-// Función para actualizar estadísticas en tiempo real
 function updateStats() {
     console.log('Actualizando estadísticas del dashboard...');
 
@@ -125,7 +114,6 @@ function updateStats() {
         movimientos: Math.floor(Math.random() * 8) + 4
     };
 
-    // Aquí se conectaría con el backend para datos reales
     fetch('/api/dashboard/stats')
         .then(response => response.json())
         .then(data => {
@@ -137,16 +125,13 @@ function updateStats() {
 }
 
 function updateStatsDisplay(stats) {
-    // Esta función actualizaría la UI con nuevos datos
     console.log('Actualizando display con:', stats);
 }
 
-// Función para manejar errores de carga
 window.addEventListener('error', function(e) {
     console.error('Error en el dashboard:', e.error);
 });
 
-// Exportar funciones para uso global (si es necesario)
 window.dashboard = {
     updateStats,
     animateStatsCards

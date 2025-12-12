@@ -1,10 +1,9 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
-<!-- Fragmento simplificado -->
+
 <div th:fragment="formulario-orden" class="orden-form-container">
 
-    <!-- Campo oculto para el ID -->
     <input type="hidden" name="id" th:value="${ordenAbastecimiento.id}">
 
     <div class="row">
@@ -53,7 +52,6 @@
         </div>
     </div>
 
-    <!-- Items de la Orden - VERSIÓN MEJORADA -->
     <div class="mb-3">
         <label class="form-label">Productos *</label>
         <div class="d-flex justify-content-between align-items-center mb-2">
@@ -71,7 +69,6 @@
         </div>
 
         <div id="items-container">
-            <!-- Items existentes para edición -->
             <div th:each="item, stat : ${ordenAbastecimiento.items}"
                  class="item-row row align-items-center mb-2"
                  th:id="'item-existing-' + ${stat.index}">
@@ -107,7 +104,6 @@
                 </div>
             </div>
 
-            <!-- ITEM BASE VACÍO (template) - SOLO EN NUEVAS ÓRDENES -->
             <div th:unless="${ordenAbastecimiento.id != null}"
                  class="item-row row align-items-center mb-2"
                  id="item-template" style="display: none;">
@@ -137,7 +133,6 @@
                 </div>
             </div>
 
-            <!-- PRIMER ITEM (solo para nuevas órdenes) -->
             <div th:unless="${ordenAbastecimiento.id != null}"
                  class="item-row row align-items-center mb-2"
                  id="item-0">
@@ -168,7 +163,6 @@
             </div>
         </div>
 
-        <!-- BOTÓN CON EVENTO MEJORADO -->
         <button type="button" class="btn btn-outline-secondary btn-sm mt-2" id="agregarProductoBtn"
                 onclick="ordenesApp.agregarNuevoItem(event)">
             <i class="bi bi-plus-circle me-1"></i>Agregar Producto

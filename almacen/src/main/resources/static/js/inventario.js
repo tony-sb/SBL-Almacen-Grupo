@@ -23,7 +23,6 @@ class InventoryManager {
             }
         } catch (error) {
             console.error('Error al cargar grupos:', error);
-            // Grupos por defecto si hay error
             this.grupos = ['20', '44', '65', '75', '85', '150', '270', '350'];
             this.populateGroupFilter();
         }
@@ -64,24 +63,20 @@ class InventoryManager {
 
     async descargarPDF() {
         try {
-            // Mostrar loading en el botón
             const btn = event.target;
             const originalHtml = btn.innerHTML;
             btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Generando PDF...';
             btn.disabled = true;
 
-            // Usar la nueva ruta
             const response = await fetch('/descargar-inventario-completo');
 
             if (response.ok) {
-                // Crear blob y descargar
                 const blob = await response.blob();
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.style.display = 'none';
                 a.href = url;
 
-                // Obtener el nombre del archivo del header
                 const contentDisposition = response.headers.get('Content-Disposition');
                 let filename = 'inventario_completo.pdf';
                 if (contentDisposition) {
@@ -136,7 +131,6 @@ class InventoryManager {
         data.forEach(product => {
             const row = document.createElement('tr');
 
-            // Determinar estado del stock
             const stockStatus = this.getStockStatus(product);
             if (stockStatus === 'low') {
                 row.classList.add('stock-bajo');
@@ -145,7 +139,6 @@ class InventoryManager {
                 row.classList.add('stock-normal');
             }
 
-            // Formatear cantidad
             const cantidadDisplay = this.formatCantidad(product.cantidad);
             const estadoDisplay = this.getEstadoDisplay(stockStatus);
 
@@ -233,7 +226,6 @@ class InventoryManager {
 
         let filteredData = this.inventoryData;
 
-        // Filtro por búsqueda
         if (searchTerm) {
             filteredData = filteredData.filter(product =>
                 product.nombre.toLowerCase().includes(searchTerm) ||
@@ -241,14 +233,12 @@ class InventoryManager {
             );
         }
 
-        // Filtro por grupo (usando categoria como grupo)
         if (groupFilter) {
             filteredData = filteredData.filter(product =>
                 product.categoria && product.categoria.toString() === groupFilter
             );
         }
 
-        // Filtro por stock
         if (stockFilter === 'low') {
             filteredData = filteredData.filter(product => this.getStockStatus(product) === 'low');
         } else if (stockFilter === 'normal') {
@@ -367,7 +357,6 @@ class InventoryManager {
     }
 }
 
-// Inicializar el manager cuando se carga la página
 let inventoryManager;
 document.addEventListener('DOMContentLoaded', () => {
     inventoryManager = new InventoryManager();

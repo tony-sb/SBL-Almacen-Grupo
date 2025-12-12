@@ -239,7 +239,6 @@
 </div>
 
 <!-- Modal para Nueva Orden de Salida -->
-<!-- Modal para Nueva Orden de Salida -->
 <div class="modal fade" id="nuevaSalidaModal" tabindex="-1" aria-labelledby="nuevaSalidaModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
@@ -249,7 +248,7 @@
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <!-- CAMBIA EL FORMULARIO PARA USAR guardar-multiples -->
+            <!-- guardar-multiples -->
             <form th:action="@{/ordenes-salida/guardar-multiples}" method="post" id="formSalidaModal" onsubmit="return validarFormularioSalida()">
                 <div class="modal-body">
                     <!-- Sección de Fecha -->
@@ -281,7 +280,7 @@
                                             </span>
                                         </div>
                                         <small class="text-muted">Número de orden generado automáticamente</small>
-                                        <!-- Campo oculto para el backend -->
+
                                         <input type="hidden" id="numero-tramite" name="numeroTramite">
                                     </div>
                                 </div>
@@ -324,7 +323,7 @@
                         </div>
                     </div>
 
-                    <!-- BÚSQUEDA DE PRODUCTOS (MÚLTIPLES) -->
+                    <!-- BÚSQUEDA DE PRODUCTOS -->
                     <div class="card mb-4">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <h6 class="mb-0"><i class="bi bi-search me-2"></i>BÚSQUEDA DE PRODUCTOS</h6>
@@ -362,14 +361,13 @@
                                     </tr>
                                     </thead>
                                     <tbody id="tabla-productos">
-                                    <!-- Los productos se cargarán dinámicamente -->
                                     </tbody>
                                 </table>
                             </div>
                         </div>
                     </div>
 
-                    <!-- PRODUCTOS SELECCIONADOS (NUEVA SECCIÓN PARA MÚLTIPLES) -->
+                    <!-- PRODUCTOS SELECCIONADOS -->
                     <div class="card mb-4">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <h6 class="mb-0"><i class="bi bi-cart-check me-2"></i>PRODUCTOS SELECCIONADOS</h6>
@@ -398,7 +396,7 @@
                         </div>
                     </div>
 
-                    <!-- DETALLES DEL PRODUCTO SELECCIONADO (OCULTAR ESTA SECCIÓN) -->
+                    <!-- DETALLES DEL PRODUCTO SELECCIONADO (NS) -->
                     <div class="card mb-4" style="display: none;">
                         <div class="card-header">
                             <h6 class="mb-0"><i class="bi bi-box me-2"></i>DETALLES DEL PRODUCTO SELECCIONADO</h6>
@@ -483,7 +481,7 @@
         // Verificar si hay orden pendiente para reabrir modal
         verificarOrdenPendiente();
 
-        // Agregar validación de DNI en tiempo real
+        // Agregar validación de DNI
         const dniInput = document.getElementById('user-dni');
         if (dniInput) {
             dniInput.addEventListener('blur', function() {
@@ -520,9 +518,6 @@
         }
     });
 
-    // ================================================
-    // FUNCIÓN PRINCIPAL PARA VERIFICAR DNI
-    // ================================================
     function verificarDNI(dni) {
         if (!dni || dni.length !== 8) return;
 
@@ -572,10 +567,6 @@
                 showAlert('danger', 'Error al conectar con el servidor');
             });
     }
-
-    // ================================================
-    // FUNCIONES AUXILIARES
-    // ================================================
 
     // Función para guardar datos de orden temporalmente
     function guardarDatosOrdenTemporal() {
@@ -744,7 +735,7 @@
         }, 5000);
     }
 
-    // Función para validar DNI en tiempo real (en input)
+    // Función para validar DNI
     function validarDniInput(input) {
         const dni = input.value;
 
@@ -814,11 +805,6 @@
     }
 </script>
 <script>
-    // ================================================
-    // FUNCIONALIDAD PARA MÚLTIPLES PRODUCTOS
-    // (MANTENIENDO LA INTERFAZ ANTERIOR)
-    // ================================================
-
     // Variables globales
     let productosSeleccionados = [];
     let productoSeleccionadoActual = null;
@@ -893,7 +879,7 @@
             }
         });
 
-        // Actualizar campos individuales (para compatibilidad)
+        // Actualizar campos individuales
         document.getElementById('product-id').value = id;
         document.getElementById('product-code').value = codigo;
         document.getElementById('product-name').value = nombre;
@@ -910,16 +896,16 @@
         console.log('Producto seleccionado para múltiples:', productoSeleccionadoActual);
     }
 
-    // Función para agregar producto a la lista (se llama desde el botón)
+    // Función para agregar producto a la lista
     function agregarProductoSeleccionado() {
         if (!productoSeleccionadoActual) {
-            alert('⚠️ Por favor, seleccione un producto de la tabla primero');
+            alert('Por favor, seleccione un producto de la tabla primero');
             return;
         }
 
         // Verificar si ya está en la lista
         if (productosSeleccionados.some(p => p.id === productoSeleccionadoActual.id)) {
-            alert('❌ Este producto ya está en la lista');
+            alert('Este producto ya está en la lista');
             return;
         }
 
@@ -933,7 +919,7 @@
         actualizarTablaProductosSeleccionados();
 
         // Mostrar mensaje de éxito
-        showAlert('success', `✅ Producto "${productoSeleccionadoActual.nombre}" agregado a la lista`);
+        showAlert('success', `Producto "${productoSeleccionadoActual.nombre}" agregado a la lista`);
 
         console.log('Productos en la lista:', productosSeleccionados);
     }
@@ -987,13 +973,13 @@
         if (producto) {
             // Validar stock
             if (cantidadNum > producto.stock) {
-                alert(`⚠️ La cantidad no puede ser mayor al stock disponible (${producto.stock})`);
+                alert(`La cantidad no puede ser mayor al stock disponible (${producto.stock})`);
                 // Corregir el valor
                 const input = document.querySelector(`input[data-producto-id="${productoId}"]`);
                 if (input) input.value = producto.stock;
                 producto.cantidad = producto.stock;
             } else if (cantidadNum < 1) {
-                alert('⚠️ La cantidad debe ser al menos 1');
+                alert('La cantidad debe ser al menos 1');
                 const input = document.querySelector(`input[data-producto-id="${productoId}"]`);
                 if (input) input.value = 1;
                 producto.cantidad = 1;
@@ -1014,7 +1000,7 @@
             // Actualizar tabla
             actualizarTablaProductosSeleccionados();
 
-            showAlert('info', '✅ Producto eliminado de la lista');
+            showAlert('info', 'Producto eliminado de la lista');
         }
     }
 
@@ -1028,7 +1014,7 @@
         }
     }
 
-    // Función de búsqueda (si no la tienes)
+    // Función de búsqueda
     function buscarProductos() {
         const termino = document.getElementById('search-term').value.toLowerCase();
         const filas = document.querySelectorAll('#tabla-productos tr');
@@ -1068,7 +1054,7 @@
             form.appendChild(inputCantidad);
         });
 
-        console.log('📦 Datos preparados para envío:', productosSeleccionados);
+        console.log('Datos preparados para envío:', productosSeleccionados);
     }
 
     // Modificar la función validarFormularioSalida para MÚLTIPLES productos
@@ -1080,7 +1066,7 @@
 
         // 2. Validar que haya productos seleccionados
         if (productosSeleccionados.length === 0) {
-            alert('❌ Error: Debe agregar al menos un producto a la lista');
+            alert('Error: Debe agregar al menos un producto a la lista');
             // Enfocar el botón de agregar producto
             const botonAgregar = document.querySelector('[onclick="agregarProductoSeleccionado()"]');
             if (botonAgregar) botonAgregar.focus();
@@ -1105,7 +1091,7 @@
         }
 
         if (errores.length > 0) {
-            alert('❌ Errores encontrados:\n\n' + errores.join('\n'));
+            alert('Errores encontrados:\n\n' + errores.join('\n'));
             return false;
         }
 
@@ -1117,8 +1103,8 @@
         document.getElementById('numero-tramite-preview').value = numeroOrden;
         document.getElementById('numero-tramite').value = numeroOrden;
 
-        console.log('✅ Formulario validado con éxito');
-        console.log('📦 Productos a enviar:', productosSeleccionados);
+        console.log('Formulario validado con éxito');
+        console.log('Productos a enviar:', productosSeleccionados);
 
         return true;
     }

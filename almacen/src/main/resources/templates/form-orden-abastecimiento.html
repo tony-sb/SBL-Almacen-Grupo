@@ -85,7 +85,7 @@
 
 <div class="container-fluid">
     <div class="row">
-        <!-- Sidebar (CORREGIDO - SOLO UNO) -->
+        <!-- Sidebar -->
         <div class="col-md-3 col-lg-2 d-md-block sidebar">
             <div class="position-sticky pt-3">
                 <ul class="nav flex-column">
@@ -211,7 +211,7 @@
         [[${producto?.id}]]: [[${producto?.precioUnitario ?: 0}]],
         </th:block>
     };
-    console.log("💰 Precios de productos cargados en formulario:", window.preciosProductos);
+    console.log("Precios de productos cargados en formulario:", window.preciosProductos);
     /*]]>*/
 </script>
 <script th:src="@{/js/ordenes-abastecimiento.js}"></script>

@@ -214,7 +214,7 @@
         const telefonoError = document.getElementById('telefonoError');
         const form = document.querySelector('form');
 
-        // Validación del RUC (exactamente 11 dígitos)
+        // Validación del RUC
         if (rucInput) {
             rucInput.addEventListener('input', function(e) {
                 // Solo permitir números
@@ -235,7 +235,6 @@
                 }
             });
 
-            // Validar al perder el foco
             rucInput.addEventListener('blur', function() {
                 if (this.value.length > 0 && this.value.length !== 11) {
                     this.classList.add('is-invalid');
@@ -260,7 +259,6 @@
                 validateTelefono();
             });
 
-            // Validar al perder el foco
             telefonoInput.addEventListener('blur', function() {
                 validateTelefono();
             });

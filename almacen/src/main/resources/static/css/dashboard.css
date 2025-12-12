@@ -5,7 +5,6 @@
     padding: 0;
 }
 
-/* Navbar fijo */
 .navbar {
     position: fixed;
     top: 0;
@@ -15,31 +14,29 @@
     padding: 0 20px;
 }
 
-/* Sidebar Fijo - MÁS ANGOSTO */
 .sidebar {
     background-color: #2c3e50;
     min-height: 100vh;
     position: fixed;
     top: 56px;
     left: 0;
-    width: 200px; /* Reducido de 250px a 200px */
+    width: 200px;
     z-index: 1000;
     overflow-y: auto;
 }
 
-/* Sidebar navigation - MÁS COMPACTO */
 .sidebar .nav {
-    padding: 15px 8px 0 8px; /* Menos padding */
+    padding: 15px 8px 0 8px;
 }
 
 .sidebar .nav-link {
     color: #ecf0f1;
-    padding: 10px 12px; /* Menos padding */
+    padding: 10px 12px;
     border-bottom: 1px solid #34495e;
     transition: all 0.3s ease;
-    margin: 0 3px; /* Menos margen */
+    margin: 0 3px;
     border-radius: 5px;
-    font-size: 0.9rem; /* Texto más pequeño */
+    font-size: 0.9rem;
 }
 
 .sidebar .nav-link:hover {
@@ -53,31 +50,28 @@
 }
 
 .sidebar .nav-link i {
-    margin-right: 8px; /* Menos espacio entre icono y texto */
+    margin-right: 8px;
     width: 18px;
     text-align: center;
-    font-size: 1rem; /* Iconos un poco más pequeños */
+    font-size: 1rem;
 }
 
-/* Main Content - MÁS ESPACIO AHORA */
+
 .main-content {
-    margin-left: 200px; /* Igual al ancho del sidebar */
-    padding: 70px 40px 20px 40px; /* Buen padding lateral */
+    margin-left: 200px;
+    padding: 70px 40px 20px 40px;
     min-height: 100vh;
     background-color: #f8f9fa;
 }
 
-/* Container fluid sin padding */
 .container-fluid {
     padding: 0 !important;
 }
 
-/* Row sin margin */
 .row {
     margin: 0;
 }
 
-/* Page Header */
 .page-header {
     margin-bottom: 20px;
     padding-left: 0;
@@ -96,7 +90,6 @@
     padding-left: 0;
 }
 
-/* Dashboard Cards */
 .dashboard-card {
     border: none;
     border-radius: 10px;
@@ -121,7 +114,6 @@
     padding: 20px;
 }
 
-/* Table Styles */
 .table {
     margin-bottom: 0;
 }
@@ -148,7 +140,6 @@
     background-color: rgba(52, 152, 219, 0.1);
 }
 
-/* Responsive */
 @media (max-width: 768px) {
     .sidebar {
         width: 100%;
@@ -167,9 +158,8 @@
     }
 }
 
-/* Scroll personalizado para sidebar */
 .sidebar::-webkit-scrollbar {
-    width: 4px; /* Scrollbar más angosto */
+    width: 4px;
 }
 
 .sidebar::-webkit-scrollbar-track {

@@ -18,11 +18,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
 
-/**
- * Servicio para la generación de reportes en formato PDF.
- * Proporciona métodos para crear reportes del inventario completo
- * y resúmenes del dashboard con diferentes formatos y estructuras.
- */
 @Service
 public class ReporteService {
 
@@ -32,14 +27,6 @@ public class ReporteService {
     @Autowired
     private MovimientoRecienteRepository movimientoRecienteRepository;
 
-    /**
-     * Genera un reporte PDF del inventario completo de productos.
-     * Incluye información detallada de todos los productos con su estado actual,
-     * categorías y estadísticas generales del inventario.
-     *
-     * @return ByteArrayInputStream con el contenido del PDF generado
-     * @throws RuntimeException si ocurre un error durante la generación del PDF
-     */
     public ByteArrayInputStream generarReporteInventario() {
         Document document = new Document();
         ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -48,14 +35,12 @@ public class ReporteService {
             PdfWriter.getInstance(document, out);
             document.open();
 
-            // Título del reporte
             Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18);
             Paragraph title = new Paragraph("INVENTARIO DE PRODUCTOS", titleFont);
             title.setAlignment(Element.ALIGN_CENTER);
             title.setSpacingAfter(20);
             document.add(title);
 
-            // Información de la institución
             Font infoFont = FontFactory.getFont(FontFactory.HELVETICA, 12);
             Paragraph institution = new Paragraph("Sociedad de Beneficencia de Lambayeque", infoFont);
             institution.setAlignment(Element.ALIGN_CENTER);
@@ -66,16 +51,13 @@ public class ReporteService {
             date.setSpacingAfter(20);
             document.add(date);
 
-            // Crear tabla con 5 columnas (igual que tu vista web)
             PdfPTable table = new PdfPTable(5);
             table.setWidthPercentage(100);
             table.setSpacingBefore(10f);
 
-            // Configurar anchos de columnas
             float[] columnWidths = {35f, 15f, 15f, 15f, 20f};
             table.setWidths(columnWidths);
 
-            // Encabezados de la tabla (igual que tu vista web)
             String[] headers = {"Nombre Producto", "Código", "Cantidad", "Grupo", "Estado"};
             for (String headerText : headers) {
                 PdfPCell header = new PdfPCell();
@@ -87,44 +69,37 @@ public class ReporteService {
                 table.addCell(header);
             }
 
-            // Obtener todos los productos para el inventario
             List<Producto> productos = productoRepository.findAll();
 
-            // Agregar productos al PDF
             for (Producto producto : productos) {
-                // Nombre del producto
+
                 PdfPCell cellNombre = new PdfPCell(new Phrase(producto.getNombre()));
                 cellNombre.setPadding(5);
                 table.addCell(cellNombre);
 
-                // Código
                 String codigo = producto.getCodigo() != null ? producto.getCodigo() : "-";
                 PdfPCell cellCodigo = new PdfPCell(new Phrase(codigo));
                 cellCodigo.setPadding(5);
                 cellCodigo.setHorizontalAlignment(Element.ALIGN_CENTER);
                 table.addCell(cellCodigo);
 
-                // Cantidad
                 String cantidad = producto.getCantidad() != null ? producto.getCantidad().toString() : "-";
                 PdfPCell cellCantidad = new PdfPCell(new Phrase(cantidad));
                 cellCantidad.setPadding(5);
                 cellCantidad.setHorizontalAlignment(Element.ALIGN_CENTER);
                 table.addCell(cellCantidad);
 
-                // Grupo (categoría)
                 String grupo = producto.getCategoria() != null ? producto.getCategoria() : "-";
                 PdfPCell cellGrupo = new PdfPCell(new Phrase(grupo));
                 cellGrupo.setPadding(5);
                 cellGrupo.setHorizontalAlignment(Element.ALIGN_CENTER);
                 table.addCell(cellGrupo);
 
-                // Estado (calculado)
                 String estado = calcularEstadoProducto(producto);
                 PdfPCell cellEstado = new PdfPCell(new Phrase(estado));
                 cellEstado.setPadding(5);
                 cellEstado.setHorizontalAlignment(Element.ALIGN_CENTER);
 
-                // Color según el estado
                 if ("STOCK BAJO".equals(estado)) {
                     cellEstado.setBackgroundColor(new BaseColor(255, 200, 200)); // Rojo suave
                     cellEstado.setPhrase(new Phrase(estado, FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, BaseColor.BLACK)));
@@ -139,10 +114,8 @@ public class ReporteService {
                 table.addCell(cellEstado);
             }
 
-            // Agregar estadísticas al final
             document.add(table);
 
-            // Agregar resumen
             Paragraph resumen = new Paragraph("\n\nRESUMEN DEL INVENTARIO",
                     FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14));
             resumen.setSpacingAfter(10);
@@ -171,14 +144,6 @@ public class ReporteService {
         return new ByteArrayInputStream(out.toByteArray());
     }
 
-    /**
-     * Genera un reporte PDF del dashboard con movimientos recientes.
-     * Incluye información de movimientos de salida y productos sin actividad reciente.
-     * Formato optimizado para el panel de control del sistema.
-     *
-     * @return ByteArrayInputStream con el contenido del PDF generado
-     * @throws RuntimeException si ocurre un error durante la generación del PDF
-     */
     public ByteArrayInputStream generarReporteDashboard() {
         Document document = new Document();
         ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -187,14 +152,12 @@ public class ReporteService {
             PdfWriter.getInstance(document, out);
             document.open();
 
-            // Título del reporte
             Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18);
             Paragraph title = new Paragraph("RESUMEN", titleFont);
             title.setAlignment(Element.ALIGN_CENTER);
             title.setSpacingAfter(20);
             document.add(title);
 
-            // Información de la institución
             Font infoFont = FontFactory.getFont(FontFactory.HELVETICA, 12);
             Paragraph institution = new Paragraph("Sociedad de Beneficencia de Lambayeque", infoFont);
             institution.setAlignment(Element.ALIGN_CENTER);
@@ -205,16 +168,13 @@ public class ReporteService {
             date.setSpacingAfter(20);
             document.add(date);
 
-            // Crear tabla con 4 columnas (para el dashboard)
             PdfPTable table = new PdfPTable(4);
             table.setWidthPercentage(100);
             table.setSpacingBefore(10f);
 
-            // Configurar anchos de columnas
             float[] columnWidths = {40f, 20f, 20f, 20f};
             table.setWidths(columnWidths);
 
-            // Encabezados de la tabla (SOLO 4 COLUMNAS para dashboard)
             String[] headers = {"Nombre Producto", "Fecha Salida", "Cantidad", "DNI Beneficiario"};
             for (String headerText : headers) {
                 PdfPCell header = new PdfPCell();
@@ -226,18 +186,15 @@ public class ReporteService {
                 table.addCell(header);
             }
 
-            // Obtener datos para el reporte DEL DASHBOARD
             List<MovimientoReciente> movimientos = movimientoRecienteRepository.findAllByOrderByFechaSalidaDesc();
             List<Producto> todosProductos = productoRepository.findAll();
 
-            // Agregar productos con movimientos (SOLO 4 COLUMNAS)
             for (MovimientoReciente movimiento : movimientos) {
-                // Nombre del producto
+
                 PdfPCell cellNombre = new PdfPCell(new Phrase(movimiento.getProducto().getNombre()));
                 cellNombre.setPadding(5);
                 table.addCell(cellNombre);
 
-                // Fecha de salida
                 String fechaStr = "-";
                 if (movimiento.getFechaSalida() != null) {
                     try {
@@ -253,13 +210,11 @@ public class ReporteService {
                 cellFecha.setHorizontalAlignment(Element.ALIGN_CENTER);
                 table.addCell(cellFecha);
 
-                // Cantidad
                 PdfPCell cellCantidad = new PdfPCell(new Phrase(String.valueOf(movimiento.getCantidad())));
                 cellCantidad.setPadding(5);
                 cellCantidad.setHorizontalAlignment(Element.ALIGN_CENTER);
                 table.addCell(cellCantidad);
 
-                // DNI Beneficiario
                 String dni = movimiento.getDniBeneficiario() != null ? movimiento.getDniBeneficiario() : "-";
                 PdfPCell cellDni = new PdfPCell(new Phrase(dni));
                 cellDni.setPadding(5);
@@ -278,13 +233,6 @@ public class ReporteService {
         return new ByteArrayInputStream(out.toByteArray());
     }
 
-    /**
-     * Calcula el estado de un producto basado en su cantidad y stock mínimo.
-     * Determina si el producto tiene stock normal, bajo o sin datos.
-     *
-     * @param producto Producto a evaluar
-     * @return String con el estado del producto: "NORMAL", "STOCK BAJO" o "SIN DATOS"
-     */
     private String calcularEstadoProducto(Producto producto) {
         if (producto.getCantidad() == null) {
             return "SIN DATOS";
@@ -299,13 +247,6 @@ public class ReporteService {
         }
     }
 
-    /**
-     * Determina si un producto tiene stock bajo.
-     * Evalúa si la cantidad actual es menor o igual al stock mínimo.
-     *
-     * @param producto Producto a verificar
-     * @return true si el producto tiene stock bajo, false en caso contrario
-     */
     private boolean tieneStockBajo(Producto producto) {
         if (producto.getCantidad() == null) return true;
         Integer stockMinimo = producto.getStockMinimo() != null ? producto.getStockMinimo() : 5;

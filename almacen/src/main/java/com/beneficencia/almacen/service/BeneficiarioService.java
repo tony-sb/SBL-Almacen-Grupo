@@ -17,35 +17,22 @@ public class BeneficiarioService {
     @Autowired
     private BeneficiarioRepository beneficiarioRepository;
 
-    // Método para obtener beneficiario por DNI
     public Optional<Beneficiario> obtenerBeneficiarioPorDni(String dni) {
         return beneficiarioRepository.findByDni(dni);
     }
 
-    /**
-     * Obtiene todos los beneficiarios registrados.
-     */
     public List<Beneficiario> obtenerTodosBeneficiarios() {
         return beneficiarioRepository.findAll();
     }
 
-    /**
-     * Busca un beneficiario por su ID.
-     */
     public Optional<Beneficiario> obtenerBeneficiarioPorId(Long id) {
         return beneficiarioRepository.findById(id);
     }
 
-    /**
-     * Busca un beneficiario por su DNI.
-     */
     public Optional<Beneficiario> buscarPorDni(String dni) {
         return beneficiarioRepository.findByDni(dni);
     }
 
-    /**
-     * Guarda un beneficiario (crea o actualiza).
-     */
     public Beneficiario guardarBeneficiario(Beneficiario beneficiario) {
         // Establecer fechas
         if (beneficiario.getId() == null) {
@@ -56,42 +43,28 @@ public class BeneficiarioService {
         return beneficiarioRepository.save(beneficiario);
     }
 
-    /**
-     * Elimina un beneficiario por ID.
-     */
     public void eliminarBeneficiario(Long id) {
         beneficiarioRepository.deleteById(id);
     }
 
-    /**
-     * Verifica si existe un beneficiario con el DNI especificado.
-     */
     public boolean existePorDni(String dni) {
         return beneficiarioRepository.existsByDni(dni);
     }
 
-    /**
-     * Contar total de beneficiarios
-     */
     public long contarTotalBeneficiarios() {
         return beneficiarioRepository.count();
     }
 
-    /**
-     * Crear o encontrar beneficiario automáticamente (para órdenes de salida)
-     */
     public Beneficiario crearOEncontrarBeneficiario(String dni, String nombreCompleto) {
         if (dni == null || dni.trim().isEmpty()) {
             return null;
         }
 
-        // Buscar si ya existe
         Optional<Beneficiario> existente = beneficiarioRepository.findByDni(dni.trim());
         if (existente.isPresent()) {
             return existente.get();
         }
 
-        // Crear nuevo
         Beneficiario nuevo = new Beneficiario();
         nuevo.setDni(dni.trim());
 
@@ -117,7 +90,7 @@ public class BeneficiarioService {
 
         return guardarBeneficiario(nuevo);
     }
-//
+
     public List<Beneficiario> obtenerBeneficiariosOrdenadosPorFechaDesc() {
         return beneficiarioRepository.findAllOrderByFechaRegistroDesc();
     }

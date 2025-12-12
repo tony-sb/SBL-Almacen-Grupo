@@ -12,9 +12,7 @@ import java.util.Optional;
 public interface BeneficiarioRepository extends JpaRepository<Beneficiario, Long> {
     Optional<Beneficiario> findByDni(String dni);
     boolean existsByDni(String dni);
-    /**
-     * Obtiene todos los beneficiarios ordenados por fecha de registro descendente.
-     */
+
     @Query("SELECT b FROM Beneficiario b ORDER BY b.fechaRegistro DESC")
     List<Beneficiario> findAllOrderByFechaRegistroDesc();
 }

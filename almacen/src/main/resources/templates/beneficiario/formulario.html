@@ -275,7 +275,7 @@
             });
         }, 5000);
 
-        // Validación del DNI (solo números y longitud)
+        // Validación del DNI
         const dniInput = document.getElementById('dni');
         if (dniInput) {
             dniInput.addEventListener('input', function(e) {
@@ -311,7 +311,7 @@
                 if (valor.startsWith('9') && valor.length === 9) {
                     this.value = valor;
                 }
-                // Si empieza con '0' -> agregar guion después de 3 dígitos
+                // Si empieza con 0 agregar guion después de 3 dígitos
                 else if (valor.startsWith('0') && valor.length >= 3) {
                     const parte1 = valor.substring(0, 3);
                     const parte2 = valor.substring(3);

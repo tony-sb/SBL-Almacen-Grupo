@@ -223,7 +223,6 @@ public class EstadisticaService {
             debug.put("totalBeneficiarios", ((Number) q3.getSingleResult()).longValue());
             debug.put("totalProductos", ((Number) q4.getSingleResult()).longValue());
 
-            // Verificar si hay datos en orden_salida_items
             String sqlCheck = "SELECT osi.id, p.nombre, osi.cantidad, b.nombres " +
                     "FROM orden_salida_items osi " +
                     "JOIN productos p ON osi.producto_id = p.id " +

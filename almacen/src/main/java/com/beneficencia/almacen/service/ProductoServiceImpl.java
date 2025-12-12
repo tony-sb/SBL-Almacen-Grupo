@@ -11,11 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * Implementación del servicio de productos para la gestión del inventario del almacén.
- * Proporciona la lógica de negocio para las operaciones CRUD, búsquedas, filtros
- * y análisis estadísticos de los productos.
- */
 @Service
 @Transactional
 public class ProductoServiceImpl implements ProductoService {
@@ -23,7 +18,6 @@ public class ProductoServiceImpl implements ProductoService {
     @Autowired
     private ProductoRepository productoRepository;
 
-    // Mapa de prefijos por categoría
     private static final Map<String, String> PREFIJOS_CATEGORIA = Map.of(
             "Medicamentos", "MED",
             "Insumos Médicos", "INS",
@@ -33,28 +27,20 @@ public class ProductoServiceImpl implements ProductoService {
             "Otros", "OTR"
     );
 
-    // Prefijo por defecto
     private static final String PREFIJO_DEFAULT = "PROD";
 
-    /**
-     * Genera un código único automático basado en la categoría
-     */
     private String generarCodigoAutomatico(String categoria) {
-        // Obtener prefijo basado en categoría
+
         String prefijo = PREFIJOS_CATEGORIA.getOrDefault(categoria, PREFIJO_DEFAULT);
 
-        // Buscar el último código con este prefijo
         List<Producto> productos = productoRepository.findByCodigoStartingWithOrderByIdDesc(prefijo + "-");
 
-        // Determinar el siguiente número
         int siguienteNumero = 1;
         if (!productos.isEmpty()) {
             String ultimoCodigo = productos.get(0).getCodigo();
             try {
-                // Extraer el número del último código (ej: MED-001 -> 1)
                 String[] partes = ultimoCodigo.split("-");
                 if (partes.length > 1) {
-                    // Remover ceros a la izquierda
                     String numeroStr = partes[1].replaceAll("^0+", "");
                     siguienteNumero = Integer.parseInt(numeroStr.isEmpty() ? "0" : numeroStr) + 1;
                 }
@@ -63,47 +49,32 @@ public class ProductoServiceImpl implements ProductoService {
             }
         }
 
-        // Formatear con ceros a la izquierda (3 dígitos)
         return String.format("%s-%03d", prefijo, siguienteNumero);
     }
 
-    /**
-     * Verifica si un código ya existe (ignorando mayúsculas/minúsculas)
-     */
     public boolean codigoExiste(String codigo) {
         return productoRepository.existsByCodigoIgnoreCase(codigo);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public List<Producto> obtenerTodosProductos() {
         return productoRepository.findAll();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public Optional<Producto> obtenerProductoPorId(Long id) {
         return productoRepository.findById(id);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public Producto guardarProducto(Producto producto) {
         System.out.println("Guardando producto - Fecha vencimiento: " + producto.getFechaVencimiento());
 
-        // Si el producto no tiene código, generar uno automático
         if (producto.getCodigo() == null || producto.getCodigo().trim().isEmpty()) {
             String codigoAutomatico = generarCodigoAutomatico(producto.getCategoria());
             producto.setCodigo(codigoAutomatico);
             System.out.println("Código generado automáticamente: " + codigoAutomatico);
         } else {
-            // Verificar que el código no exista ya
             if (codigoExiste(producto.getCodigo())) {
                 throw new IllegalArgumentException("El código " + producto.getCodigo() + " ya existe");
             }
@@ -119,50 +90,33 @@ public class ProductoServiceImpl implements ProductoService {
         return productoRepository.save(producto);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void eliminarProducto(Long id) {
         productoRepository.deleteById(id);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public List<Producto> obtenerProductosPorCategoria(String categoria) {
         return productoRepository.findByCategoria(categoria);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public List<Producto> obtenerProductosConStockBajo() {
         return productoRepository.findProductosConStockBajo();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public boolean existeProductoPorCodigo(String codigo) {
         return productoRepository.existsByCodigo(codigo);
     }
 
-    // MÉTODOS NUEVOS PARA ORDEN DE SALIDAS
-
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public List<Producto> buscarProductosPorTermino(String termino) {
-        // Usando el método del repositorio si existe, sino implementación manual
+
         try {
             return productoRepository.findByNombreContainingIgnoreCaseOrCodigoContainingIgnoreCase(termino, termino);
         } catch (Exception e) {
-            // Fallback a implementación manual si el método del repositorio no existe
+
             List<Producto> todosProductos = productoRepository.findAll();
             return todosProductos.stream()
                     .filter(producto ->
@@ -172,27 +126,19 @@ public class ProductoServiceImpl implements ProductoService {
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public Optional<Producto> obtenerProductoPorCodigo(String codigo) {
-        // Usando el método del repositorio si existe, sino implementación manual
+
         try {
             return productoRepository.findByCodigo(codigo);
         } catch (Exception e) {
-            // Fallback a implementación manual si el método del repositorio no existe
+
             return productoRepository.findAll().stream()
                     .filter(producto -> producto.getCodigo() != null && producto.getCodigo().equalsIgnoreCase(codigo))
                     .findFirst();
         }
     }
 
-    // MÉTODOS NUEVOS PARA EL INVENTARIO CON ALERTAS
-
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public Long contarProductosConStockBajo() {
         try {
@@ -205,9 +151,6 @@ public class ProductoServiceImpl implements ProductoService {
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public List<String> obtenerTodasLasCategorias() {
         return productoRepository.findAll().stream()
@@ -217,9 +160,6 @@ public class ProductoServiceImpl implements ProductoService {
                 .toList();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public boolean tieneStockBajo(Producto producto) {
         if (producto.getCantidad() == null) return true;
@@ -227,21 +167,16 @@ public class ProductoServiceImpl implements ProductoService {
         return producto.getCantidad() <= producto.getStockMinimo();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public Map<String, Object> obtenerEstadisticasInventario() {
         List<Producto> todosProductos = productoRepository.findAll();
         List<Producto> productosStockBajo = obtenerProductosConStockBajo();
         List<String> categorias = obtenerTodasLasCategorias();
 
-        // Calcular total de items en inventario
         Integer totalItems = todosProductos.stream()
                 .mapToInt(producto -> producto.getCantidad() != null ? producto.getCantidad() : 0)
                 .sum();
 
-        // Calcular valor total del inventario
         Double valorTotal = todosProductos.stream()
                 .mapToDouble(producto ->
                         producto.getPrecioUnitario() != null && producto.getCantidad() != null ?
@@ -249,7 +184,6 @@ public class ProductoServiceImpl implements ProductoService {
                 )
                 .sum();
 
-        // Calcular estadísticas por categoría
         Map<String, Long> productosPorCategoria = todosProductos.stream()
                 .collect(HashMap::new,
                         (map, producto) -> map.merge(producto.getCategoria(), 1L, Long::sum),

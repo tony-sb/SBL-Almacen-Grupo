@@ -7,7 +7,7 @@ import java.util.Optional;
 public interface CuadreInventarioService {
 
     CuadreInventario guardarCuadre(CuadreInventario cuadre);
-    List<CuadreInventario> obtenerTodosCuadresOrdenados(); // NUEVO
+    List<CuadreInventario> obtenerTodosCuadresOrdenados();
     Optional<CuadreInventario> obtenerCuadrePorId(Long id);
     void confirmarCuadre(Long id);
     void descartarCuadre(Long id);

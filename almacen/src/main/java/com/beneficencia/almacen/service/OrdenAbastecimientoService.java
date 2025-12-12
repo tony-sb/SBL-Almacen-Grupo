@@ -16,12 +16,6 @@ import java.time.Year;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * Servicio para la gestión de órdenes de abastecimiento del almacén.
- * Maneja las operaciones CRUD de órdenes de abastecimiento, incluyendo
- * generación automática de números, validaciones, cálculos de totales
- * y procesamiento de items.
- */
 @Service
 public class OrdenAbastecimientoService {
 
@@ -39,59 +33,46 @@ public class OrdenAbastecimientoService {
 
     @PersistenceContext
     private EntityManager entityManager;
-    /**
-     * Gestiona los items antiguos antes de guardar una orden actualizada
-     */
+
     private void gestionarItemsAntiguos(OrdenAbastecimiento ordenActualizada) {
         try {
-            System.out.println("🔄 Gestionando items antiguos para orden ID: " + ordenActualizada.getId());
+            System.out.println("Gestionando items antiguos para orden ID: " + ordenActualizada.getId());
 
-            // Obtener la orden existente con sus items
             OrdenAbastecimiento ordenExistente = ordenAbastecimientoRepository
                     .findByIdWithItems(ordenActualizada.getId())
                     .orElseThrow(() -> new RuntimeException("Orden no encontrada: " + ordenActualizada.getId()));
 
-            // Si hay items existentes, eliminarlos de la base de datos
             if (ordenExistente.getItems() != null && !ordenExistente.getItems().isEmpty()) {
-                System.out.println("🗑️ Eliminando " + ordenExistente.getItems().size() + " items antiguos");
+                System.out.println("Eliminando " + ordenExistente.getItems().size() + " items antiguos");
 
-                // Crear una copia para evitar ConcurrentModificationException
                 List<OrdenAbastecimientoItem> itemsAEliminar = new ArrayList<>(ordenExistente.getItems());
 
-                // Eliminar cada item de la base de datos
                 for (OrdenAbastecimientoItem item : itemsAEliminar) {
-                    // Primero romper la relación
+
                     item.setOrdenAbastecimiento(null);
-                    // Luego eliminar de la lista
+
                     ordenExistente.getItems().remove(item);
-                    // Finalmente eliminar de la base de datos
+
                     if (item.getId() != null) {
                         ordenAbastecimientoItemRepository.deleteById(item.getId());
                     }
                 }
 
-                System.out.println("✅ Items antiguos eliminados correctamente");
+                System.out.println("Items antiguos eliminados correctamente");
             }
 
         } catch (Exception e) {
-            System.err.println("❌ Error gestionando items antiguos: " + e.getMessage());
+            System.err.println("Error gestionando items antiguos: " + e.getMessage());
             throw new RuntimeException("Error al gestionar items antiguos", e);
         }
     }
-    /**
-     * Obtiene todas las órdenes de abastecimiento con relaciones cargadas.
-     * Incluye información de proveedor y usuario para visualización completa.
-     *
-     * @return Lista de todas las órdenes de abastecimiento ordenadas por fecha de creación descendente
-     * @throws RuntimeException si ocurre un error al cargar las órdenes
-     */
+
     public List<OrdenAbastecimiento> obtenerTodasOrdenes() {
         try {
             System.out.println("=== BUSCANDO TODAS LAS ÓRDENES DE ABASTECIMIENTO ===");
             List<OrdenAbastecimiento> ordenes = ordenAbastecimientoRepository.findAllWithProveedorAndUsuario();
             System.out.println("Órdenes encontradas: " + ordenes.size());
 
-            // Log detallado para debugging
             for (OrdenAbastecimiento orden : ordenes) {
                 System.out.println(" []  " + orden.getNumeroOA() +
                         " - " + orden.getTipoOrden() +
@@ -106,7 +87,7 @@ public class OrdenAbastecimientoService {
             e.printStackTrace();
 
             System.out.println("=== USANDO MÉTODO SIMPLE COMO RESPUESTA ===");
-            // Método simple de respaldo
+
             try {
                 List<OrdenAbastecimiento> ordenes = ordenAbastecimientoRepository.findAll();
                 System.out.println("Órdenes con método simple: " + ordenes.size());
@@ -118,13 +99,6 @@ public class OrdenAbastecimientoService {
         }
     }
 
-    /**
-     * Obtiene una orden de abastecimiento por ID con todos sus items cargados.
-     * Filtra automáticamente items con productos nulos para evitar errores.
-     *
-     * @param id ID de la orden a buscar
-     * @return Optional con la orden encontrada y sus items válidos, o vacío si no existe
-     */
     public Optional<OrdenAbastecimiento> obtenerOrdenPorId(Long id) {
         try {
             System.out.println("=== BUSCANDO ORDEN POR ID: " + id + " ===");
@@ -133,7 +107,6 @@ public class OrdenAbastecimientoService {
             if (orden.isPresent()) {
                 OrdenAbastecimiento ordenEncontrada = orden.get();
 
-                // CORRECCIÓN CRÍTICA: Filtrar items con productos nulos
                 if (ordenEncontrada.getItems() != null) {
                     List<OrdenAbastecimientoItem> itemsValidos = ordenEncontrada.getItems().stream()
                             .filter(item -> item.getProducto() != null) // ✅ FILTRAR PRODUCTOS NULOS
@@ -156,14 +129,6 @@ public class OrdenAbastecimientoService {
         }
     }
 
-    /**
-     * Guarda o actualiza una orden de abastecimiento.
-     * Realiza validaciones, genera número automático, calcula totales y procesa items.
-     *
-     * @param ordenAbastecimiento Orden de abastecimiento a guardar o actualizar
-     * @return Orden de abastecimiento guardada con ID y datos actualizados
-     * @throws RuntimeException si hay errores de validación o persistencia
-     */
     @Transactional
     public OrdenAbastecimiento guardarOrden(OrdenAbastecimiento ordenAbastecimiento) {
         try {
@@ -174,17 +139,14 @@ public class OrdenAbastecimientoService {
             System.out.println("¿Es nueva orden? " + esNuevaOrden +
                     " - ID: " + ordenAbastecimiento.getId());
 
-            // Si es una orden existente, eliminar items antiguos PRIMERO
             if (!esNuevaOrden) {
                 eliminarItemsAntiguosDirectamente(ordenAbastecimiento.getId());
             }
 
-            // Si es una orden existente, eliminar items antiguos PRIMERO
             if (ordenAbastecimiento.getId() != null) {
                 eliminarItemsAntiguosDirectamente(ordenAbastecimiento.getId());
             }
 
-            // Validaciones básicas
             if (ordenAbastecimiento.getTipoOrden() == null) {
                 throw new IllegalArgumentException("El tipo de orden es requerido");
             }
@@ -192,47 +154,40 @@ public class OrdenAbastecimientoService {
                 throw new IllegalArgumentException("El proveedor es requerido");
             }
 
-            // Generar número de OA automáticamente si es nueva
             if (ordenAbastecimiento.getNumeroOA() == null || ordenAbastecimiento.getNumeroOA().isEmpty()) {
                 String nuevoNumero = generarNumeroOAUnico(ordenAbastecimiento.getTipoOrden());
                 ordenAbastecimiento.setNumeroOA(nuevoNumero);
                 System.out.println("Número de orden generado: " + nuevoNumero);
             }
 
-            // Asegurar que los items tengan la relación bidireccional
             if (ordenAbastecimiento.getItems() != null) {
                 for (OrdenAbastecimientoItem item : ordenAbastecimiento.getItems()) {
                     item.setOrdenAbastecimiento(ordenAbastecimiento);
                 }
             }
 
-            // Calcular total
             calcularTotal(ordenAbastecimiento);
 
-            // Establecer fechas si no existen
             if (ordenAbastecimiento.getFechaCreacion() == null) {
                 ordenAbastecimiento.setFechaCreacion(LocalDateTime.now());
                 System.out.println("Fecha de creación establecida");
             }
             ordenAbastecimiento.setFechaActualizacion(LocalDateTime.now());
 
-            // Establecer estado por defecto si no existe
             if (ordenAbastecimiento.getEstado() == null) {
                 ordenAbastecimiento.setEstado(OrdenAbastecimiento.EstadoOrden.PENDIENTE);
                 System.out.println("Estado establecido: PENDIENTE");
             }
 
-            // Validar items antes de guardar
             validarItemsOrden(ordenAbastecimiento);
 
             System.out.println("Guardando orden con número: " + ordenAbastecimiento.getNumeroOA());
 
-            // Guardar la orden (esto incluirá los nuevos items)
             OrdenAbastecimiento ordenGuardada = ordenAbastecimientoRepository.save(ordenAbastecimiento);
 
             actualizarInventarioProductos(ordenGuardada, esNuevaOrden);
 
-            System.out.println("✅ Orden guardada exitosamente con ID: " + ordenGuardada.getId());
+            System.out.println("Orden guardada exitosamente con ID: " + ordenGuardada.getId());
             System.out.println("Total de orden: S/ " + ordenGuardada.getTotal());
             System.out.println("Items en orden guardada: " +
                     (ordenGuardada.getItems() != null ? ordenGuardada.getItems().size() : 0));
@@ -246,30 +201,24 @@ public class OrdenAbastecimientoService {
         }
     }
 
-    /**
-     * ACTUALIZA el inventario de productos considerando si es nueva orden o edición
-     */
     private void actualizarInventarioProductos(OrdenAbastecimiento orden, boolean esNuevaOrden) {
-        System.out.println("🔄 ACTUALIZANDO INVENTARIO - Orden: " + orden.getNumeroOA() +
+        System.out.println("ACTUALIZANDO INVENTARIO - Orden: " + orden.getNumeroOA() +
                 " - Tipo: " + (esNuevaOrden ? "NUEVA" : "EDITAR"));
 
         if (orden.getItems() == null || orden.getItems().isEmpty()) {
-            System.out.println("⚠️  Orden sin items, no hay inventario que actualizar");
+            System.out.println("Orden sin items, no hay inventario que actualizar");
             return;
         }
 
         if (esNuevaOrden) {
-            System.out.println("📥 Sumando items al inventario (orden nueva)");
+            System.out.println("Sumando items al inventario (orden nueva)");
             sumarAlInventario(orden);
         } else {
-            System.out.println("✏️  Ajustando inventario (orden editada)");
+            System.out.println("Ajustando inventario (orden editada)");
             ajustarInventarioPorEdicion(orden);
         }
     }
 
-    /**
-     * PARA ÓRDENES NUEVAS: Suma los items al inventario
-     */
     private void sumarAlInventario(OrdenAbastecimiento orden) {
         for (OrdenAbastecimientoItem item : orden.getItems()) {
             try {
@@ -285,49 +234,42 @@ public class OrdenAbastecimientoService {
                     Integer nuevaCantidad = cantidadActual + cantidadOrdenada;
                     productoActual.setCantidad(nuevaCantidad);
 
-                    // Actualizar precio si es mayor a cero
                     if (precioOrdenado != null && precioOrdenado.compareTo(BigDecimal.ZERO) > 0) {
                         productoActual.setPrecioUnitario(precioOrdenado);
                     }
 
                     productoService.actualizarProducto(productoActual);
 
-                    System.out.println("✅ Producto sumado: " + productoActual.getNombre() +
+                    System.out.println("Producto sumado: " + productoActual.getNombre() +
                             " - Stock: " + cantidadActual + " + " + cantidadOrdenada + " = " + nuevaCantidad);
                 }
             } catch (Exception e) {
-                System.err.println("❌ Error sumando producto: " + e.getMessage());
+                System.err.println("Error sumando producto: " + e.getMessage());
             }
         }
     }
 
-    /**
-     * PARA EDICIÓN DE ÓRDENES: Calcula la diferencia y ajusta
-     */
     private void ajustarInventarioPorEdicion(OrdenAbastecimiento orden) {
         try {
-            // Obtener la orden ORIGINAL de la base de datos
             OrdenAbastecimiento ordenOriginal = ordenAbastecimientoRepository
                     .findByIdWithItems(orden.getId())
                     .orElseThrow(() -> new RuntimeException("Orden original no encontrada: " + orden.getId()));
 
-            System.out.println("🔄 Comparando orden editada con original:");
+            System.out.println("Comparando orden editada con original:");
             System.out.println("   - Original: " + (ordenOriginal.getItems() != null ? ordenOriginal.getItems().size() : 0) + " items");
             System.out.println("   - Editada: " + (orden.getItems() != null ? orden.getItems().size() : 0) + " items");
 
-            // Crear mapa de items originales por producto ID
             Map<Long, Integer> itemsOriginales = new HashMap<>();
             if (ordenOriginal.getItems() != null) {
                 for (OrdenAbastecimientoItem item : ordenOriginal.getItems()) {
                     if (item.getProducto() != null) {
                         itemsOriginales.put(item.getProducto().getId(), item.getCantidad());
-                        System.out.println("   📦 Original - Producto " + item.getProducto().getId() +
+                        System.out.println("Original - Producto " + item.getProducto().getId() +
                                 ": " + item.getCantidad() + " unidades");
                     }
                 }
             }
 
-            // Procesar items editados
             for (OrdenAbastecimientoItem itemEditado : orden.getItems()) {
                 try {
                     if (itemEditado.getProducto() == null || itemEditado.getCantidad() == null) continue;
@@ -336,97 +278,78 @@ public class OrdenAbastecimientoService {
                     Integer cantidadEditada = itemEditado.getCantidad();
                     BigDecimal precioEditado = itemEditado.getPrecioUnitario();
 
-                    // Obtener producto actual
                     Producto productoActual = productoService.obtenerProductoPorId(productoId)
                             .orElseThrow(() -> new RuntimeException("Producto no encontrado: " + productoId));
 
                     Integer cantidadActual = productoActual.getCantidad() != null ? productoActual.getCantidad() : 0;
                     Integer cantidadOriginal = itemsOriginales.getOrDefault(productoId, 0);
 
-                    // Calcular diferencia
                     Integer diferencia = cantidadEditada - cantidadOriginal;
 
-                    System.out.println("   🔄 Producto " + productoId + " - " + productoActual.getNombre() +
+                    System.out.println("Producto " + productoId + " - " + productoActual.getNombre() +
                             ": Original=" + cantidadOriginal +
                             ", Editado=" + cantidadEditada +
                             ", Diferencia=" + diferencia +
                             ", Stock actual=" + cantidadActual);
 
                     if (diferencia != 0) {
-                        // Ajustar inventario según la diferencia
                         Integer nuevaCantidad = cantidadActual + diferencia;
 
-                        // Validar que no sea negativo
                         if (nuevaCantidad < 0) {
-                            System.err.println("⚠️  ADVERTENCIA: Stock negativo para " + productoActual.getNombre() +
+                            System.err.println("ADVERTENCIA: Stock negativo para " + productoActual.getNombre() +
                                     " - Diferencia: " + diferencia);
-                            nuevaCantidad = 0; // No permitir stock negativo
+                            nuevaCantidad = 0;
                         }
 
                         productoActual.setCantidad(nuevaCantidad);
 
-                        System.out.println("   📊 Ajuste: " + cantidadActual + " + " + diferencia + " = " + nuevaCantidad);
+                        System.out.println("Ajuste: " + cantidadActual + " + " + diferencia + " = " + nuevaCantidad);
                     }
 
-                    // Actualizar precio si cambió
                     if (precioEditado != null && precioEditado.compareTo(BigDecimal.ZERO) > 0) {
                         productoActual.setPrecioUnitario(precioEditado);
-                        System.out.println("   💰 Precio actualizado: " + productoActual.getPrecioUnitario());
+                        System.out.println("Precio actualizado: " + productoActual.getPrecioUnitario());
                     }
 
                     productoService.actualizarProducto(productoActual);
 
                 } catch (Exception e) {
-                    System.err.println("❌ Error ajustando producto: " + e.getMessage());
+                    System.err.println("Error ajustando producto: " + e.getMessage());
                 }
             }
 
         } catch (Exception e) {
-            System.err.println("❌ Error al obtener orden original: " + e.getMessage());
-            // Fallback: Tratar como nueva orden
-            System.out.println("⚠️  Fallback: Tratando como nueva orden");
+            System.err.println("Error al obtener orden original: " + e.getMessage());
+            System.out.println("Fallback: Tratando como nueva orden");
             sumarAlInventario(orden);
         }
     }
 
-    /**
-     * Eliminar items antiguos usando JPQL directo (EVITA el problema de null)
-     */
     private void eliminarItemsAntiguosDirectamente(Long ordenId) {
         try {
-            System.out.println("🗑️ ELIMINANDO items antiguos para orden ID: " + ordenId);
+            System.out.println("ELIMINANDO items antiguos para orden ID: " + ordenId);
 
-            // Usar JPQL DELETE directo (NO SET NULL, SINO DELETE)
             String deleteQuery = "DELETE FROM OrdenAbastecimientoItem i WHERE i.ordenAbastecimiento.id = :ordenId";
             int deleted = entityManager.createQuery(deleteQuery)
                     .setParameter("ordenId", ordenId)
                     .executeUpdate();
 
-            System.out.println("✅ " + deleted + " items antiguos ELIMINADOS (no set null)");
+            System.out.println(" - " + deleted + " items antiguos ELIMINADOS (no set null)");
 
-            // Limpiar el caché para esta orden
             entityManager.flush();
             entityManager.clear();
 
         } catch (Exception e) {
-            System.err.println("❌ Error eliminando items antiguos: " + e.getMessage());
+            System.err.println("Error eliminando items antiguos: " + e.getMessage());
             throw new RuntimeException("Error al eliminar items antiguos", e);
         }
     }
 
-    /**
-     * Elimina una orden de abastecimiento por ID.
-     * Realiza validación de existencia antes de proceder con la eliminación.
-     *
-     * @param id ID de la orden a eliminar
-     * @throws RuntimeException si la orden no existe o hay errores durante la eliminación
-     */
     @Transactional
     public void eliminarOrden(Long id) {
         try {
             System.out.println("=== ELIMINANDO ORDEN - ID: " + id + " ===");
 
-            // Verificar que la orden existe
             if (!ordenAbastecimientoRepository.existsById(id)) {
                 throw new IllegalArgumentException("Orden no encontrada con ID: " + id);
             }
@@ -441,13 +364,6 @@ public class OrdenAbastecimientoService {
         }
     }
 
-    /**
-     * Obtiene órdenes de abastecimiento por tipo específico.
-     *
-     * @param tipoOrden Tipo de orden a filtrar
-     * @return Lista de órdenes que coinciden con el tipo especificado
-     * @throws RuntimeException si ocurre un error en la consulta
-     */
     public List<OrdenAbastecimiento> obtenerOrdenesPorTipo(OrdenAbastecimiento.TipoOrden tipoOrden) {
         try {
             System.out.println("=== BUSCANDO ÓRDENES POR TIPO: " + tipoOrden + " ===");
@@ -460,13 +376,6 @@ public class OrdenAbastecimientoService {
         }
     }
 
-    /**
-     * Obtiene órdenes de abastecimiento por estado específico.
-     *
-     * @param estado Estado de la orden a filtrar
-     * @return Lista de órdenes que coinciden con el estado especificado
-     * @throws RuntimeException si ocurre un error en la consulta
-     */
     public List<OrdenAbastecimiento> obtenerOrdenesPorEstado(OrdenAbastecimiento.EstadoOrden estado) {
         try {
             System.out.println("=== BUSCANDO ÓRDENES POR ESTADO: " + estado + " ===");
@@ -479,15 +388,6 @@ public class OrdenAbastecimientoService {
         }
     }
 
-    // ================= MÉTODOS PRIVADOS AUXILIARES =================
-
-    /**
-     * Genera un número de orden único basado en tipo y año, evitando duplicados.
-     * Utiliza múltiples estrategias para garantizar la unicidad.
-     *
-     * @param tipoOrden Tipo de orden para determinar el prefijo
-     * @return Número de orden único generado
-     */
     private String generarNumeroOAUnico(OrdenAbastecimiento.TipoOrden tipoOrden) {
         String prefijo = obtenerPrefijoTipo(tipoOrden);
         String año = String.valueOf(Year.now().getValue());
@@ -495,14 +395,12 @@ public class OrdenAbastecimientoService {
         System.out.println("Generando número para tipo: " + tipoOrden + ", prefijo: " + prefijo + ", año: " + año);
 
         try {
-            // Método 1: Buscar el máximo número existente
             Long maxNumero = ordenAbastecimientoRepository.findMaxNumeroByPrefijoAndYear(prefijo, año);
             Long nextNumber = (maxNumero != null) ? maxNumero + 1 : 1;
 
             String numeroPropuesto = String.format("%s-%s-%03d", prefijo, año, nextNumber);
             System.out.println("Número propuesto: " + numeroPropuesto);
 
-            // Verificar que no exista
             if (!ordenAbastecimientoRepository.existsByNumeroOA(numeroPropuesto)) {
                 return numeroPropuesto;
             }
@@ -510,7 +408,6 @@ public class OrdenAbastecimientoService {
             System.err.println("Error en generación automática: " + e.getMessage());
         }
 
-        // Método 2: Búsqueda secuencial (más seguro)
         System.out.println("Buscando número disponible secuencialmente...");
         for (long i = 1; i <= 999; i++) {
             String numeroPropuesto = String.format("%s-%s-%03d", prefijo, año, i);
@@ -520,30 +417,16 @@ public class OrdenAbastecimientoService {
             }
         }
 
-        // Método 3: Usar timestamp como fallback
         String numeroFallback = generarNumeroFallback(prefijo, año);
         System.out.println("Número fallback: " + numeroFallback);
         return numeroFallback;
     }
 
-    /**
-     * Genera número de fallback usando timestamp cuando no hay números disponibles.
-     *
-     * @param prefijo Prefijo del tipo de orden
-     * @param año Año actual
-     * @return Número de orden único basado en timestamp
-     */
     private String generarNumeroFallback(String prefijo, String año) {
         String timestamp = String.valueOf(System.currentTimeMillis()).substring(7, 12);
         return String.format("%s-%s-%s", prefijo, año, timestamp);
     }
 
-    /**
-     * Obtiene el prefijo correspondiente al tipo de orden.
-     *
-     * @param tipoOrden Tipo de orden
-     * @return Prefijo de 2-4 caracteres para el número de orden
-     */
     private String obtenerPrefijoTipo(OrdenAbastecimiento.TipoOrden tipoOrden) {
         return switch (tipoOrden) {
             case ALIMENTOS -> "ALM";
@@ -554,11 +437,6 @@ public class OrdenAbastecimientoService {
         };
     }
 
-    /**
-     * Calcula el total de la orden basado en los subtotales de los items.
-     *
-     * @param ordenAbastecimiento Orden a la que se calculará el total
-     */
     private void calcularTotal(OrdenAbastecimiento ordenAbastecimiento) {
         if (ordenAbastecimiento.getItems() != null && !ordenAbastecimiento.getItems().isEmpty()) {
             double total = ordenAbastecimiento.getItems().stream()
@@ -572,20 +450,12 @@ public class OrdenAbastecimientoService {
         }
     }
 
-    /**
-     * Valida los items de la orden antes de guardar.
-     * Filtra items inválidos y verifica que haya al menos un producto válido.
-     *
-     * @param ordenAbastecimiento Orden cuyos items serán validados
-     * @throws IllegalArgumentException si no hay items válidos en la orden
-     */
     private void validarItemsOrden(OrdenAbastecimiento ordenAbastecimiento) {
         if (ordenAbastecimiento.getItems() == null || ordenAbastecimiento.getItems().isEmpty()) {
             System.out.println("Orden sin items - permitido para algunos tipos de orden");
             return;
         }
 
-        // Filtrar items con productos nulos
         List<OrdenAbastecimientoItem> itemsValidos = ordenAbastecimiento.getItems().stream()
                 .filter(item -> item.getProducto() != null && item.getProducto().getId() != null)
                 .collect(Collectors.toList());
@@ -608,15 +478,6 @@ public class OrdenAbastecimientoService {
         }
     }
 
-    // ================= MÉTODOS ADICIONALES =================
-
-    /**
-     * Obtiene las órdenes de abastecimiento pendientes.
-     * Ordenadas por fecha de orden ascendente para priorizar las más antiguas.
-     *
-     * @return Lista de órdenes con estado PENDIENTE
-     * @throws RuntimeException si ocurre un error en la consulta
-     */
     public List<OrdenAbastecimiento> obtenerOrdenesPendientes() {
         try {
             System.out.println("=== BUSCANDO ÓRDENES PENDIENTES ===");
@@ -629,13 +490,6 @@ public class OrdenAbastecimientoService {
         }
     }
 
-    /**
-     * Obtiene las órdenes de abastecimiento del mes actual.
-     * Útil para reportes mensuales y dashboards.
-     *
-     * @return Lista de órdenes del mes actual ordenadas por fecha descendente
-     * @throws RuntimeException si ocurre un error en la consulta
-     */
     public List<OrdenAbastecimiento> obtenerOrdenesDelMesActual() {
         try {
             System.out.println("=== BUSCANDO ÓRDENES DEL MES ACTUAL ===");
@@ -648,12 +502,6 @@ public class OrdenAbastecimientoService {
         }
     }
 
-    /**
-     * Verifica si existe una orden con el número dado.
-     *
-     * @param numeroOA Número de orden a verificar
-     * @return true si existe una orden con ese número, false en caso contrario
-     */
     public boolean existeOrdenConNumero(String numeroOA) {
         try {
             return ordenAbastecimientoRepository.existsByNumeroOA(numeroOA);
@@ -663,17 +511,6 @@ public class OrdenAbastecimientoService {
         }
     }
 
-    /**
-     * Obtiene estadísticas consolidadas para el dashboard.
-     * Incluye total de órdenes, órdenes por estado y monto total del año actual.
-     *
-     * @return Array de objetos con las estadísticas:
-     *         [0] = totalOrdenes (Long)
-     *         [1] = pendientes (Long)
-     *         [2] = aprobadas (Long)
-     *         [3] = completadas (Long)
-     *         [4] = totalMonto (BigDecimal)
-     */
     public Object[] obtenerEstadisticasDashboard() {
         try {
             System.out.println("=== OBTENIENDO ESTADÍSTICAS PARA DASHBOARD ===");

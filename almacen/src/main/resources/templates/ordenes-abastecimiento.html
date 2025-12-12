@@ -66,7 +66,6 @@
         }
     </style>
     <style>
-        /* Asegurar estructura de tabla */
         table {
             table-layout: fixed;
             width: 100%;
@@ -81,7 +80,6 @@
         th:nth-child(6), td:nth-child(6) { width: 12%; text-align: center; } /* Estado */
         th:nth-child(7), td:nth-child(7) { width: 19%; text-align: center; } /* Acciones */
 
-        /* Mejorar los badges */
         .badge {
             display: inline-block !important;
             padding: 0.4em 0.8em !important;
@@ -363,13 +361,13 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script th:inline="javascript">
     /*<![CDATA[*/
-    // Cargar precios de productos desde Thymeleaf - VERSIÓN CORREGIDA
+    // Cargar precios de productos
     window.preciosProductos = {
         <th:block th:each="producto : ${productos}">
         [[${producto?.id}]]: [[${#numbers.formatDecimal(producto?.precioUnitario ?: 0, 1, 2)}]],
         </th:block>
     };
-    console.log("💰 Precios de productos cargados:", window.preciosProductos);
+    console.log("Precios de productos cargados:", window.preciosProductos);
     /*]]>*/
 </script>
 <script>
@@ -384,7 +382,7 @@
             fechaElement.textContent = fechaFormateada;
         }
 
-        console.log(`📅 Fecha actual: ${fechaFormateada}`);
+        console.log(`Fecha actual: ${fechaFormateada}`);
 
         // INICIALIZAR COMPONENTES DE BOOTSTRAP
         var dropdownElementList = [].slice.call(document.querySelectorAll('.dropdown-toggle'))
@@ -398,7 +396,7 @@
             return new bootstrap.Tooltip(tooltipTriggerEl)
         });
 
-        console.log("✅ Componentes Bootstrap inicializados");
+        console.log("Componentes Bootstrap inicializados");
     });
 </script>
 <script th:src="@{/js/ordenes-abastecimiento.js}"></script>

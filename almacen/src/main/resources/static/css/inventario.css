@@ -1,12 +1,9 @@
-/* Estilos específicos para el inventario */
 
-/* Badge de alerta con animación */
 .badge.bg-warning {
     font-size: 0.85rem;
     padding: 0.5rem 0.75rem;
 }
 
-/* Estados de stock */
 .stock-bajo {
     background-color: rgba(220, 53, 69, 0.1) !important;
     border-left: 4px solid #dc3545;
@@ -37,7 +34,6 @@
     background-color: #6c757d;
 }
 
-/* Animación de pulso para alertas */
 @keyframes pulse {
     0% {
         transform: scale(0.95);
@@ -55,19 +51,16 @@
     }
 }
 
-/* Mejoras para la tabla */
 .table td {
     vertical-align: middle;
 }
 
-/* Hover effects mejorados */
 .table-hover tbody tr:hover {
     transform: translateY(-1px);
     transition: all 0.2s ease;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
-/* Responsive */
 @media (max-width: 768px) {
     .card-header .btn {
         margin-top: 0.5rem;
@@ -78,7 +71,6 @@
     }
 }
 
-/* Estilos para el botón Stand By en inventario.css */
 .btn-standby {
     background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
     color: white;

@@ -13,11 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.stream.Collectors;
 
-/**
- * Servicio personalizado para la carga de detalles de usuario en Spring Security.
- * Implementa la interfaz UserDetailsService para integrar la autenticación
- * del sistema con la entidad Usuario personalizada de la aplicación.
- */
 @Service
 @Transactional
 public class CustomUserDetailsService implements UserDetailsService {
@@ -30,8 +25,6 @@ public class CustomUserDetailsService implements UserDetailsService {
         Usuario usuario = usuarioRepository.findByUsernameWithRoles(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado: " + username));
 
-        // ✅ SOLUCIÓN CORRECTA: Devolver el UserDetails con disabled=true
-        // NO lances excepción aquí, déjale a Spring Security que maneje el disabled
         var authorities = usuario.getRoles().stream()
                 .map(rol -> new SimpleGrantedAuthority("ROLE_" + rol.getNombre()))
                 .collect(Collectors.toList());
@@ -40,7 +33,7 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .username(usuario.getUsername())
                 .password(usuario.getPassword())
                 .authorities(authorities)
-                .disabled(!usuario.isEnabled())  // ✅ AQUÍ ESTÁ LA CLAVE: disabled = !isEnabled()
+                .disabled(!usuario.isEnabled())
                 .accountExpired(false)
                 .credentialsExpired(false)
                 .accountLocked(false)
